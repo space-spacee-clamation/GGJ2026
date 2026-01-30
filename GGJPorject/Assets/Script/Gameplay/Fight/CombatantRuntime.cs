@@ -85,6 +85,31 @@ public sealed class CombatantRuntime
         CritChance = Mathf.Clamp01(CritChance + delta);
     }
 
+    public void AddCritMultiplier(float delta)
+    {
+        CritMultiplier = Mathf.Max(1f, CritMultiplier + delta);
+    }
+
+    public void AddSpeedRate(int delta)
+    {
+        SpeedRate = Mathf.Max(0, SpeedRate + delta);
+    }
+
+    public void AddMaxHP(float delta, bool alsoHeal)
+    {
+        if (delta == 0f) return;
+        var oldMax = MaxHP;
+        MaxHP = Mathf.Max(1f, MaxHP + delta);
+        if (alsoHeal)
+        {
+            CurrentHP = Mathf.Min(MaxHP, CurrentHP + (MaxHP - oldMax));
+        }
+        else
+        {
+            CurrentHP = Mathf.Min(CurrentHP, MaxHP);
+        }
+    }
+
     public void Damage(float amount)
     {
         if (amount <= 0f) return;

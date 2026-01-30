@@ -90,7 +90,10 @@ public class MaterialEditorWindow : OdinEditorWindow
         CleanupEditingInstance();
 
         var go = new GameObject("NewMaterial");
-        go.hideFlags = HideFlags.HideAndDontSave;
+        // 注意：不能使用 HideAndDontSave，否则 PrefabUtility.SaveAsPrefabAsset 会报：
+        // "No objects were found for saving into prefab. Have you marked all objects with DontSave?"
+        // 我们只隐藏到 Hierarchy，不使用 DontSave。
+        go.hideFlags = HideFlags.HideInHierarchy;
         var mat = go.AddComponent<MaterialObj>();
 
         mat.Id = GetNextIdOrDefault(folder);
@@ -242,7 +245,27 @@ public class MaterialEditorWindow : OdinEditorWindow
         {
             EditorGUILayout.LabelField("组件参数", EditorStyles.boldLabel);
 
-            var comps = _editingInstance != null ? _editingInstance.GetComponents<MonoBehaviour>() : Array.Empty<MonoBehaviour>();
+            if (_editingMaterial == null || _editingInstance == null)
+            {
+                EditorGUILayout.HelpBox("未选择可编辑的材质对象。", MessageType.Info);
+                return;
+            }
+
+            // 确保 orderedComponents 有内容（老 prefab 兼容）
+            if (_editingMaterial.OrderedComponents == null || _editingMaterial.OrderedComponents.Count == 0)
+            {
+                EditorGUILayout.HelpBox("该材质未配置组件顺序列表（orderedComponents）。点击下方按钮会按当前组件顺序初始化。", MessageType.Warning);
+                if (GUILayout.Button("初始化顺序列表（按当前组件顺序）", GUILayout.Height(26)))
+                {
+                    RebuildOrderedComponentsFromCurrent();
+                }
+            }
+
+            var ordered = _editingMaterial.OrderedComponents != null && _editingMaterial.OrderedComponents.Count > 0;
+            var comps = ordered
+                ? _editingMaterial.OrderedComponents.ToArray()
+                : (_editingInstance != null ? _editingInstance.GetComponents<MonoBehaviour>() : Array.Empty<MonoBehaviour>());
+
             for (int i = 0; i < comps.Length; i++)
             {
                 var c = comps[i];
@@ -250,19 +273,45 @@ public class MaterialEditorWindow : OdinEditorWindow
                 if (c is MaterialObj) continue;
 
                 EditorGUILayout.Space(6);
-                EditorGUILayout.LabelField(c.GetType().Name, EditorStyles.boldLabel);
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorGUILayout.LabelField(c.GetType().Name, EditorStyles.boldLabel);
+
+                    // 仅对 orderedComponents 生效：排序/删除
+                    if (ordered)
+                    {
+                        GUI.enabled = i > 0;
+                        if (GUILayout.Button("↑", GUILayout.Width(28))) MoveOrderedComponent(i, i - 1);
+                        GUI.enabled = i < comps.Length - 1;
+                        if (GUILayout.Button("↓", GUILayout.Width(28))) MoveOrderedComponent(i, i + 1);
+                        GUI.enabled = true;
+
+                        if (GUILayout.Button("删除", GUILayout.Width(50)))
+                        {
+                            DeleteComponentAtOrderedIndex(i);
+                            // 列表已变化，停止本次绘制避免索引错乱
+                            GUIUtility.ExitGUI();
+                        }
+                    }
+                }
 
                 // Draw serialized fields
                 var so = new SerializedObject(c);
+                so.Update();
                 var it = so.GetIterator();
                 bool enterChildren = true;
                 while (it.NextVisible(enterChildren))
                 {
                     enterChildren = false;
                     if (it.name == "m_Script") continue;
+                    // “描述”统一在下方以只读方式展示（由 IMaterialDescriptionProvider 生成）
+                    if (it.propertyType == SerializedPropertyType.String && it.name == "description") continue;
                     EditorGUILayout.PropertyField(it, true);
                 }
-                so.ApplyModifiedProperties();
+                if (so.ApplyModifiedProperties())
+                {
+                    EditorUtility.SetDirty(c);
+                }
 
                 // ReadOnly description
                 var d = BuildComponentDescription(c);
@@ -272,6 +321,96 @@ public class MaterialEditorWindow : OdinEditorWindow
                 }
             }
         }
+    }
+
+    private SerializedProperty GetOrderedComponentsProp(SerializedObject matSO)
+    {
+        // MaterialObj: [SerializeField] private List<MonoBehaviour> orderedComponents;
+        return matSO.FindProperty("orderedComponents");
+    }
+
+    private void RebuildOrderedComponentsFromCurrent()
+    {
+        if (_editingMaterial == null || _editingInstance == null) return;
+
+        var matSO = new SerializedObject(_editingMaterial);
+        matSO.Update();
+        var list = GetOrderedComponentsProp(matSO);
+        if (list == null || !list.isArray)
+        {
+            Debug.LogError("[材料编辑器] 找不到 MaterialObj.orderedComponents 序列化字段。");
+            return;
+        }
+
+        list.ClearArray();
+        var bs = _editingInstance.GetComponents<MonoBehaviour>();
+        for (int i = 0; i < bs.Length; i++)
+        {
+            if (bs[i] == null) continue;
+            if (bs[i] is MaterialObj) continue;
+
+            int idx = list.arraySize;
+            list.InsertArrayElementAtIndex(idx);
+            list.GetArrayElementAtIndex(idx).objectReferenceValue = bs[i];
+        }
+
+        matSO.ApplyModifiedProperties();
+        EditorUtility.SetDirty(_editingMaterial);
+        Repaint();
+    }
+
+    private void MoveOrderedComponent(int from, int to)
+    {
+        if (_editingMaterial == null) return;
+        if (from == to) return;
+
+        var matSO = new SerializedObject(_editingMaterial);
+        matSO.Update();
+        var list = GetOrderedComponentsProp(matSO);
+        if (list == null || !list.isArray) return;
+
+        if (from < 0 || from >= list.arraySize) return;
+        if (to < 0 || to >= list.arraySize) return;
+
+        list.MoveArrayElement(from, to);
+        matSO.ApplyModifiedProperties();
+        EditorUtility.SetDirty(_editingMaterial);
+        Repaint();
+    }
+
+    private void DeleteComponentAtOrderedIndex(int index)
+    {
+        if (_editingMaterial == null || _editingInstance == null) return;
+
+        var matSO = new SerializedObject(_editingMaterial);
+        matSO.Update();
+        var list = GetOrderedComponentsProp(matSO);
+        if (list == null || !list.isArray) return;
+
+        if (index < 0 || index >= list.arraySize) return;
+
+        var elem = list.GetArrayElementAtIndex(index);
+        var target = elem.objectReferenceValue as MonoBehaviour;
+
+        // 先从 orderedComponents 移除引用
+        elem.objectReferenceValue = null;
+        // Unity 对 ObjectReference 的删除通常需要两次
+        list.DeleteArrayElementAtIndex(index);
+        if (index < list.arraySize && list.GetArrayElementAtIndex(index).objectReferenceValue == null)
+        {
+            list.DeleteArrayElementAtIndex(index);
+        }
+
+        matSO.ApplyModifiedProperties();
+        EditorUtility.SetDirty(_editingMaterial);
+
+        // 再删除组件本体（支持 Undo）
+        if (target != null)
+        {
+            Undo.DestroyObjectImmediate(target);
+        }
+
+        Repaint();
     }
 
     private void Save()
@@ -345,7 +484,8 @@ public class MaterialEditorWindow : OdinEditorWindow
         }
 
         var inst = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-        inst.hideFlags = HideFlags.HideAndDontSave;
+        // 同 CreateNew：不能 DontSave，否则无法保存回 prefab
+        inst.hideFlags = HideFlags.HideInHierarchy;
         _editingInstance = inst;
         _editingMaterial = inst.GetComponent<MaterialObj>();
         if (_editingMaterial == null)
@@ -460,7 +600,11 @@ public class MaterialEditorWindow : OdinEditorWindow
     {
         if (_editingInstance == null || t == null) return;
         if (_editingInstance.GetComponent(t) != null) return;
-        Undo.AddComponent(_editingInstance, t);
+        var added = Undo.AddComponent(_editingInstance, t) as MonoBehaviour;
+        if (_editingMaterial != null && added != null)
+        {
+            _editingMaterial.EditorAppendOrderedComponent(added);
+        }
     }
 
     private static string GetDefaultComponentDescription(Type t)

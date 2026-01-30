@@ -45,34 +45,6 @@ public sealed class MaterialInventory
         }
     }
 
-    public bool TryGetItemsSortedByExpiry(out List<MaterialObj> sorted)
-    {
-        sorted = null;
-        if (items == null || items.Count == 0) return false;
-
-        var list = new List<MaterialObj>(items.Count);
-        for (int i = 0; i < items.Count; i++)
-        {
-            var m = items[i];
-            if (m == null) continue;
-            if (m.RemainingShelfLifeTurns <= 0) continue;
-            list.Add(m);
-        }
-
-        if (list.Count == 0) return false;
-
-        list.Sort((a, b) =>
-        {
-            if (a == null && b == null) return 0;
-            if (a == null) return 1;
-            if (b == null) return -1;
-            return a.RemainingShelfLifeTurns.CompareTo(b.RemainingShelfLifeTurns);
-        });
-
-        sorted = list;
-        return true;
-    }
-
     public void Remove(MaterialObj instance)
     {
         if (instance == null) return;

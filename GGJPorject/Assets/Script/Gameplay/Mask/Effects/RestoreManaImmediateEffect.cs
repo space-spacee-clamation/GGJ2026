@@ -7,7 +7,6 @@ using UnityEngine;
 public sealed class RestoreManaImmediateEffect : MonoBehaviour, IMaterialBindEffect, IMaterialDescriptionProvider
 {
     [Min(1)] public int RestoreAmount = 1;
-    [TextArea] [SerializeField] private string description = "绑定时：恢复法力值。";
 
     public void OnBind(in BindContext context)
     {
@@ -17,10 +16,7 @@ public sealed class RestoreManaImmediateEffect : MonoBehaviour, IMaterialBindEff
     public void AppendDescription(StringBuilder sb)
     {
         if (sb == null) return;
-        if (!string.IsNullOrWhiteSpace(description))
-        {
-            sb.AppendLine(description);
-        }
+        sb.AppendLine($"绑定时：恢复法力值 +{RestoreAmount}");
     }
 }
 

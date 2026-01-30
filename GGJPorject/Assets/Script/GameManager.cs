@@ -42,6 +42,15 @@ public class GameManager : MonoBehaviour
     [SerializeField] private SimpleLuckMaterialDropMethod dropMethod;
     [SerializeField, Min(0)] private int dropCount = 1;
 
+    [Header("材料池/初始材料（自动从 Resources/Mat 读取）")]
+    [Tooltip("启动时自动扫描 Assets/Resources/Mat 下所有 MaterialObj prefab，生成运行时材料池并覆盖 dropPool。")]
+    [SerializeField] private bool autoBuildDropPoolFromResources = true;
+    [SerializeField] private string resourcesMatFolder = "Mat";
+
+    [Tooltip("开局给玩家的品质0材质数量（用于制作阶段）。")]
+    [SerializeField, Min(0)] private int initialCommonMaterialCount = 4;
+    private bool _initialMaterialsSpawned;
+
     [Header("Flow")]
     [SerializeField] private bool autoRunLoop = false;
 
@@ -82,9 +91,114 @@ public class GameManager : MonoBehaviour
             audioManager.LoadAllEntriesFromResources();
         }
 
+        // 自动构建材料池（用于掉落与开局发牌）
+        if (autoBuildDropPoolFromResources)
+        {
+            BuildDropPoolFromResources();
+        }
+
+        // 开局发 4 个品质0材质给玩家
+        SpawnInitialCommonMaterialsIfNeeded();
+
         if (autoRunLoop)
         {
             RunMainLoopAsync().Forget();
+        }
+    }
+
+    private void BuildDropPoolFromResources()
+    {
+        var mats = Resources.LoadAll<MaterialObj>(resourcesMatFolder);
+        if (mats == null || mats.Length == 0)
+        {
+            Debug.LogWarning($"[GameManager] Resources/{resourcesMatFolder} 未找到任何 MaterialObj，无法自动生成材料池。");
+            return;
+        }
+
+        var pool = ScriptableObject.CreateInstance<MaterialPool>();
+        pool.name = $"RuntimeMaterialPool_{resourcesMatFolder}";
+
+        for (int i = 0; i < mats.Length; i++)
+        {
+            var prefab = mats[i];
+            if (prefab == null) continue;
+
+            var entry = new MaterialPoolEntry { MaterialPrefab = prefab, Weight = 1 };
+            switch (prefab.Quality)
+            {
+                case MaterialQuality.Common: pool.Common.Add(entry); break;
+                case MaterialQuality.Uncommon: pool.Uncommon.Add(entry); break;
+                case MaterialQuality.Rare: pool.Rare.Add(entry); break;
+                case MaterialQuality.Epic: pool.Epic.Add(entry); break;
+                case MaterialQuality.Legendary: pool.Legendary.Add(entry); break;
+                default: pool.Common.Add(entry); break;
+            }
+        }
+
+        dropPool = pool;
+        Debug.Log($"[GameManager] 已从 Resources/{resourcesMatFolder} 自动生成材料池：Common={pool.Common.Count}, Uncommon={pool.Uncommon.Count}, Rare={pool.Rare.Count}, Epic={pool.Epic.Count}, Legendary={pool.Legendary.Count}");
+    }
+
+    private void SpawnInitialCommonMaterialsIfNeeded()
+    {
+        if (_initialMaterialsSpawned) return;
+        _initialMaterialsSpawned = true;
+
+        if (initialCommonMaterialCount <= 0) return;
+        if (materialInventory == null)
+        {
+            Debug.LogError("[GameManager] materialInventory 为空，无法发放开局材料。", this);
+            return;
+        }
+        if (materialInventoryRoot == null)
+        {
+            Debug.LogError("[GameManager] materialInventoryRoot 未初始化，无法实例化开局材料。", this);
+            return;
+        }
+
+        if (dropPool == null)
+        {
+            Debug.LogWarning("[GameManager] dropPool 为空，无法从材料池发放开局材料。");
+            return;
+        }
+
+        var list = dropPool.GetList(MaterialQuality.Common);
+        if (list == null || list.Count == 0)
+        {
+            Debug.LogWarning("[GameManager] 材料池 Common 列表为空，无法发放开局材料。");
+            return;
+        }
+
+        // 不强求不重复：数量不足时允许重复抽取（Jam 简化）
+        var used = new HashSet<int>();
+        for (int n = 0; n < initialCommonMaterialCount; n++)
+        {
+            int pick;
+            if (list.Count >= initialCommonMaterialCount)
+            {
+                // 尽量不重复
+                int safety = 200;
+                do
+                {
+                    pick = Random.Range(0, list.Count);
+                } while (!used.Add(pick) && --safety > 0);
+            }
+            else
+            {
+                pick = Random.Range(0, list.Count);
+            }
+
+            var prefab = list[pick]?.MaterialPrefab;
+            if (prefab == null) continue;
+
+            var inst = Instantiate(prefab, materialInventoryRoot, false);
+            inst.ResetInventoryShelfLife();
+            materialInventory.Add(inst);
+        }
+
+        if (makeMuskUI != null && makeMuskUI.gameObject.activeInHierarchy)
+        {
+            makeMuskUI.RefreshInventoryUI();
         }
     }
 
@@ -273,6 +387,7 @@ public class GameManager : MonoBehaviour
         _battleEndTcs = new UniTaskCompletionSource<bool>();
 
         fightManager.StartFight();
+        Debug.Log("[GameManager] 进入战斗阶段（纯数值战斗）。");
 
         var ctx = fightManager.Context;
         if (ctx == null)
@@ -340,7 +455,7 @@ public class GameManager : MonoBehaviour
 
         var delta = new PlayerGrowthDelta();
 
-        // 面具库顺序 → 材料顺序 → 组件顺序（MaterialObj 缓存顺序）
+        // 面具库顺序 → 材料顺序 → 组件顺序（MaterialObj.orderedComponents / 编辑器配置顺序）
         for (int mi = 0; mi < _maskLibrary.Count; mi++)
         {
             var mask = _maskLibrary[mi];
@@ -352,12 +467,35 @@ public class GameManager : MonoBehaviour
                 var mat = mats[i];
                 if (mat == null) continue;
 
-                var behaviours = mat.GetComponents<MonoBehaviour>();
-                for (int bi = 0; bi < behaviours.Length; bi++)
+                var comps = mat.OrderedComponents;
+                // Jam 容错：若未配置 orderedComponents，则 fallback 到 GetComponents 顺序
+                if (comps == null || comps.Count == 0)
                 {
-                    if (behaviours[bi] is IPersistentGrowthProvider p)
+                    var bs = mat.GetComponents<MonoBehaviour>();
+                    for (int bi = 0; bi < bs.Length; bi++)
                     {
-                        p.OnCollectPersistentGrowth(Player.I, delta, ctx);
+                        if (bs[bi] == null) continue;
+                        if (bs[bi] is MaterialObj) continue;
+                        if (bs[bi] is IMaterialTraversalGate g)
+                        {
+                            var tctx = new MaterialTraverseContext(MaterialTraversePhase.PersistentGrowth, ctx, FightSide.None, ctx.BattleActionCount, 0);
+                            if (g.ShouldBreak(in tctx)) break;
+                        }
+                        if (bs[bi] is IPersistentGrowthProvider p)
+                        {
+                            p.OnCollectPersistentGrowth(Player.I, delta, ctx);
+                        }
+                    }
+                }
+                else
+                {
+                    var tctx = new MaterialTraverseContext(MaterialTraversePhase.PersistentGrowth, ctx, FightSide.None, ctx.BattleActionCount, 0);
+                    for (int bi = 0; bi < comps.Count; bi++)
+                    {
+                        var c = comps[bi];
+                        if (c == null) continue;
+                        if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx)) break;
+                        if (c is IPersistentGrowthProvider p) p.OnCollectPersistentGrowth(Player.I, delta, ctx);
                     }
                 }
             }

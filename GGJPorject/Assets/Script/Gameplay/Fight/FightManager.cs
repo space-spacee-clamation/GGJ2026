@@ -20,6 +20,7 @@ public class FightManager : MonoBehaviour
     [Header("Loop")]
     [SerializeField] private bool autoStartOnPlay = false;
     [SerializeField] private bool enableLogs = false;
+    [SerializeField] private bool forceLogsInJam = true;
 
     public FightContext Context { get; private set; }
 
@@ -115,6 +116,11 @@ public class FightManager : MonoBehaviour
         Context.RaiseBattleEnter();
         Context.RaiseBattleStart();
 
+        if (enableLogs || forceLogsInJam)
+        {
+            Debug.Log($"[Fight] BattleStart ArenaSpeed={Context.ArenaSpeedThreshold} PlayerHP={Context.Player.CurrentHP}/{Context.Player.MaxHP} EnemyHP={Context.Enemy.CurrentHP}/{Context.Enemy.MaxHP}");
+        }
+
         _battleRoundIndex++;
     }
 
@@ -184,6 +190,12 @@ public class FightManager : MonoBehaviour
         Context.CurrentAttacker = attacker;
         Context.CurrentDefender = defender;
 
+        // 计数器：供“每X回合/第X攻击/前X回合/前X攻击”类词条使用
+        Context.CurrentActionNumber = Context.BattleActionCount + 1;
+        if (side == FightSide.Player) Context.CurrentAttackerAttackNumber = Context.PlayerAttackCount + 1;
+        else if (side == FightSide.Enemy) Context.CurrentAttackerAttackNumber = Context.EnemyAttackCount + 1;
+        else Context.CurrentAttackerAttackNumber = 0;
+
         // 创建 AttackInfo（每次攻击创建）
         var info = new AttackInfo
         {
@@ -212,7 +224,12 @@ public class FightManager : MonoBehaviour
         var damage = info.FinalDamage > 0f ? info.FinalDamage : info.RawAttack;
         defender.Damage(damage);
 
-        if (enableLogs)
+        // 结算后累加次数
+        Context.BattleActionCount += 1;
+        if (side == FightSide.Player) Context.PlayerAttackCount += 1;
+        else if (side == FightSide.Enemy) Context.EnemyAttackCount += 1;
+
+        if (enableLogs || forceLogsInJam)
         {
             Debug.Log($"[Fight] {attacker.Name} hit {defender.Name} dmg={damage} (HP {defender.CurrentHP}/{defender.MaxHP})");
         }
@@ -226,5 +243,11 @@ public class FightManager : MonoBehaviour
         Context.RaiseBattleEnd();
         if (!Context.Player.IsDead && Context.Enemy.IsDead) Context.RaiseVictory();
         else Context.RaiseDefeat();
+
+        if (enableLogs || forceLogsInJam)
+        {
+            var result = (!Context.Player.IsDead && Context.Enemy.IsDead) ? "Victory" : "Defeat";
+            Debug.Log($"[Fight] BattleEnd Result={result} PlayerHP={Context.Player.CurrentHP}/{Context.Player.MaxHP} EnemyHP={Context.Enemy.CurrentHP}/{Context.Enemy.MaxHP}");
+        }
     }
 }

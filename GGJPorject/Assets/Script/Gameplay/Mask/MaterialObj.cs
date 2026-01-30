@@ -47,8 +47,63 @@ public class MaterialObj : MonoBehaviour
         return remainingShelfLifeTurns <= 0;
     }
 
+    [Header("Ordered Components (Editor)")]
+    [Tooltip("材质组件执行顺序（由编辑器/材质编辑器维护）。用于跳出 Gate 与顺序触发。")]
+    [SerializeField] private List<MonoBehaviour> orderedComponents = new();
+
+    public IReadOnlyList<MonoBehaviour> OrderedComponents => orderedComponents;
+
+    private IReadOnlyList<MonoBehaviour> GetOrderedComponentsRuntime()
+    {
+        // Jam 容错：老 prefab 未配置顺序时，退化为 GetComponents 顺序
+        if (orderedComponents == null || orderedComponents.Count == 0)
+        {
+            var list = new List<MonoBehaviour>();
+            var bs = GetComponents<MonoBehaviour>();
+            for (int i = 0; i < bs.Length; i++)
+            {
+                if (bs[i] == null) continue;
+                if (bs[i] is MaterialObj) continue;
+                list.Add(bs[i]);
+            }
+            return list;
+        }
+
+        // 清理空引用
+        for (int i = orderedComponents.Count - 1; i >= 0; i--)
+        {
+            if (orderedComponents[i] == null) orderedComponents.RemoveAt(i);
+        }
+        return orderedComponents;
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Rebuild Ordered Components From Current")]
+    private void EditorRebuildOrderedComponentsFromCurrent()
+    {
+        orderedComponents ??= new List<MonoBehaviour>();
+        orderedComponents.Clear();
+        var bs = GetComponents<MonoBehaviour>();
+        for (int i = 0; i < bs.Length; i++)
+        {
+            if (bs[i] == null) continue;
+            if (bs[i] is MaterialObj) continue;
+            orderedComponents.Add(bs[i]);
+        }
+        UnityEditor.EditorUtility.SetDirty(this);
+    }
+
+    public void EditorAppendOrderedComponent(MonoBehaviour comp)
+    {
+        if (comp == null || comp is MaterialObj) return;
+        orderedComponents ??= new List<MonoBehaviour>();
+        if (!orderedComponents.Contains(comp)) orderedComponents.Add(comp);
+        UnityEditor.EditorUtility.SetDirty(this);
+    }
+#endif
+
     /// <summary>
-    /// 按组件顺序生成描述：遍历本 GameObject 上的 MonoBehaviour，依次调用 IMaterialDescriptionProvider。
+    /// 按“配置好的顺序”生成描述：依次调用 IMaterialDescriptionProvider；遇到 Gate 跳出则提前结束。
     /// </summary>
     public string BuildDescription()
     {
@@ -60,53 +115,28 @@ public class MaterialObj : MonoBehaviour
     public void BuildDescription(StringBuilder sb)
     {
         if (sb == null) return;
-        var behaviours = GetComponents<MonoBehaviour>();
-        for (int i = 0; i < behaviours.Length; i++)
+        var comps = GetOrderedComponentsRuntime();
+        var ctx = new MaterialTraverseContext(MaterialTraversePhase.Description, null, FightSide.None, 0, 0);
+        for (int i = 0; i < comps.Count; i++)
         {
-            if (behaviours[i] is IMaterialDescriptionProvider p)
-            {
-                p.AppendDescription(sb);
-            }
-        }
-    }
-
-    private readonly List<IMaterialBindEffect> _bindEffects = new();
-    private readonly List<IFightComponent> _fightComponents = new();
-    private readonly List<IAttackInfoModifier> _attackModifiers = new();
-
-    public IReadOnlyList<IMaterialBindEffect> BindEffects => _bindEffects;
-    public IReadOnlyList<IFightComponent> FightComponents => _fightComponents;
-    public IReadOnlyList<IAttackInfoModifier> AttackModifiers => _attackModifiers;
-
-    private void Awake()
-    {
-        CacheComponents();
-    }
-
-    private void CacheComponents()
-    {
-        _bindEffects.Clear();
-        _fightComponents.Clear();
-        _attackModifiers.Clear();
-
-        var behaviours = GetComponents<MonoBehaviour>();
-        for (int i = 0; i < behaviours.Length; i++)
-        {
-            var b = behaviours[i];
-            if (b == null) continue;
-
-            if (b is IMaterialAutoInit init) init.Initialize(this);
-            if (b is IMaterialBindEffect bind) _bindEffects.Add(bind);
-            if (b is IFightComponent fight) _fightComponents.Add(fight);
-            if (b is IAttackInfoModifier mod) _attackModifiers.Add(mod);
+            var c = comps[i];
+            if (c == null) continue;
+            if (c is IMaterialTraversalGate g && g.ShouldBreak(in ctx)) break;
+            if (c is IMaterialDescriptionProvider p) p.AppendDescription(sb);
         }
     }
 
     public void RunBindEffects(in BindContext context)
     {
-        for (int i = 0; i < _bindEffects.Count; i++)
+        var comps = GetOrderedComponentsRuntime();
+        var tctx = new MaterialTraverseContext(MaterialTraversePhase.Bind, null, FightSide.None, 0, 0);
+        for (int i = 0; i < comps.Count; i++)
         {
-            _bindEffects[i]?.OnBind(in context);
+            var c = comps[i];
+            if (c == null) continue;
+            if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx)) break;
+            if (c is IMaterialAutoInit init) init.Initialize(this);
+            if (c is IMaterialBindEffect bind) bind.OnBind(in context);
         }
     }
 
@@ -114,20 +144,11 @@ public class MaterialObj : MonoBehaviour
     {
         if (context == null) return;
 
-        // 订阅回调等（战斗组件）
-        for (int i = 0; i < _fightComponents.Count; i++)
-        {
-            context.AddFightComponent(_fightComponents[i]);
-        }
-
-        // 攻击修改器（默认注入两条链，组件内部自行判断是否生效）
-        for (int i = 0; i < _attackModifiers.Count; i++)
-        {
-            var mod = _attackModifiers[i];
-            if (mod == null) continue;
-            context.PlayerAttackProcessor.Add(mod);
-            context.EnemyAttackProcessor.Add(mod);
-        }
+        // 每个材料注入一个“运行时执行器”，它会按 orderedComponents 顺序执行，并支持 Gate 跳出
+        var runner = new MaterialRuntimeRunner(this);
+        context.AddFightComponent(runner);
+        context.PlayerAttackProcessor.Add(runner);
+        context.EnemyAttackProcessor.Add(runner);
     }
 }
 

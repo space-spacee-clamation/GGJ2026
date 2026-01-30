@@ -24,6 +24,22 @@ public sealed class FightContext
     public CombatantRuntime CurrentAttacker { get; internal set; }
     public CombatantRuntime CurrentDefender { get; internal set; }
 
+    // ---- Counters (for material gates: 回合/攻击次数) ----
+    /// <summary>本场战斗已发生的“行动次数”（每发生一次攻击 +1）。</summary>
+    public int BattleActionCount { get; internal set; }
+
+    /// <summary>本场战斗玩家已攻击次数。</summary>
+    public int PlayerAttackCount { get; internal set; }
+
+    /// <summary>本场战斗敌人已攻击次数。</summary>
+    public int EnemyAttackCount { get; internal set; }
+
+    /// <summary>本次攻击的“回合序号”（从 1 开始）。</summary>
+    public int CurrentActionNumber { get; internal set; }
+
+    /// <summary>本次攻击方的“第几次攻击”（从 1 开始）。</summary>
+    public int CurrentAttackerAttackNumber { get; internal set; }
+
     // ---- Processors ----
     public AttackInfoProcessorChain PlayerAttackProcessor { get; } = new();
     public AttackInfoProcessorChain EnemyAttackProcessor { get; } = new();
