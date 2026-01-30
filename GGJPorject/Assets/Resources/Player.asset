@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   BaseStats:
     MaxHP: 100
-    Attack: 10
+    Attack: 1
     Defense: 5
     CritChance: 0.204
     CritMultiplier: 3

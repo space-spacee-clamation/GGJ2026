@@ -2,13 +2,13 @@ using System.Text;
 using UnityEngine;
 
 /// <summary>
-/// Gate：前 X 回合允许执行（否则跳出）。
-/// 取反：前 X 回合不执行（从第 X+1 回合开始执行）。
+/// Gate：前 X 次行动允许执行（否则跳出）。
+/// 取反：前 X 次行动不执行（从第 X+1 次行动开始执行）。
 /// </summary>
 public class Gate_FirstXTurns : MonoBehaviour, IMaterialTraversalGate, IMaterialDescriptionProvider
 {
     [Min(1)] public int FirstX = 2;
-    [Tooltip("取反：前X回合不执行。")]
+    [Tooltip("取反：前X次行动不执行。")]
     public bool Invert = false;
 
     public bool ShouldBreak(in MaterialTraverseContext context)
@@ -25,7 +25,7 @@ public class Gate_FirstXTurns : MonoBehaviour, IMaterialTraversalGate, IMaterial
     public void AppendDescription(StringBuilder sb)
     {
         if (sb == null) return;
-        sb.AppendLine(Invert ? $"前{FirstX}回合不执行后续效果" : $"前{FirstX}回合执行后续效果");
+        sb.AppendLine(Invert ? $"前{FirstX}次行动不执行后续效果" : $"前{FirstX}次行动执行后续效果");
     }
 }
 

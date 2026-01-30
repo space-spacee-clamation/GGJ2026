@@ -7,6 +7,13 @@ using System.Collections.Generic;
 /// </summary>
 public sealed class FightContext
 {
+    // ---- Debug ----
+    /// <summary>是否输出详细调试日志（GameJam 期间可常开）。</summary>
+    public bool DebugVerbose { get; internal set; }
+
+    /// <summary>调试日志输出函数（由 FightManager 注入）。</summary>
+    public Action<string> DebugLogger { get; internal set; }
+
     // ---- Runtime References ----
     public CombatantRuntime Player { get; internal set; }
     public CombatantRuntime Enemy { get; internal set; }
@@ -24,7 +31,7 @@ public sealed class FightContext
     public CombatantRuntime CurrentAttacker { get; internal set; }
     public CombatantRuntime CurrentDefender { get; internal set; }
 
-    // ---- Counters (for material gates: 回合/攻击次数) ----
+    // ---- Counters (for material gates: 行动/攻击次数) ----
     /// <summary>本场战斗已发生的“行动次数”（每发生一次攻击 +1）。</summary>
     public int BattleActionCount { get; internal set; }
 
@@ -34,7 +41,7 @@ public sealed class FightContext
     /// <summary>本场战斗敌人已攻击次数。</summary>
     public int EnemyAttackCount { get; internal set; }
 
-    /// <summary>本次攻击的“回合序号”（从 1 开始）。</summary>
+    /// <summary>本次攻击的“行动序号”（从 1 开始；每发生一次攻击事件 +1）。</summary>
     public int CurrentActionNumber { get; internal set; }
 
     /// <summary>本次攻击方的“第几次攻击”（从 1 开始）。</summary>

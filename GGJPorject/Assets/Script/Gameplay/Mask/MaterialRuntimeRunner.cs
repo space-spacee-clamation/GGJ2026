@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 /// <summary>
@@ -49,8 +50,16 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
         {
             var c = runtimeList[i];
             if (c == null) continue;
-            if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx)) break;
-            if (c is IMaterialBattleStartEffect start) start.OnBattleStart(context);
+            if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx))
+            {
+                LogGateBreak(context, "BattleStart", g, tctx);
+                break;
+            }
+            if (c is IMaterialBattleStartEffect start)
+            {
+                LogEffect(context, "BattleStart", c);
+                start.OnBattleStart(context);
+            }
         }
     }
 
@@ -77,8 +86,16 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
         {
             var c = runtimeList[i];
             if (c == null) continue;
-            if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx)) break;
-            if (c is IMaterialBattleEndEffect end) end.OnBattleEnd(context);
+            if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx))
+            {
+                LogGateBreak(context, "BattleEnd", g, tctx);
+                break;
+            }
+            if (c is IMaterialBattleEndEffect end)
+            {
+                LogEffect(context, "BattleEnd", c);
+                end.OnBattleEnd(context);
+            }
         }
     }
 
@@ -112,9 +129,56 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
         {
             var c = runtimeList[i];
             if (c == null) continue;
-            if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx)) break;
-            if (c is IAttackInfoModifier mod) mod.Modify(ref info, context);
+            if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx))
+            {
+                LogGateBreak(context, "AttackModify", g, tctx);
+                break;
+            }
+            if (c is IAttackInfoModifier mod)
+            {
+                LogEffect(context, "AttackModify", c);
+                mod.Modify(ref info, context);
+            }
         }
+    }
+
+    private void LogGateBreak(FightContext context, string phase, IMaterialTraversalGate gate, in MaterialTraverseContext tctx)
+    {
+        if (context == null || !context.DebugVerbose || context.DebugLogger == null) return;
+        var name = _material != null ? (!string.IsNullOrWhiteSpace(_material.DisplayName) ? _material.DisplayName : _material.name) : "nullMaterial";
+        context.DebugLogger($"[MatGate] {name} phase={phase} gate={gate.GetType().Name} BREAK action={tctx.ActionNumber} atk#{tctx.AttackerAttackNumber} side={tctx.Side}");
+    }
+
+    private void LogEffect(FightContext context, string phase, MonoBehaviour comp)
+    {
+        if (context == null || !context.DebugVerbose || context.DebugLogger == null) return;
+        if (comp == null) return;
+
+        var matName = _material != null ? (!string.IsNullOrWhiteSpace(_material.DisplayName) ? _material.DisplayName : _material.name) : "nullMaterial";
+        var desc = BuildComponentDesc(comp);
+        if (string.IsNullOrWhiteSpace(desc))
+        {
+            context.DebugLogger($"[MatFx] {matName} phase={phase} comp={comp.GetType().Name}");
+        }
+        else
+        {
+            context.DebugLogger($"[MatFx] {matName} phase={phase} comp={comp.GetType().Name} desc={desc}");
+        }
+    }
+
+    private static string BuildComponentDesc(MonoBehaviour comp)
+    {
+        try
+        {
+            if (comp is IMaterialDescriptionProvider p)
+            {
+                var sb = new StringBuilder(128);
+                p.AppendDescription(sb);
+                return sb.ToString().Trim().Replace("\n", " | ").Replace("\r", "");
+            }
+        }
+        catch { /* ignore */ }
+        return string.Empty;
     }
 }
 

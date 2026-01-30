@@ -312,13 +312,16 @@ public class MaterialEditorWindow : OdinEditorWindow
                 {
                     EditorUtility.SetDirty(c);
                 }
+            }
 
-                // ReadOnly description
-                var d = BuildComponentDescription(c);
-                if (!string.IsNullOrWhiteSpace(d))
-                {
-                    EditorGUILayout.HelpBox(d, MessageType.None);
-                }
+            // 最终描述预览：在结尾统一生成，而不是每个组件分段生成
+            if (_editingMaterial != null)
+            {
+                EditorGUILayout.Space(10);
+                EditorGUILayout.LabelField("最终描述预览（只读）", EditorStyles.boldLabel);
+                var desc = _editingMaterial.BuildDescription();
+                if (string.IsNullOrWhiteSpace(desc)) desc = "(空)";
+                EditorGUILayout.HelpBox(desc, MessageType.None);
             }
         }
     }

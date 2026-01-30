@@ -89,6 +89,9 @@ public class FightManager : MonoBehaviour
             AttackInfoCalculator = attackInfoCalculator,
             ArenaSpeedThreshold = Mathf.Max(1, GameSetting.DefaultArenaSpeedThreshold),
         };
+        var logs = (enableLogs || forceLogsInJam);
+        Context.DebugVerbose = logs;
+        Context.DebugLogger = logs ? (System.Action<string>)(msg => Debug.Log(msg)) : null;
 
         // 注入“战斗组件”
         if (fightComponents != null)
@@ -116,9 +119,9 @@ public class FightManager : MonoBehaviour
         Context.RaiseBattleEnter();
         Context.RaiseBattleStart();
 
-        if (enableLogs || forceLogsInJam)
+        if (logs)
         {
-            Debug.Log($"[Fight] BattleStart ArenaSpeed={Context.ArenaSpeedThreshold} PlayerHP={Context.Player.CurrentHP}/{Context.Player.MaxHP} EnemyHP={Context.Enemy.CurrentHP}/{Context.Enemy.MaxHP}");
+            DumpBattleHeader();
         }
 
         _battleRoundIndex++;
@@ -206,16 +209,19 @@ public class FightManager : MonoBehaviour
             IsCrit = false,
             FinalDamage = 0f,
         };
+        var beforeProc = info;
 
         // 处理链（材料链表顺序）
         if (side == FightSide.Player) Context.PlayerAttackProcessor.Process(ref info, Context);
         else Context.EnemyAttackProcessor.Process(ref info, Context);
+        var afterProc = info;
 
         // 通知：攻击前（不用于修改）
         Context.RaiseBeforeAttack(side, info);
 
         // 数值计算接口（ref 修改）
         Context.AttackInfoCalculator.Calculate(ref info, Context);
+        var afterCalc = info;
 
         // 通知：攻击后
         Context.RaiseAfterAttack(side, info);
@@ -229,9 +235,9 @@ public class FightManager : MonoBehaviour
         if (side == FightSide.Player) Context.PlayerAttackCount += 1;
         else if (side == FightSide.Enemy) Context.EnemyAttackCount += 1;
 
-        if (enableLogs || forceLogsInJam)
+        if (Context != null && Context.DebugVerbose && Context.DebugLogger != null)
         {
-            Debug.Log($"[Fight] {attacker.Name} hit {defender.Name} dmg={damage} (HP {defender.CurrentHP}/{defender.MaxHP})");
+            DumpAttackVerbose(side, attacker, defender, beforeProc, afterProc, afterCalc, damage);
         }
     }
 
@@ -244,10 +250,53 @@ public class FightManager : MonoBehaviour
         if (!Context.Player.IsDead && Context.Enemy.IsDead) Context.RaiseVictory();
         else Context.RaiseDefeat();
 
-        if (enableLogs || forceLogsInJam)
+        if (Context != null && Context.DebugVerbose && Context.DebugLogger != null)
         {
             var result = (!Context.Player.IsDead && Context.Enemy.IsDead) ? "Victory" : "Defeat";
-            Debug.Log($"[Fight] BattleEnd Result={result} PlayerHP={Context.Player.CurrentHP}/{Context.Player.MaxHP} EnemyHP={Context.Enemy.CurrentHP}/{Context.Enemy.MaxHP}");
+            Context.DebugLogger($"[Fight] BattleEnd Result={result} PlayerHP={FmtHP(Context.Player)} EnemyHP={FmtHP(Context.Enemy)} Actions={Context.BattleActionCount} PAtk={Context.PlayerAttackCount} EAtk={Context.EnemyAttackCount}");
         }
+    }
+
+    private void DumpBattleHeader()
+    {
+        var c = Context;
+        if (c == null || c.DebugLogger == null) return;
+        c.DebugLogger($"[Fight] BattleStart ArenaSpeed={c.ArenaSpeedThreshold} " +
+                      $"P({FmtCore(c.Player)} SpeedValue={c.PlayerSpeedValue:0.0}) " +
+                      $"E({FmtCore(c.Enemy)} SpeedValue={c.EnemySpeedValue:0.0}) " +
+                      $"PlayerMods={c.PlayerAttackProcessor.Modifiers.Count} EnemyMods={c.EnemyAttackProcessor.Modifiers.Count} FightComponents={c.FightComponents.Count}");
+    }
+
+    private void DumpAttackVerbose(FightSide side, CombatantRuntime attacker, CombatantRuntime defender,
+        AttackInfo beforeProc, AttackInfo afterProc, AttackInfo afterCalc, float damage)
+    {
+        var c = Context;
+        if (c == null || c.DebugLogger == null) return;
+        string who = side == FightSide.Player ? "Player" : "Enemy";
+        c.DebugLogger($"[Fight] ---- Attack {c.CurrentActionNumber} ({who} #{c.CurrentAttackerAttackNumber}) ----");
+        c.DebugLogger($"[Fight] SpeedValue P={c.PlayerSpeedValue:0.0}/{c.ArenaSpeedThreshold} E={c.EnemySpeedValue:0.0}/{c.ArenaSpeedThreshold}");
+        c.DebugLogger($"[Fight] Attacker {attacker.Name} {FmtCore(attacker)}");
+        c.DebugLogger($"[Fight] Defender {defender.Name} {FmtCore(defender)}");
+        c.DebugLogger($"[Fight] AttackInfo BeforeProc {FmtInfo(beforeProc)}");
+        c.DebugLogger($"[Fight] AttackInfo AfterProc  {FmtInfo(afterProc)}");
+        c.DebugLogger($"[Fight] AttackInfo AfterCalc {FmtInfo(afterCalc)}");
+        c.DebugLogger($"[Fight] Result damage={damage:0.##} DefenderHP={FmtHP(defender)}");
+    }
+
+    private static string FmtHP(CombatantRuntime c)
+    {
+        if (c == null) return "null";
+        return $"{c.CurrentHP:0.##}/{c.MaxHP:0.##}";
+    }
+
+    private static string FmtCore(CombatantRuntime c)
+    {
+        if (c == null) return "null";
+        return $"HP={FmtHP(c)} ATK={c.Attack:0.##} DEF={c.Defense:0.##} Crit={c.CritChance:0.##} CritMul={c.CritMultiplier:0.##} SpeedRate={c.SpeedRate}";
+    }
+
+    private static string FmtInfo(AttackInfo i)
+    {
+        return $"Base={i.BaseValue:0.##} Raw={i.RawAttack:0.##} CritChance={i.CritChance:0.##} CritMul={i.CritMultiplier:0.##} IsCrit={i.IsCrit} Final={i.FinalDamage:0.##}";
     }
 }

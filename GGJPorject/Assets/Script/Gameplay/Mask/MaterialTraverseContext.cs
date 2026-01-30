@@ -11,7 +11,7 @@ public enum MaterialTraversePhase
 }
 
 /// <summary>
-/// 遍历上下文：供“每X回合/第X攻击/前X回合/前X攻击”等 gate 使用。
+/// 遍历上下文：供“每X次行动/第X次攻击/前X次行动/前X次攻击”等 gate 使用。
 /// </summary>
 public readonly struct MaterialTraverseContext
 {
@@ -19,7 +19,7 @@ public readonly struct MaterialTraverseContext
     public readonly FightContext Fight;
     public readonly FightSide Side;
 
-    /// <summary>本次“回合序号”（从 1 开始）。</summary>
+    /// <summary>本次“行动序号”（从 1 开始；每发生一次攻击事件 +1）。</summary>
     public readonly int ActionNumber;
 
     /// <summary>本次攻击方“第几次攻击”（从 1 开始）。</summary>
