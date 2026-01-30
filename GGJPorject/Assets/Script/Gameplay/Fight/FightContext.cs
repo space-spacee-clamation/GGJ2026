@@ -1,0 +1,76 @@
+using System;
+using System.Collections.Generic;
+
+/// <summary>
+/// 战斗上下文（BattleContext）。
+/// 承载战斗共享数据、回调入口、以及玩家/敌人的 AttackInfo 处理链。
+/// </summary>
+public sealed class FightContext
+{
+    // ---- Runtime References ----
+    public CombatantRuntime Player { get; internal set; }
+    public CombatantRuntime Enemy { get; internal set; }
+
+    // ---- Speed Battle ----
+    public int ArenaSpeedThreshold { get; internal set; } = 10;
+    public float PlayerSpeedValue { get; internal set; }
+    public float EnemySpeedValue { get; internal set; }
+
+    /// <summary>可选：面具实例（后续材料系统用）。</summary>
+    public IMaskBattleInjector MaskInjector { get; internal set; }
+
+    // ---- Current Engagement ----
+    public FightSide CurrentAttackerSide { get; internal set; } = FightSide.None;
+    public CombatantRuntime CurrentAttacker { get; internal set; }
+    public CombatantRuntime CurrentDefender { get; internal set; }
+
+    // ---- Processors ----
+    public AttackInfoProcessorChain PlayerAttackProcessor { get; } = new();
+    public AttackInfoProcessorChain EnemyAttackProcessor { get; } = new();
+
+    // ---- Calculator ----
+    public IAttackInfoCalculator AttackInfoCalculator { get; internal set; }
+
+    // ---- Fight Components (optional) ----
+    private readonly List<IFightComponent> _fightComponents = new();
+    public IReadOnlyList<IFightComponent> FightComponents => _fightComponents;
+
+    public void AddFightComponent(IFightComponent component)
+    {
+        if (component == null) return;
+        _fightComponents.Add(component);
+        component.Inject(this);
+    }
+
+    // ---- Callbacks ----
+    public event Action<FightContext> OnBattleEnter;
+    public event Action<FightContext> OnBattleStart;
+    public event Action<FightContext> OnBattleEnd;
+    public event Action<FightContext> OnVictory;
+    public event Action<FightContext> OnDefeat;
+
+    /// <summary>攻击前/后通知（不用于修改；修改请走处理链/Calculator）。</summary>
+    public event Action<FightContext, AttackInfo> OnBeforePlayerAttack;
+    public event Action<FightContext, AttackInfo> OnAfterPlayerAttack;
+    public event Action<FightContext, AttackInfo> OnBeforeEnemyAttack;
+    public event Action<FightContext, AttackInfo> OnAfterEnemyAttack;
+
+    // ---- Raise helpers ----
+    internal void RaiseBattleEnter() => OnBattleEnter?.Invoke(this);
+    internal void RaiseBattleStart() => OnBattleStart?.Invoke(this);
+    internal void RaiseBattleEnd() => OnBattleEnd?.Invoke(this);
+    internal void RaiseVictory() => OnVictory?.Invoke(this);
+    internal void RaiseDefeat() => OnDefeat?.Invoke(this);
+
+    internal void RaiseBeforeAttack(FightSide side, AttackInfo info)
+    {
+        if (side == FightSide.Player) OnBeforePlayerAttack?.Invoke(this, info);
+        else if (side == FightSide.Enemy) OnBeforeEnemyAttack?.Invoke(this, info);
+    }
+
+    internal void RaiseAfterAttack(FightSide side, AttackInfo info)
+    {
+        if (side == FightSide.Player) OnAfterPlayerAttack?.Invoke(this, info);
+        else if (side == FightSide.Enemy) OnAfterEnemyAttack?.Invoke(this, info);
+    }
+}
