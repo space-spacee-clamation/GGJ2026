@@ -30,15 +30,16 @@ public sealed class PersistentGrowthAddStatsMaterial : MonoBehaviour, IPersisten
     public void AppendDescription(StringBuilder sb)
     {
         if (sb == null) return;
+        // 去掉“战后/永久提高”等修饰；时间点交给 Gate_BattleEnd 表达
         var any = false;
-        if (addMaxHP != 0f) { sb.AppendLine($"战后成长：最大生命 {(addMaxHP >= 0 ? "+" : "")}{addMaxHP}"); any = true; }
-        if (addAttack != 0f) { sb.AppendLine($"战后成长：攻击 {(addAttack >= 0 ? "+" : "")}{addAttack}"); any = true; }
-        if (addDefense != 0f) { sb.AppendLine($"战后成长：防御 {(addDefense >= 0 ? "+" : "")}{addDefense}"); any = true; }
-        if (addCritChance != 0f) { sb.AppendLine($"战后成长：暴击率 {(addCritChance >= 0 ? "+" : "")}{addCritChance:P0}"); any = true; }
-        if (addCritMultiplier != 0f) { sb.AppendLine($"战后成长：爆伤倍率 {(addCritMultiplier >= 0 ? "+" : "")}{addCritMultiplier}"); any = true; }
-        if (addSpeedRate != 0) { sb.AppendLine($"战后成长：速度成长 {(addSpeedRate >= 0 ? "+" : "")}{addSpeedRate}/秒"); any = true; }
-        if (addLuck != 0) { sb.AppendLine($"战后成长：幸运 {(addLuck >= 0 ? "+" : "")}{addLuck}"); any = true; }
-        if (!any) sb.AppendLine("战后成长：无变化");
+        if (addMaxHP != 0f) { sb.AppendLine($"最大生命 {(addMaxHP >= 0 ? "+" : "")}{addMaxHP}"); any = true; }
+        if (addAttack != 0f) { sb.AppendLine($"攻击 {(addAttack >= 0 ? "+" : "")}{addAttack}"); any = true; }
+        if (addDefense != 0f) { sb.AppendLine($"防御 {(addDefense >= 0 ? "+" : "")}{addDefense}"); any = true; }
+        if (addCritChance != 0f) { sb.AppendLine($"暴击率 {(addCritChance >= 0 ? "+" : "")}{addCritChance:P0}"); any = true; }
+        if (addCritMultiplier != 0f) { sb.AppendLine($"爆伤倍率 {(addCritMultiplier >= 0 ? "+" : "")}{addCritMultiplier}"); any = true; }
+        if (addSpeedRate != 0) { sb.AppendLine($"速度成长 {(addSpeedRate >= 0 ? "+" : "")}{addSpeedRate}/秒"); any = true; }
+        if (addLuck != 0) { sb.AppendLine($"幸运 {(addLuck >= 0 ? "+" : "")}{addLuck}"); any = true; }
+        if (!any) sb.AppendLine("无变化");
     }
 }
 

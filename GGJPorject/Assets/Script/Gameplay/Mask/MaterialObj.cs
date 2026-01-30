@@ -121,7 +121,8 @@ public class MaterialObj : MonoBehaviour
         {
             var c = comps[i];
             if (c == null) continue;
-            if (c is IMaterialTraversalGate g && g.ShouldBreak(in ctx)) break;
+            // 描述阶段不做“跳出”，避免 Gate 把后续词条描述截断；
+            // Gate 自己可以在 AppendDescription 里输出“战斗开始时/战斗结束时”等前缀文案。
             if (c is IMaterialDescriptionProvider p) p.AppendDescription(sb);
         }
     }

@@ -27,6 +27,9 @@ public class MakeMuskUI : MonoBehaviour
     [Header("Outline Shader Material (UI/AlphaOutline)")]
     [SerializeField] private Material outlineMaterial;
 
+    [Header("Debug")]
+    [SerializeField] private bool enableLogs = true;
+
     private readonly Dictionary<MaterialObj, MaterialButton> _buttons = new();
     private readonly Dictionary<MaterialObj, ChoicedMaterial> _choiced = new();
 
@@ -36,6 +39,20 @@ public class MakeMuskUI : MonoBehaviour
     {
         if (nextButton != null) nextButton.onClick.AddListener(OnClickNext);
         if (composeButton != null) composeButton.onClick.AddListener(OnClickCompose);
+        if (enableLogs)
+        {
+            if (composeButton == null) Debug.LogWarning("[MakeMuskUI] composeButton 未绑定。", this);
+            if (nextButton == null) Debug.LogWarning("[MakeMuskUI] nextButton 未绑定。", this);
+            if (chosenSpawnArea == null) Debug.LogWarning("[MakeMuskUI] chosenSpawnArea 未绑定：仍可选择并合成，但不会生成 ChoicedMaterial UI。", this);
+            if (choicedMaterialPrefab == null) Debug.LogWarning("[MakeMuskUI] choicedMaterialPrefab 未绑定：仍可选择并合成，但不会生成 ChoicedMaterial UI。", this);
+            if (UnityEngine.EventSystems.EventSystem.current == null) Debug.LogWarning("[MakeMuskUI] 场景中没有 EventSystem，UI 点击/悬停可能无效。", this);
+        }
+
+        // UI 兜底：如果 UI 被直接打开但还没创建 CurrentMask，自动补一个
+        if (GameManager.I != null && GameManager.I.GetCurrentMask() == null)
+        {
+            GameManager.I.EnsureCurrentMaskForMakeUI();
+        }
         RefreshInventoryUI();
         UpdateNextInteractable();
         UpdateMaskSprite();
@@ -57,6 +74,11 @@ public class MakeMuskUI : MonoBehaviour
             if (kv.Value != null) Destroy(kv.Value.gameObject);
         }
         _buttons.Clear();
+        // 清空旧“已选”UI
+        foreach (var kv in _choiced)
+        {
+            if (kv.Value != null) Destroy(kv.Value.gameObject);
+        }
         _choiced.Clear();
 
         // 按“加入库存顺序”展示：MaterialInventory.Items 的顺序就是加入顺序
@@ -98,10 +120,11 @@ public class MakeMuskUI : MonoBehaviour
         // 已选则忽略（V0：一个材料只能被选中一次）
         if (_choiced.ContainsKey(mat)) return;
 
-        // 生成 ChoicedMaterial（UI），但不移动材料实例（材料仍在库存中，仍会参与保质期 tick）
+        // 生成 ChoicedMaterial（UI），但不移动材料实例（材料仍在库存中）
+        ChoicedMaterial c = null;
         if (choicedMaterialPrefab != null && chosenSpawnArea != null)
         {
-            var c = Instantiate(choicedMaterialPrefab, chosenSpawnArea, false);
+            c = Instantiate(choicedMaterialPrefab, chosenSpawnArea, false);
             c.Initialize(this, mat, outlineMaterial, outlineMaterial);
 
             // 随机位置（在 given area 内）
@@ -114,8 +137,10 @@ public class MakeMuskUI : MonoBehaviour
                 rt.anchoredPosition = new Vector2(px, py);
             }
 
-            _choiced[mat] = c;
         }
+
+        // 即使未配置 choicedMaterialPrefab / chosenSpawnArea，也要记录“已选”，否则 Compose 会认为没选中
+        _choiced[mat] = c;
 
         btn.SetSelected(true);
         ShowMaterialInfo(mat);
@@ -144,9 +169,22 @@ public class MakeMuskUI : MonoBehaviour
     {
         if (GameManager.I == null) return;
         var mask = GameManager.I.GetCurrentMask();
-        if (mask == null) return;
+        if (mask == null)
+        {
+            // 再兜底一次：可能是中途被销毁/未创建
+            mask = GameManager.I.EnsureCurrentMaskForMakeUI();
+            if (mask == null)
+            {
+                if (enableLogs) Debug.LogWarning("[MakeMuskUI] Compose 失败：当前 Mask 为空（GameManager.GetCurrentMask()）。", this);
+                return;
+            }
+        }
 
-        if (_choiced.Count == 0) return;
+        if (_choiced.Count == 0)
+        {
+            if (enableLogs) Debug.Log("[MakeMuskUI] Compose：没有已选材料。", this);
+            return;
+        }
 
         // 绑定所有已选材料（顺序：按玩家选择顺序。这里用当前字典遍历顺序可能不稳定，V0 先简单实现：按按钮 sibling 顺序绑定）
         // Jam 简化：直接遍历 _choiced 的 key
@@ -160,6 +198,7 @@ public class MakeMuskUI : MonoBehaviour
             var result = mask.BindMaterial(mat);
             if (result.Success)
             {
+                if (enableLogs) Debug.Log($"[MakeMuskUI] Compose 成功：Bind {mat.DisplayName} cost={mat.ManaCost} maskMana={mask.CurrentMana}/{mask.BaseMana}", this);
                 // 从库存移除（材料成为面具一部分，不再参与库存结算）
                 GameManager.I.RemoveMaterialFromInventory(mat);
 
@@ -179,6 +218,7 @@ public class MakeMuskUI : MonoBehaviour
             }
             else
             {
+                if (enableLogs) Debug.LogWarning($"[MakeMuskUI] Compose 失败：Bind {mat.DisplayName} reason={result.FailReason}", this);
                 // 绑定失败：取消选择，材料仍在库存中
                 if (_choiced.TryGetValue(mat, out var cm) && cm != null) Destroy(cm.gameObject);
                 _choiced.Remove(mat);

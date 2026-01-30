@@ -27,6 +27,16 @@ public class MaskObj : MonoBehaviour, IMaskBattleInjector
     private void Awake()
     {
         if (materialRoot == null) materialRoot = transform;
+        // Jam 容错：如果没有配置 config，提供一个默认值，避免 NRE
+        if (config == null)
+        {
+            config = new StaticConfig
+            {
+                BaseMana = 10,
+                DisplayName = "Mask",
+                Description = string.Empty
+            };
+        }
         RebuildFromConfig(config);
     }
 
@@ -35,7 +45,8 @@ public class MaskObj : MonoBehaviour, IMaskBattleInjector
     /// </summary>
     public void RebuildFromConfig(StaticConfig cfg)
     {
-        config = cfg;
+        // Jam 容错：cfg 为空则给一个默认配置
+        config = cfg ?? new StaticConfig { BaseMana = 10, DisplayName = "Mask", Description = string.Empty };
         BaseMana = Mathf.Max(0, config.BaseMana);
         CurrentMana = BaseMana;
 

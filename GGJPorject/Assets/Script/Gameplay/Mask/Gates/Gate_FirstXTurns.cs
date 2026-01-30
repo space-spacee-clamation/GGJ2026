@@ -13,6 +13,7 @@ public class Gate_FirstXTurns : MonoBehaviour, IMaterialTraversalGate, IMaterial
 
     public bool ShouldBreak(in MaterialTraverseContext context)
     {
+        if (context.Phase == MaterialTraversePhase.Description) return false;
         if (FirstX <= 0) return false;
         if (context.ActionNumber <= 0) return false;
 

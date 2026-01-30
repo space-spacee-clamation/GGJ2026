@@ -58,9 +58,15 @@ public class GameManager : MonoBehaviour
     [Tooltip("进入制造阶段后，是否自动视为玩家已完成制造（仅用于快速测试）。")]
     [SerializeField] private bool autoCompleteMakePhase = false;
 
+    [Header("Jam 自动化/调试")]
+    [SerializeField] private bool enableJamAutoFixes = true;
+    [SerializeField] private bool enablePhaseDebugLogs = true;
+    private int _roundIndex;
+
     private UniTaskCompletionSource<bool> _makePhaseTcs;
     private UniTaskCompletionSource<bool> _battleEndTcs;
     private CancellationToken _destroyToken;
+    private bool _manualAdvanceInProgress;
 
     private void Awake()
     {
@@ -81,6 +87,11 @@ public class GameManager : MonoBehaviour
         BootstrapRuntimeRoots();
 
         _destroyToken = this.GetCancellationTokenOnDestroy();
+
+        if (enablePhaseDebugLogs)
+        {
+            Debug.Log("[GameManager] Awake 完成：系统 Bootstrap 完毕。");
+        }
     }
 
     private void Start()
@@ -97,8 +108,17 @@ public class GameManager : MonoBehaviour
             BuildDropPoolFromResources();
         }
 
+        // 自动化掉落配置（保证 dropMethod/dropCount 可用）
+        EnsureDropConfigForJam();
+
         // 开局发 4 个品质0材质给玩家
         SpawnInitialCommonMaterialsIfNeeded();
+
+        // Jam 容错：用临时测试补全未配置内容，保证流程可跑
+        if (enableJamAutoFixes)
+        {
+            new JamTempFixer().Apply(this);
+        }
 
         if (autoRunLoop)
         {
@@ -137,6 +157,23 @@ public class GameManager : MonoBehaviour
 
         dropPool = pool;
         Debug.Log($"[GameManager] 已从 Resources/{resourcesMatFolder} 自动生成材料池：Common={pool.Common.Count}, Uncommon={pool.Uncommon.Count}, Rare={pool.Rare.Count}, Epic={pool.Epic.Count}, Legendary={pool.Legendary.Count}");
+    }
+
+    private void EnsureDropConfigForJam()
+    {
+        // dropMethod: 如果没配，运行时创建一个默认实现（SO 实例）
+        if (dropMethod == null)
+        {
+            dropMethod = ScriptableObject.CreateInstance<SimpleLuckMaterialDropMethod>();
+            dropMethod.name = "Runtime_SimpleLuckDropMethod";
+            if (enablePhaseDebugLogs) Debug.Log("[GameManager] dropMethod 未配置：已创建 Runtime_SimpleLuckDropMethod。");
+        }
+
+        if (dropCount <= 0)
+        {
+            dropCount = 3;
+            if (enablePhaseDebugLogs) Debug.Log("[GameManager] dropCount<=0：已自动设置为 3。");
+        }
     }
 
     private void SpawnInitialCommonMaterialsIfNeeded()
@@ -207,7 +244,47 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void NotifyMakeMaskFinished()
     {
-        _makePhaseTcs?.TrySetResult(true);
+        if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 制造阶段完成（Next）。round={_roundIndex}");
+        if (_makePhaseTcs != null)
+        {
+            _makePhaseTcs.TrySetResult(true);
+            return;
+        }
+
+        // Jam/手动模式兜底：如果主循环没跑起来（或 UI 被直接打开），则 Next 直接推进一次完整流程
+        if (!_manualAdvanceInProgress)
+        {
+            _manualAdvanceInProgress = true;
+            AdvanceFromMakeUIAsync(_destroyToken).Forget();
+        }
+        else
+        {
+            if (enablePhaseDebugLogs) Debug.LogWarning("[GameManager] 手动推进中，忽略重复 Next。");
+        }
+    }
+
+    private async UniTaskVoid AdvanceFromMakeUIAsync(CancellationToken ct)
+    {
+        try
+        {
+            // 2) 制造阶段结束：材料库存保质期结算
+            if (enablePhaseDebugLogs) Debug.Log($"[GameManager]（手动）制造阶段结算：库存 TickEndOfMakePhase。round={_roundIndex}");
+            materialInventory?.TickEndOfMakePhase(materialInventoryRoot);
+
+            // 3) 战斗阶段：开始战斗并等待结束
+            if (enablePhaseDebugLogs) Debug.Log($"[GameManager]（手动）进入战斗阶段。round={_roundIndex}");
+            await StartBattlePhaseAsync(ct);
+
+            if (enablePhaseDebugLogs) Debug.Log($"[GameManager]（手动）回合结束。round={_roundIndex}");
+            _roundIndex++;
+
+            // 回到制造阶段（方便继续点）
+            EnterMakeMaskPhase();
+        }
+        finally
+        {
+            _manualAdvanceInProgress = false;
+        }
     }
 
     private async UniTaskVoid RunMainLoopAsync()
@@ -220,19 +297,26 @@ public class GameManager : MonoBehaviour
 
     private async UniTask RunOneRoundAsync(CancellationToken ct)
     {
+        if (enablePhaseDebugLogs) Debug.Log($"[GameManager] RoundStart round={_roundIndex}");
         // 1) 制造阶段：生成底板面具，等待玩家完成合成
         EnterMakeMaskPhase();
 
         _makePhaseTcs = new UniTaskCompletionSource<bool>();
         if (autoCompleteMakePhase) _makePhaseTcs.TrySetResult(true);
 
+        if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 等待制造阶段结束... round={_roundIndex}");
         await _makePhaseTcs.Task.AttachExternalCancellation(ct);
 
         // 2) 制造阶段结束：材料库存保质期结算
+        if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 制造阶段结算：库存 TickEndOfMakePhase。round={_roundIndex}");
         materialInventory?.TickEndOfMakePhase(materialInventoryRoot);
 
         // 3) 战斗阶段：开始战斗并等待结束
+        if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 进入战斗阶段。round={_roundIndex}");
         await StartBattlePhaseAsync(ct);
+
+        if (enablePhaseDebugLogs) Debug.Log($"[GameManager] RoundEnd round={_roundIndex}");
+        _roundIndex++;
     }
 
     private void BootstrapAudio()
@@ -416,6 +500,7 @@ public class GameManager : MonoBehaviour
 
     private void PostBattleSettlement(FightContext ctx)
     {
+        if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 战后结算开始。round={_roundIndex}");
         // 当前面具入库
         var cur = maskMakeManager != null ? maskMakeManager.DetachCurrentMaskForLibrary() : null;
         if (cur != null && !_maskLibrary.Contains(cur))
@@ -426,9 +511,11 @@ public class GameManager : MonoBehaviour
 
         // 持久增值结算
         CollectAndApplyPersistentGrowth(ctx);
+        if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 持久增值结算完成。round={_roundIndex}");
 
         // 掉落结算（入材料库存）
         RunDrops();
+        if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 掉落结算完成。round={_roundIndex}");
     }
 
     // ---- UI helpers ----
@@ -440,6 +527,32 @@ public class GameManager : MonoBehaviour
     public MaskObj GetCurrentMask()
     {
         return maskMakeManager != null ? maskMakeManager.CurrentMask : null;
+    }
+
+    /// <summary>
+    /// UI 兜底：如果策划直接把 MakeMuskUI 打开但没有走 EnterMakeMaskPhase()，
+    /// 则此方法会保证存在一个 CurrentMask（不会重复开启 UI，也不会触发流程等待）。
+    /// </summary>
+    public MaskObj EnsureCurrentMaskForMakeUI()
+    {
+        if (maskMakeManager == null)
+        {
+            Debug.LogError("[GameManager] MaskMakeManager 未初始化，无法 EnsureCurrentMaskForMakeUI。", this);
+            return null;
+        }
+
+        if (maskMakeManager.CurrentMask != null) return maskMakeManager.CurrentMask;
+
+        var m = maskMakeManager.MakeNextMask();
+        if (m == null) return null;
+
+        if (m.transform.parent != transform && m.transform.parent != maskMakeManager.transform)
+        {
+            m.transform.SetParent(maskMakeManager.transform, false);
+        }
+
+        if (enablePhaseDebugLogs) Debug.Log("[GameManager] EnsureCurrentMaskForMakeUI：已自动创建 CurrentMask。");
+        return m;
     }
 
     public void RemoveMaterialFromInventory(MaterialObj mat)
@@ -478,7 +591,8 @@ public class GameManager : MonoBehaviour
                         if (bs[bi] is MaterialObj) continue;
                         if (bs[bi] is IMaterialTraversalGate g)
                         {
-                            var tctx = new MaterialTraverseContext(MaterialTraversePhase.PersistentGrowth, ctx, FightSide.None, ctx.BattleActionCount, 0);
+                    // “战斗结束时” Gate：持久成长也视为战斗结束阶段
+                    var tctx = new MaterialTraverseContext(MaterialTraversePhase.BattleEnd, ctx, FightSide.None, ctx.BattleActionCount, 0);
                             if (g.ShouldBreak(in tctx)) break;
                         }
                         if (bs[bi] is IPersistentGrowthProvider p)
@@ -489,7 +603,8 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    var tctx = new MaterialTraverseContext(MaterialTraversePhase.PersistentGrowth, ctx, FightSide.None, ctx.BattleActionCount, 0);
+            // “战斗结束时” Gate：持久成长也视为战斗结束阶段
+            var tctx = new MaterialTraverseContext(MaterialTraversePhase.BattleEnd, ctx, FightSide.None, ctx.BattleActionCount, 0);
                     for (int bi = 0; bi < comps.Count; bi++)
                     {
                         var c = comps[bi];
@@ -511,6 +626,7 @@ public class GameManager : MonoBehaviour
         if (dropPool == null || dropMethod == null) return;
 
         int luck = Player.I.ActualStats.Luck;
+        if (enablePhaseDebugLogs) Debug.Log($"[GameManager] RollDrops luck={luck} dropCount={dropCount} round={_roundIndex}");
         var drops = dropMethod.Roll(dropPool, luck, dropCount);
         if (drops == null) return;
 
@@ -560,6 +676,71 @@ public class GameManager : MonoBehaviour
                 {
                     mat.transform.SetParent(materialInventoryRoot, false);
                 }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Jam 临时补全：在策划还没配置完 Inspector/Prefab 的情况下，让流程先跑通。
+    /// 手动 new 出来（非 Mono），符合“临时测试类”需求。
+    /// </summary>
+    private sealed class JamTempFixer
+    {
+        public void Apply(GameManager gm)
+        {
+            if (gm == null) return;
+
+            // 玩家：如果没配 PlayerConfigSO，则用默认数值创建单例
+            if (Player.I == null)
+            {
+                if (gm.playerConfig != null)
+                {
+                    Player.CreateSingleton(gm.playerConfig.BaseStats);
+                    if (gm.enablePhaseDebugLogs) Debug.Log("[JamTempFixer] Player 已用 PlayerConfigSO 初始化。");
+                }
+                else
+                {
+                    var s = new PlayerStats
+                    {
+                        MaxHP = 80f,
+                        Attack = 12f,
+                        Defense = 3f,
+                        CritChance = 0.1f,
+                        CritMultiplier = 1.5f,
+                        SpeedRate = 6,
+                        Luck = 20
+                    };
+                    Player.CreateSingleton(s);
+                    Debug.LogWarning("[JamTempFixer] playerConfig 未配置：已用默认 PlayerStats 创建 Player 单例（仅用于测试跑流程）。");
+                }
+            }
+
+            // 面具底板：确保存在（未配置时自动创建临时底板）
+            if (gm.maskMakeManager != null)
+            {
+                gm.maskMakeManager.EnsureBaseMaskPrefabForTest(10);
+            }
+
+            // 怪物生成：如果当前链条生成不出怪物，自动挂一个测试逻辑并重建链
+            if (gm.monsterSpawnSystem != null)
+            {
+                var testCfg = gm.monsterSpawnSystem.Spawn(0, null);
+                if (testCfg == null)
+                {
+                    Debug.LogWarning("[JamTempFixer] 当前怪物生成链无法生成怪物：已自动挂 JamTestMonsterSpawnLogic。");
+                    if (gm.monsterSpawnSystem.GetComponent<JamTestMonsterSpawnLogic>() == null)
+                    {
+                        gm.monsterSpawnSystem.gameObject.AddComponent<JamTestMonsterSpawnLogic>();
+                    }
+                    gm.monsterSpawnSystem.Initialize();
+                }
+            }
+
+            // 制造 UI：如果没配 UI 且没开 autoCompleteMakePhase，会卡住等待
+            if (gm.makeMuskUI == null && !gm.autoCompleteMakePhase)
+            {
+                gm.autoCompleteMakePhase = true;
+                Debug.LogWarning("[JamTempFixer] makeMuskUI 未配置：已强制 autoCompleteMakePhase=true，避免流程卡住。");
             }
         }
     }

@@ -13,6 +13,7 @@ public class Gate_FirstXAttacks : MonoBehaviour, IMaterialTraversalGate, IMateri
 
     public bool ShouldBreak(in MaterialTraverseContext context)
     {
+        if (context.Phase == MaterialTraversePhase.Description) return false;
         if (FirstX <= 0) return false;
         if (context.AttackerAttackNumber <= 0) return false;
 

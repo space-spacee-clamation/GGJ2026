@@ -19,6 +19,7 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
     {
         if (context == null) return;
         context.OnBattleStart += OnBattleStart;
+        context.OnBattleEnd += OnBattleEnd;
     }
 
     private void OnBattleStart(FightContext context)
@@ -50,6 +51,34 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
             if (c == null) continue;
             if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx)) break;
             if (c is IMaterialBattleStartEffect start) start.OnBattleStart(context);
+        }
+    }
+
+    private void OnBattleEnd(FightContext context)
+    {
+        if (_material == null) return;
+
+        IReadOnlyList<MonoBehaviour> runtimeList = _material.OrderedComponents;
+        if (runtimeList == null || runtimeList.Count == 0)
+        {
+            var bs = _material.GetComponents<MonoBehaviour>();
+            var tmp = new List<MonoBehaviour>();
+            for (int i = 0; i < bs.Length; i++)
+            {
+                if (bs[i] == null) continue;
+                if (bs[i] is MaterialObj) continue;
+                tmp.Add(bs[i]);
+            }
+            runtimeList = tmp;
+        }
+
+        var tctx = new MaterialTraverseContext(MaterialTraversePhase.BattleEnd, context, FightSide.None, context.BattleActionCount, 0);
+        for (int i = 0; i < runtimeList.Count; i++)
+        {
+            var c = runtimeList[i];
+            if (c == null) continue;
+            if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx)) break;
+            if (c is IMaterialBattleEndEffect end) end.OnBattleEnd(context);
         }
     }
 

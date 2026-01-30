@@ -13,6 +13,7 @@ public class Gate_EveryXTurns : MonoBehaviour, IMaterialTraversalGate, IMaterial
 
     public bool ShouldBreak(in MaterialTraverseContext context)
     {
+        if (context.Phase == MaterialTraversePhase.Description) return false;
         if (EveryX <= 0) return false;
         if (context.ActionNumber <= 0) return false; // 非攻击阶段通常为 0，不拦截
 

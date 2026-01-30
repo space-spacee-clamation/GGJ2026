@@ -28,6 +28,29 @@ public class MaskMakeManager : MonoBehaviour
         I = this;
     }
 
+    /// <summary>
+    /// Jam 测试用：如果未配置 baseMaskPrefab，则在运行时创建一个临时底板面具并作为“模板”使用。
+    /// </summary>
+    public void EnsureBaseMaskPrefabForTest(int baseMana = 10)
+    {
+        if (baseMaskPrefab != null) return;
+
+        var go = new GameObject("TempBaseMaskPrefab");
+        go.transform.SetParent(transform, false);
+        go.hideFlags = HideFlags.HideInHierarchy;
+
+        var mask = go.AddComponent<MaskObj>();
+        // MaskObj 自身已有 config 容错；这里确保 baseMana
+        mask.RebuildFromConfig(new MaskObj.StaticConfig
+        {
+            BaseMana = Mathf.Max(0, baseMana),
+            DisplayName = "TempMask",
+            Description = "Jam 自动生成的底板面具（仅用于测试跑流程）。"
+        });
+
+        baseMaskPrefab = mask;
+    }
+
     [Button(ButtonSizes.Medium)]
     public MaskObj MakeNextMask()
     {
@@ -40,7 +63,12 @@ public class MaskMakeManager : MonoBehaviour
 
         if (baseMaskPrefab == null)
         {
-            Debug.LogError("[MaskMakeManager] baseMaskPrefab 未配置，无法制造面具。", this);
+            // Jam 容错：尝试自动生成一个临时底板面具，保证流程可跑
+            EnsureBaseMaskPrefabForTest(10);
+        }
+        if (baseMaskPrefab == null)
+        {
+            Debug.LogError("[MaskMakeManager] baseMaskPrefab 未配置且自动生成失败，无法制造面具。", this);
             return null;
         }
 
