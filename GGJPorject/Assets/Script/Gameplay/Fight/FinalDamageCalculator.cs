@@ -41,7 +41,7 @@ public sealed class FinalDamageCalculator : IAttackInfoModifier
             float reduction;
             if(curDef >= 0)
             {
-                reduction = curDef/curDef+defValue;
+                reduction = curDef/(curDef+defValue);
             }
             else
             {
