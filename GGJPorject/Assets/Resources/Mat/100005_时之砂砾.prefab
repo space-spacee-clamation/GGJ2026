@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3147823768498827867}
   - component: {fileID: 1493931688796890208}
-  - component: {fileID: 3955975661638538841}
   - component: {fileID: 9149059833685159224}
   - component: {fileID: 5602930374543476144}
   - component: {fileID: 917062039358644278}
@@ -79,32 +78,6 @@ MonoBehaviour:
       Role: 0
       ActionSide: 0
       Children: []
-  - Title: Gate_EveryXTurns
-    Expanded: 0
-    Component: {fileID: 3955975661638538841}
-    Role: 0
-    ActionSide: 0
-    Children:
-    - Title: Node_Effect
-      Expanded: 1
-      Component: {fileID: 4777719365680377884}
-      Role: 0
-      ActionSide: 0
-      Children: []
---- !u!114 &3955975661638538841
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6903284507592388165}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f943109b11ed9144cab60e1fd7087c45, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  EveryX: 1
-  Invert: 0
 --- !u!114 &9149059833685159224
 MonoBehaviour:
   m_ObjectHideFlags: 0
