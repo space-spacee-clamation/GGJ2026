@@ -414,12 +414,12 @@ public class GameManager : MonoBehaviour
 
         if (makeMuskUI != null)
         {
-            makeMuskUI.gameObject.SetActive(true);
+            SetUIActiveWithCanvasGroup(makeMuskUI.gameObject, true);
             makeMuskUI.RefreshInventoryUI();
         }
 
         // 进入制造阶段：关闭战斗 UI
-        if (battleUI != null) battleUI.gameObject.SetActive(false);
+        if (battleUI != null) SetUIActiveWithCanvasGroup(battleUI.gameObject, false);
     }
 
     /// <summary>
@@ -445,9 +445,9 @@ public class GameManager : MonoBehaviour
             EnterMakeMaskPhase();
         }
 
-        // 进入战斗阶段：关闭制造 UI，打开战斗 UI
-        if (makeMuskUI != null) makeMuskUI.gameObject.SetActive(false);
-        if (battleUI != null) battleUI.gameObject.SetActive(true);
+        // 进入战斗阶段：关闭制造 UI，打开战斗 UI（CanvasGroup 会同时控制透明度与射线）
+        if (makeMuskUI != null) SetUIActiveWithCanvasGroup(makeMuskUI.gameObject, false);
+        if (battleUI != null) SetUIActiveWithCanvasGroup(battleUI.gameObject, true);
 
         // 组装“面具库注入器”：面具库 + 当前面具（当前面具不一定已入库，但本场战斗需要生效）
         var injectors = new System.Collections.Generic.List<IMaskBattleInjector>();
@@ -491,7 +491,37 @@ public class GameManager : MonoBehaviour
         PostBattleSettlement(ctx);
 
         // 战斗结束：关闭战斗 UI（制造阶段会在下一轮再打开）
-        if (battleUI != null) battleUI.gameObject.SetActive(false);
+        if (battleUI != null) SetUIActiveWithCanvasGroup(battleUI.gameObject, false);
+    }
+
+    private static void SetUIActiveWithCanvasGroup(GameObject go, bool active)
+    {
+        if (go == null) return;
+
+        var cg = go.GetComponent<CanvasGroup>();
+        if (cg != null)
+        {
+            if (active)
+            {
+                // 先激活，再恢复可见/可交互（避免 OnEnable 期间状态不一致）
+                go.SetActive(true);
+                cg.alpha = 1f;
+                cg.interactable = true;
+                cg.blocksRaycasts = true;
+            }
+            else
+            {
+                // 先禁止交互/射线，再隐藏
+                cg.interactable = false;
+                cg.blocksRaycasts = false;
+                cg.alpha = 0f;
+                go.SetActive(false);
+            }
+            return;
+        }
+
+        // 没有 CanvasGroup 就保持旧逻辑
+        go.SetActive(active);
     }
 
     private void PostBattleSettlement(FightContext ctx)
