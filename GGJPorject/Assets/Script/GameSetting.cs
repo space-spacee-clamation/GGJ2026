@@ -30,7 +30,7 @@ public static class GameSetting
     /// <summary>
     /// 场地速度阈值默认值（整数）。后续如果需要"根据默认值生成关卡速度"，再补逻辑。
     /// </summary>
-    public const int DefaultArenaSpeedThreshold = 10;
+    public const int DefaultArenaSpeedThreshold = 100;
 
     // ---- UI：品质描边颜色（白/绿/紫/金/红，低->高）----
     public static readonly Color32 QualityOutline_Common = new(255, 255, 255, 255);

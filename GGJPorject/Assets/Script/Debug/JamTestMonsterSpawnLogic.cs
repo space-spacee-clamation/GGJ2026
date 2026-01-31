@@ -9,7 +9,7 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
     [SerializeField] private float baseHP = 150f;
     [SerializeField] private float baseATK = 30f;
     [SerializeField] private float baseDEF = 50f;
-    [SerializeField] private int baseSpeedRate = 3;
+    [SerializeField] private int baseSpeedRate = 12;
 
     [Header("Per Round Growth")]
     [SerializeField] private float hpPerRound = 8f;

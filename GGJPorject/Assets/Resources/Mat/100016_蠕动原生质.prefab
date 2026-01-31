@@ -100,7 +100,7 @@ MonoBehaviour:
   addDefense: 0
   addCritChance: 0
   addCritMultiplier: 0
-  addMaxHP: 0
+  addMaxHP: 30
   addSpeedRate: 0
   addLuck: 3
   addPenetrationPercent: 0
