@@ -54,7 +54,7 @@ MonoBehaviour:
   DisplayName: "\u7981\u5FCC\u4E66\u9875"
   Type: 1
   ManaCost: 2
-  Quality: 0
+  Quality: 3
   BaseSprite: {fileID: 1327328550, guid: 61fa58eba8ae79d448d20da75cfa4a04, type: 3}
   ShelfLifeTurns: 4
   remainingShelfLifeTurns: 4
