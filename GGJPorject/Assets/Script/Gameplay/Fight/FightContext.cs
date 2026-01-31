@@ -78,6 +78,12 @@ public sealed class FightContext
     public event Action<FightContext, AttackInfo> OnBeforeEnemyAttack;
     public event Action<FightContext, AttackInfo> OnAfterEnemyAttack;
 
+    /// <summary>
+    /// 伤害结算通知：已对 Defender 扣血之后触发（用于 UI 飘字等展示）。
+    /// attackerSide/defenderSide：本次攻击方/受击方。
+    /// </summary>
+    public event Action<FightContext, FightSide, FightSide, AttackInfo, float> OnDamageApplied;
+
     // ---- Raise helpers ----
     internal void RaiseBattleEnter() => OnBattleEnter?.Invoke(this);
     internal void RaiseBattleStart() => OnBattleStart?.Invoke(this);
@@ -95,5 +101,10 @@ public sealed class FightContext
     {
         if (side == FightSide.Player) OnAfterPlayerAttack?.Invoke(this, info);
         else if (side == FightSide.Enemy) OnAfterEnemyAttack?.Invoke(this, info);
+    }
+
+    internal void RaiseDamageApplied(FightSide attackerSide, FightSide defenderSide, AttackInfo info, float damage)
+    {
+        OnDamageApplied?.Invoke(this, attackerSide, defenderSide, info, damage);
     }
 }

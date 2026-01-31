@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,6 +7,8 @@ public class MakeMuskUI : MonoBehaviour
 {
     [Header("Refs")]
     [SerializeField] private InfoNode infoNode;
+
+    [SerializeField] private TextMeshProUGUI CostText;
 
     [Header("Mask View")]
     [SerializeField] private Image maskImage;
@@ -246,5 +249,8 @@ public class MakeMuskUI : MonoBehaviour
     {
         if (maskImage == null) return;
         maskImage.sprite = _composedOnce && composedMaskSprite != null ? composedMaskSprite : baseMaskSprite;
+    }
+    private void Update(){
+        CostText.text = MaskMakeManager.I.CurrentMask.CurrentMana.ToString();
     }
 }

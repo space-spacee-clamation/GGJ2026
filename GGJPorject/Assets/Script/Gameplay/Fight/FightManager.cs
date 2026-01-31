@@ -187,6 +187,7 @@ public class FightManager : MonoBehaviour
     {
         var attacker = side == FightSide.Player ? Context.Player : Context.Enemy;
         var defender = side == FightSide.Player ? Context.Enemy : Context.Player;
+        var defenderSide = side == FightSide.Player ? FightSide.Enemy : FightSide.Player;
 
         // 设置本次“交战上下文”，供 Calculator/材料读取
         Context.CurrentAttackerSide = side;
@@ -229,6 +230,9 @@ public class FightManager : MonoBehaviour
         // 应用伤害（V0：如果 Calculator 没写 FinalDamage，则回退用 RawAttack）
         var damage = info.FinalDamage > 0f ? info.FinalDamage : info.RawAttack;
         defender.Damage(damage);
+
+        // 通知：伤害已结算（给 UI 飘字等展示用）
+        Context.RaiseDamageApplied(side, defenderSide, info, damage);
 
         // 结算后累加次数
         Context.BattleActionCount += 1;

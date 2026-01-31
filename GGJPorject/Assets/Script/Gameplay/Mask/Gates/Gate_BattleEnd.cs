@@ -28,3 +28,4 @@ public class Gate_BattleEnd : MonoBehaviour, IMaterialTraversalGate, IMaterialDe
 }
 
 
+
