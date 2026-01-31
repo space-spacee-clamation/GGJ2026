@@ -14,8 +14,8 @@ GameObject:
   - component: {fileID: 849175591694943323}
   - component: {fileID: 1731684954656253175}
   - component: {fileID: 6173592970688188139}
-  - component: {fileID: 6671179503053821456}
-  - component: {fileID: 2117736153243770910}
+  - component: {fileID: 4446940533334112699}
+  - component: {fileID: 2980994502269389006}
   m_Layer: 0
   m_Name: "100017_\u76F8\u4F4D\u6C34\u6676"
   m_TagString: Untagged
@@ -72,14 +72,14 @@ MonoBehaviour:
       ActionSide: 0
       Children: []
   - Title: Gate_WaitEveryX
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 6173592970688188139}
     Role: 0
     ActionSide: 0
     Children:
     - Title: Node_Effect
       Expanded: 1
-      Component: {fileID: 2117736153243770910}
+      Component: {fileID: 2980994502269389006}
       Role: 0
       ActionSide: 0
       Children: []
@@ -146,7 +146,7 @@ MonoBehaviour:
   EveryX: 3
   Invert: 0
   _counter: 0
---- !u!114 &6671179503053821456
+--- !u!114 &4446940533334112699
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -155,7 +155,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5733097152376097735}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f86b311c0c2cdfd488b9a5c9feb26752, type: 3}
+  m_Script: {fileID: 11500000, guid: 7bf7a87bc07c50341b4c826be16f3075, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   sourceSide: 1
@@ -164,7 +164,7 @@ MonoBehaviour:
   targetStat: 5
   percent: 0.05
   maxHpAlsoHeal: 1
---- !u!114 &2117736153243770910
+--- !u!114 &2980994502269389006
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -176,4 +176,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Effect: {fileID: 6671179503053821456}
+  Effect: {fileID: 4446940533334112699}
