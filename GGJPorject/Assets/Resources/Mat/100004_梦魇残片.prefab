@@ -59,13 +59,13 @@ MonoBehaviour:
   remainingShelfLifeTurns: 1
   logicTreeRoots:
   - Title: Gate_Phase
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 6340823868927596339}
     Role: 0
     ActionSide: 0
     Children:
     - Title: Node_Effect
-      Expanded: 0
+      Expanded: 1
       Component: {fileID: 785194132886464576}
       Role: 0
       ActionSide: 0
@@ -96,14 +96,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ApplyAsPersistentGrowth: 0
+  ApplyAsPersistentGrowth: 1
   appliesTo: 1
   addAttack: 0
-  addDefense: 20
+  addDefense: 50
   addCritChance: 0
   addCritMultiplier: 0
   addMaxHP: 0
-  addSpeedRate: 0
+  addSpeedRate: -5
   addLuck: 0
 --- !u!114 &785194132886464576
 MonoBehaviour:

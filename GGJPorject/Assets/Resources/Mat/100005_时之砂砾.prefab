@@ -17,6 +17,9 @@ GameObject:
   - component: {fileID: 4777719365680377884}
   - component: {fileID: 3574575454908754568}
   - component: {fileID: 7200696130509910191}
+  - component: {fileID: 8285842122814950510}
+  - component: {fileID: 5194969855121386128}
+  - component: {fileID: 4248431637902370012}
   m_Layer: 0
   m_Name: "100005_\u65F6\u4E4B\u7802\u783E"
   m_TagString: Untagged
@@ -61,7 +64,7 @@ MonoBehaviour:
   remainingShelfLifeTurns: 1
   logicTreeRoots:
   - Title: Gate_Phase
-    Expanded: 1
+    Expanded: 0
     Component: {fileID: 9149059833685159224}
     Role: 0
     ActionSide: 0
@@ -73,8 +76,20 @@ MonoBehaviour:
       ActionSide: 0
       Children: []
     - Title: Node_Effect
-      Expanded: 1
+      Expanded: 0
       Component: {fileID: 7200696130509910191}
+      Role: 0
+      ActionSide: 0
+      Children: []
+  - Title: Gate_Phase
+    Expanded: 1
+    Component: {fileID: 8285842122814950510}
+    Role: 0
+    ActionSide: 0
+    Children:
+    - Title: Node_Effect
+      Expanded: 0
+      Component: {fileID: 4248431637902370012}
       Role: 0
       ActionSide: 0
       Children: []
@@ -186,3 +201,51 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Effect: {fileID: 3574575454908754568}
+--- !u!114 &8285842122814950510
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6903284507592388165}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdce60ac543361f428c11fb667e61ca6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Phase: 7
+  Invert: 0
+--- !u!114 &5194969855121386128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6903284507592388165}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ApplyAsPersistentGrowth: 0
+  appliesTo: 1
+  addAttack: -5
+  addDefense: 0
+  addCritChance: 0
+  addCritMultiplier: 0
+  addMaxHP: 0
+  addSpeedRate: 0
+  addLuck: 0
+--- !u!114 &4248431637902370012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6903284507592388165}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Effect: {fileID: 5194969855121386128}
