@@ -86,7 +86,7 @@ public class FightManager : MonoBehaviour
         {
             Player = CombatantRuntime.FromStats("Player", Player.I.BuildBattleStats(),GameManager.I.PendingGrowthDelta),
             Enemy = new CombatantRuntime("Enemy", enemyCfg),
-            ArenaSpeedThreshold = Mathf.Max(1, GameSetting.DefaultArenaSpeedThreshold),
+            ArenaSpeedThreshold = (Player.I.BaseStats.SpeedRate+enemyCfg.SpeedRate)/2
         };
         var logs = (enableLogs || forceLogsInJam);
         Context.DebugVerbose = logs;
