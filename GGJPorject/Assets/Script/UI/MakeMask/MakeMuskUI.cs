@@ -109,13 +109,16 @@ public class MakeMuskUI : MonoBehaviour
             infoNode.Clear();
             return;
         }
+        infoNode.gameObject.SetActive(true);
         string name = !string.IsNullOrWhiteSpace(mat.DisplayName) ? mat.DisplayName : mat.name;
         string desc = mat.BuildDescription();
         int ttl = mat.RemainingShelfLifeTurns;
         Sprite sprite = mat.BaseSprite; // 使用材料的 BaseSprite
         infoNode.Show(name, desc, ttl, sprite);
     }
-
+    public void CloseInfo(){
+        infoNode.gameObject.SetActive(false);
+    }
     public void OnClickMaterialButton(MaterialButton btn)
     {
         if (btn == null || btn.Material == null) return;

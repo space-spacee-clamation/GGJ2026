@@ -124,7 +124,8 @@ public class MaterialObj : MonoBehaviour
         if (c != null && c is IMaterialDescriptionProvider p)
         {
             bool isLogicNode = c is IMaterialLogicNode;
-            if (isLogicNode)
+            bool notNodeEffect = c as Node_Effect ==null;
+            if (isLogicNode && notNodeEffect)
             {
                 sb.Append($"<color=red>");
                 p.AppendDescription(sb);
@@ -135,7 +136,7 @@ public class MaterialObj : MonoBehaviour
                 char lastChar = sb[sb.Length - 1];
                 if (lastChar != '，' && lastChar != '。' && lastChar != '\n')
                 {
-                    sb.Append("，");
+                    sb.Append(" ");
                 }
             }
         }

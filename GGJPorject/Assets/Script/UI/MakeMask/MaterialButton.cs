@@ -8,8 +8,6 @@ using UnityEngine.UI;
 public class MaterialButton : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Image image;
-    [SerializeField] private Image qualityOutline;
-    [SerializeField] private Image selectedOutline;
 
     public MaterialObj Material { get; private set; }
     public bool IsSelected { get; private set; }
@@ -27,52 +25,16 @@ public class MaterialButton : MonoBehaviour, IPointerClickHandler, IPointerEnter
         var sprite = material != null ? material.BaseSprite : null;
         if (image != null) image.sprite = sprite;
 
-        if (qualityOutline != null)
-        {
-            qualityOutline.sprite = sprite;
-            if (outlineMat != null) qualityOutline.material = new Material(outlineMat);
-            ApplyQualityOutlineColor(qualityOutline, material);
-        }
-
-        if (selectedOutline != null)
-        {
-            selectedOutline.sprite = sprite;
-            if (outlineMat != null) selectedOutline.material = new Material(outlineMat);
-            SetSelected(false);
-        }
     }
 
     public void SetSelected(bool selected)
     {
         IsSelected = selected;
-        if (selectedOutline == null) return;
-
-        selectedOutline.enabled = selected;
-        if (selectedOutline.material != null)
+        gameObject.SetActive(!selected);
+        if(selected)
         {
-            selectedOutline.material.SetColor("_OutlineColor", GameSetting.SelectedOutline_Green);
-            selectedOutline.material.SetFloat("_OutlineWidth", selected ? 3f : 0f);
+           _owner?.CloseInfo();
         }
-    }
-
-    private static void ApplyQualityOutlineColor(Image img, MaterialObj mat)
-    {
-        if (img == null || img.material == null) return;
-        var c = GameSetting.QualityOutline_Common;
-        if (mat != null)
-        {
-            c = mat.Quality switch
-            {
-                MaterialQuality.Common => GameSetting.QualityOutline_Common,
-                MaterialQuality.Uncommon => GameSetting.QualityOutline_Uncommon,
-                MaterialQuality.Rare => GameSetting.QualityOutline_Rare,
-                MaterialQuality.Epic => GameSetting.QualityOutline_Epic,
-                MaterialQuality.Legendary => GameSetting.QualityOutline_Legendary,
-                _ => GameSetting.QualityOutline_Common
-            };
-        }
-        img.material.SetColor("_OutlineColor", c);
-        img.material.SetFloat("_OutlineWidth", 1.5f);
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -87,6 +49,7 @@ public class MaterialButton : MonoBehaviour, IPointerClickHandler, IPointerEnter
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        _owner?.CloseInfo();
         // no-op
     }
 }
