@@ -63,7 +63,7 @@ MonoBehaviour:
     ActionSide: 0
     Children:
     - Title: Node_Effect
-      Expanded: 1
+      Expanded: 0
       Component: {fileID: 2026235432900614569}
       Role: 0
       ActionSide: 0
@@ -100,11 +100,11 @@ MonoBehaviour:
   addDefense: 0
   addCritChance: 0
   addCritMultiplier: 0
-  addMaxHP: 24
+  addMaxHP: 0
   addSpeedRate: 0
   addLuck: 0
   addPenetrationPercent: 0
-  addPenetrationFixed: 0
+  addPenetrationFixed: 10
 --- !u!114 &2026235432900614569
 MonoBehaviour:
   m_ObjectHideFlags: 0

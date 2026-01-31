@@ -74,20 +74,20 @@ MonoBehaviour:
       ActionSide: 0
       Children: []
   - Title: Gate_Phase
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 6380075968158431176}
     Role: 0
     ActionSide: 0
     Children:
     - Title: Node_Effect
       Expanded: 0
-      Component: {fileID: 494372689289527297}
+      Component: {fileID: 3768379894157276876}
       Role: 0
       ActionSide: 0
       Children: []
     - Title: Node_Effect
       Expanded: 0
-      Component: {fileID: 3768379894157276876}
+      Component: {fileID: 494372689289527297}
       Role: 0
       ActionSide: 0
       Children: []
@@ -171,7 +171,7 @@ MonoBehaviour:
   sourceStat: 3
   targetSide: 1
   targetStat: 3
-  percent: -0.02
+  percent: -0.25
   maxHpAlsoHeal: 1
 --- !u!114 &494372689289527297
 MonoBehaviour:
@@ -202,7 +202,7 @@ MonoBehaviour:
   sourceStat: 4
   targetSide: 1
   targetStat: 4
-  percent: 0.02
+  percent: 0.25
   maxHpAlsoHeal: 1
 --- !u!114 &3768379894157276876
 MonoBehaviour:

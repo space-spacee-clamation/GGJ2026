@@ -53,7 +53,7 @@ MonoBehaviour:
   Id: 100079
   DisplayName: "\u865A\u5316\u6811\u8102"
   Type: 3
-  ManaCost: 3
+  ManaCost: 2
   Quality: 2
   BaseSprite: {fileID: 0}
   ShelfLifeTurns: 3

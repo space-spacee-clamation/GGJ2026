@@ -14,8 +14,11 @@ GameObject:
   - component: {fileID: 5203273571518900361}
   - component: {fileID: 6819380430072095734}
   - component: {fileID: 4543900383603872155}
-  - component: {fileID: 5146838207065724956}
-  - component: {fileID: 5632976102186626364}
+  - component: {fileID: 4966460827077441041}
+  - component: {fileID: 893937724393207973}
+  - component: {fileID: 7404642656897631988}
+  - component: {fileID: 7385578853080815276}
+  - component: {fileID: 7831204172441455859}
   m_Layer: 0
   m_Name: "100073_\u67AF\u840E\u871C\u9732"
   m_TagString: Untagged
@@ -79,10 +82,22 @@ MonoBehaviour:
     Children:
     - Title: Node_Effect
       Expanded: 1
-      Component: {fileID: 5632976102186626364}
+      Component: {fileID: 893937724393207973}
       Role: 0
       ActionSide: 0
       Children: []
+    - Title: Gate_RandomChance
+      Expanded: 1
+      Component: {fileID: 7404642656897631988}
+      Role: 0
+      ActionSide: 0
+      Children:
+      - Title: Node_Effect
+        Expanded: 1
+        Component: {fileID: 7831204172441455859}
+        Role: 0
+        ActionSide: 0
+        Children: []
 --- !u!114 &6559711837460962207
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -145,9 +160,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdce60ac543361f428c11fb667e61ca6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Phase: 7
+  Phase: 10
   Invert: 0
---- !u!114 &5146838207065724956
+--- !u!114 &4966460827077441041
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -156,16 +171,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 7070915587351049760}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7bf7a87bc07c50341b4c826be16f3075, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sourceSide: 1
-  sourceStat: 2
-  targetSide: 1
-  targetStat: 5
-  percent: 0.01
-  maxHpAlsoHeal: 1
---- !u!114 &5632976102186626364
+  ApplyAsPersistentGrowth: 0
+  appliesTo: 1
+  addAttack: 0
+  addDefense: 0
+  addCritChance: 0
+  addCritMultiplier: 0
+  addMaxHP: 0
+  addSpeedRate: 0
+  addLuck: 0
+  addPenetrationPercent: 0.02
+  addPenetrationFixed: 0
+--- !u!114 &893937724393207973
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -177,4 +197,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Effect: {fileID: 5146838207065724956}
+  Effect: {fileID: 4966460827077441041}
+--- !u!114 &7404642656897631988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070915587351049760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba915f14b9e719c41a96b2ccabf16d60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Chance01: 0.1
+  Invert: 0
+--- !u!114 &7385578853080815276
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070915587351049760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ApplyAsPersistentGrowth: 1
+  appliesTo: 1
+  addAttack: 2
+  addDefense: 2
+  addCritChance: 0
+  addCritMultiplier: 0
+  addMaxHP: 2
+  addSpeedRate: 2
+  addLuck: 0
+  addPenetrationPercent: 0
+  addPenetrationFixed: 0
+--- !u!114 &7831204172441455859
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070915587351049760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Effect: {fileID: 7385578853080815276}

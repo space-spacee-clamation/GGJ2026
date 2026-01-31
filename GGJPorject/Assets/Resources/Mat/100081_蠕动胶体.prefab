@@ -166,10 +166,10 @@ MonoBehaviour:
   addCritChance: 0
   addCritMultiplier: 0
   addMaxHP: 0
-  addSpeedRate: 12
+  addSpeedRate: 0
   addLuck: 0
   addPenetrationPercent: 0
-  addPenetrationFixed: 0
+  addPenetrationFixed: 5
 --- !u!114 &2743135883407930900
 MonoBehaviour:
   m_ObjectHideFlags: 0

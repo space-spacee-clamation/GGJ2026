@@ -72,13 +72,13 @@ MonoBehaviour:
       ActionSide: 0
       Children: []
   - Title: Gate_Phase
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 8990268561535174651}
     Role: 0
     ActionSide: 0
     Children:
     - Title: Node_Effect
-      Expanded: 0
+      Expanded: 1
       Component: {fileID: 5396732395739797629}
       Role: 0
       ActionSide: 0
@@ -118,6 +118,8 @@ MonoBehaviour:
   addMaxHP: 24
   addSpeedRate: 0
   addLuck: 0
+  addPenetrationPercent: 0
+  addPenetrationFixed: 0
 --- !u!114 &2911939063433764163
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -159,13 +161,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ApplyAsPersistentGrowth: 1
   appliesTo: 1
-  addAttack: 10
+  addAttack: 0
   addDefense: 0
   addCritChance: 0
   addCritMultiplier: 0
   addMaxHP: 0
   addSpeedRate: 0
   addLuck: 0
+  addPenetrationPercent: 0.02
+  addPenetrationFixed: 0
 --- !u!114 &5396732395739797629
 MonoBehaviour:
   m_ObjectHideFlags: 0
