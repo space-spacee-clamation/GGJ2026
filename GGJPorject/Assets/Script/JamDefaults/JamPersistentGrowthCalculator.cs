@@ -33,12 +33,8 @@ public sealed class JamPersistentGrowthCalculator_Default : IJamPersistentGrowth
         // - 基于玩家当前 ActualStats 或 battle stats（fightContext.Player）做缩放
         // - 例如：delta.AddAttack = Mathf.Floor(delta.AddAttack * 0.5f);
         var delta2 = new PlayerGrowthDelta();
-       int allQuality= 0;
-       foreach(var item in MaskMakeManager.I.CurrentMask.Materials)
-        {
-            allQuality += (int)item.Quality;
-        }
-        int value = allQuality/300;
+
+        var value = fightContext.MaskCount/100;
 
         delta2.AddAttack = delta.AddAttack*value;
         delta2.AddDefense = delta.AddDefense*value;
