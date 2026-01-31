@@ -7,7 +7,7 @@ using UnityEngine;
 /// - ApplyAsPersistentGrowth=true：战斗结束结算时把数值写入 PlayerGrowthDelta（持久成长）
 ///
 /// 注意：
-/// - 触发时机建议由逻辑树的 Gate_Phase / Gate_BattleStart / Gate_BattleEnd 决定；
+/// - 触发时机建议由逻辑树的 Gate_Phase 决定；
 ///   本组件自身不负责“阶段逻辑”，只负责“效果”。
 /// </summary>
 [MaterialCnMeta("加属性", "加属性 增加属性 攻击 防御 血量 暴击 爆伤 速度 幸运 成长")]

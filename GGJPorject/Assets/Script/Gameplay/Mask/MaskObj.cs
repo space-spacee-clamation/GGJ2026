@@ -15,9 +15,15 @@ public class MaskObj : MonoBehaviour, IMaskBattleInjector
 
     [Header("Runtime")]
     [SerializeField] private Transform materialRoot;
+    [SerializeField] private Sprite displaySprite;
 
     public int BaseMana { get; private set; }
     public int CurrentMana { get; private set; }
+    public Sprite DisplaySprite
+    {
+        get => displaySprite;
+        set => displaySprite = value;
+    }
 
     private readonly System.Collections.Generic.List<MaterialObj> _materials = new();
     public System.Collections.Generic.IReadOnlyList<MaterialObj> Materials => _materials;

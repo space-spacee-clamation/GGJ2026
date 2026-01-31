@@ -103,18 +103,6 @@ public class MaterialObj : MonoBehaviour
                 var tmp = new StringBuilder(128);
                 p.AppendDescription(tmp);
                 var text = tmp.ToString();
-                if (!string.IsNullOrWhiteSpace(text))
-                {
-                    // 给每一行加上层级缩进
-                    var lines = text.Replace("\r", "").Split('\n');
-                    for (int li = 0; li < lines.Length; li++)
-                    {
-                        var line = lines[li];
-                        if (string.IsNullOrWhiteSpace(line)) continue;
-                        for (int t = 0; t < depth; t++) sb.Append('\t');
-                        sb.AppendLine(line);
-                    }
-                }
             }
             if (n.Children != null && n.Children.Count > 0)
             {

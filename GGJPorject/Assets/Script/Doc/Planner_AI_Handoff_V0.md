@@ -187,13 +187,13 @@ Luck：
 
 ### 示例 1：想让某个材料“前 3 次攻击生效”
 做法：
-- 在材料 prefab 上添加 `Gate_FirstXAttacks`
-- `FirstX = 3`
-- 在逻辑树上把 Gate 作为父节点，把要控制的节点挂在其 Children 下
+- 使用 `Gate_MaxTriggerCount`
+- `MaxTimes = 3`
+- 在逻辑树上把 Gate 作为父节点，把要控制的节点挂在其 Children 下（每次“通过”会计数）
 
 ### 示例 2：想让某个材料“每 2 回合不生效”
 做法：
-- 添加 `Gate_EveryXTurns`
+- 添加 `Gate_WaitEveryX`
 - `EveryX = 2`
 - `Invert = true`
 

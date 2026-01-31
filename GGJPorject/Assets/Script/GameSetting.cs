@@ -18,7 +18,17 @@ public static class GameSetting
     public const float AttackAnimIntervalSeconds = 0.25f;
 
     /// <summary>
-    /// 场地速度阈值默认值（整数）。后续如果需要“根据默认值生成关卡速度”，再补逻辑。
+    /// 攻击动画总时间（秒）。往返移动的总时长（去程 + 回程）。
+    /// </summary>
+    public const float AttackTweenTotalSeconds = 0.3f;
+
+    /// <summary>
+    /// 攻击动画命中距离（像素）。移动到目标方向的距离偏移。
+    /// </summary>
+    public const float AttackHitDistance = 50f;
+
+    /// <summary>
+    /// 场地速度阈值默认值（整数）。后续如果需要"根据默认值生成关卡速度"，再补逻辑。
     /// </summary>
     public const int DefaultArenaSpeedThreshold = 10;
 

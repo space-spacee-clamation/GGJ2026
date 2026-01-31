@@ -329,7 +329,7 @@ public class MaterialEditorWindow : OdinEditorWindow
 
                 string title = titleProp != null ? titleProp.stringValue : "";
                 var comp = compProp != null ? compProp.objectReferenceValue as MonoBehaviour : null;
-                var header = BuildNodeHeader(title, comp, roleProp, sideProp);
+                var header = BuildNodeHeader(title, comp);
                 bool expanded = expandedProp == null || expandedProp.boolValue;
                 expanded = EditorGUILayout.Foldout(expanded, header, true);
                 if (expandedProp != null) expandedProp.boolValue = expanded;
@@ -390,14 +390,7 @@ public class MaterialEditorWindow : OdinEditorWindow
                 compCheck = null;
             }
 
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                var roleProp = node.FindPropertyRelative("Role");
-                var sideProp = node.FindPropertyRelative("ActionSide");
-                GUILayout.Space(indent * 14);
-                if (roleProp != null) EditorGUILayout.PropertyField(roleProp);
-                if (sideProp != null) EditorGUILayout.PropertyField(sideProp);
-            }
+            // 移除 Role/ActionSide 配置入口：逻辑完全由 Gate_Phase 区分事件；作用对象由 effect 自己决定（默认玩家）。
 
             // 提示：组件应来自当前 editingInstance
             var comp2 = node.FindPropertyRelative("Component")?.objectReferenceValue as MonoBehaviour;
@@ -699,17 +692,12 @@ public class MaterialEditorWindow : OdinEditorWindow
         }
     }
 
-    private static string BuildNodeHeader(string title, MonoBehaviour comp, SerializedProperty roleProp, SerializedProperty sideProp)
+    private static string BuildNodeHeader(string title, MonoBehaviour comp)
     {
         var t = comp != null ? comp.GetType().Name : "未选择组件";
-        var role = roleProp != null ? roleProp.enumDisplayNames[roleProp.enumValueIndex] : "Auto";
-        var side = sideProp != null ? sideProp.enumDisplayNames[sideProp.enumValueIndex] : "Both";
-
-        // 让策划更直观：Gate 默认就是条件节点
-        if (comp is IMaterialTraversalGate) role = "Condition";
 
         var name = string.IsNullOrWhiteSpace(title) ? t : title;
-        var head = $"{name}  [{role}] [{side}]";
+        var head = $"{name}";
 
         // 追加中文描述摘要，方便搜索/阅读
         if (comp is IMaterialDescriptionProvider p)

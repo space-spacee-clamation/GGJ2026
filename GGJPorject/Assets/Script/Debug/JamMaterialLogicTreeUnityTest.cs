@@ -34,7 +34,7 @@ public sealed class JamMaterialLogicTreeUnityTest : MonoBehaviour
             var phaseAttack = go.AddComponent<Gate_Phase>();
             phaseAttack.Phase = MaterialTraversePhase.AttackModify;
 
-            var every1 = go.AddComponent<Gate_EveryXTurns>();
+            var every1 = go.AddComponent<Gate_WaitEveryX>();
             every1.EveryX = 1;
 
             var add1 = go.AddComponent<TestAtk_AddRawAttack>();
@@ -42,7 +42,7 @@ public sealed class JamMaterialLogicTreeUnityTest : MonoBehaviour
             var node1 = go.AddComponent<Node_Effect>();
             node1.Effect = add1;
 
-            var every2 = go.AddComponent<Gate_EveryXTurns>();
+            var every2 = go.AddComponent<Gate_WaitEveryX>();
             every2.EveryX = 2;
 
             var add3 = go.AddComponent<TestAtk_AddRawAttack>();

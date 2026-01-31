@@ -18,9 +18,26 @@ public sealed class Gate_Phase : MonoBehaviour, IMaterialLogicNode, IMaterialTra
     public bool ShouldBreak(in MaterialVommandeTreeContext context)
     {
         if (context.Phase == MaterialTraversePhase.Description) return false;
-        bool allow = context.Phase == Phase;
+        bool allow = IsPhaseMatch(context.Phase, Phase);
         if (Invert) allow = !allow;
         return !allow;
+    }
+
+    private static bool IsPhaseMatch(MaterialTraversePhase actual, MaterialTraversePhase configured)
+    {
+        if (actual == configured) return true;
+
+        // 兼容旧配置：AttackModify/DamageApplied 视为“玩家/敌人两侧都匹配”
+        if (configured == MaterialTraversePhase.AttackModify)
+        {
+            return actual == MaterialTraversePhase.PlayerAttackBefore || actual == MaterialTraversePhase.EnemyAttackBefore;
+        }
+        if (configured == MaterialTraversePhase.DamageApplied)
+        {
+            return actual == MaterialTraversePhase.PlayerAttackAfter || actual == MaterialTraversePhase.EnemyAttackAfter;
+        }
+
+        return false;
     }
 
     public void AppendDescription(StringBuilder sb)
@@ -30,8 +47,12 @@ public sealed class Gate_Phase : MonoBehaviour, IMaterialLogicNode, IMaterialTra
         {
             MaterialTraversePhase.Bind => "绑定时",
             MaterialTraversePhase.BattleStart => "战斗开始时",
-            MaterialTraversePhase.AttackModify => "行动前（AttackModify）",
-            MaterialTraversePhase.DamageApplied => "行动后（DamageApplied）",
+            MaterialTraversePhase.AttackModify => "攻击前（Legacy：等价于玩家攻击前/敌人攻击前）",
+            MaterialTraversePhase.DamageApplied => "攻击后（Legacy：等价于玩家攻击后/敌人攻击后）",
+            MaterialTraversePhase.PlayerAttackBefore => "玩家攻击前",
+            MaterialTraversePhase.PlayerAttackAfter => "玩家攻击后",
+            MaterialTraversePhase.EnemyAttackBefore => "敌人攻击前",
+            MaterialTraversePhase.EnemyAttackAfter => "敌人攻击后",
             MaterialTraversePhase.BattleEnd => "战斗结束时",
             MaterialTraversePhase.PersistentGrowth => "持久成长结算时",
             _ => Phase.ToString()

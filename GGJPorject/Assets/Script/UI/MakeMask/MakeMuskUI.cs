@@ -112,7 +112,8 @@ public class MakeMuskUI : MonoBehaviour
         string name = !string.IsNullOrWhiteSpace(mat.DisplayName) ? mat.DisplayName : mat.name;
         string desc = mat.BuildDescription();
         int ttl = mat.RemainingShelfLifeTurns;
-        infoNode.Show(name, desc, ttl);
+        Sprite sprite = mat.BaseSprite; // 使用材料的 BaseSprite
+        infoNode.Show(name, desc, ttl, sprite);
     }
 
     public void OnClickMaterialButton(MaterialButton btn)
@@ -229,6 +230,12 @@ public class MakeMuskUI : MonoBehaviour
             }
         }
 
+        // Compose 后为面具分配随机 Sprite
+        if (_composedOnce && mask != null)
+        {
+            GameManager.I?.AssignRandomMaskSprite(mask);
+        }
+
         UpdateMaskSprite();
         UpdateNextInteractable();
     }
@@ -248,6 +255,16 @@ public class MakeMuskUI : MonoBehaviour
     private void UpdateMaskSprite()
     {
         if (maskImage == null) return;
+
+        // 优先使用当前面具的 DisplaySprite
+        var mask = GameManager.I != null ? GameManager.I.GetCurrentMask() : null;
+        if (mask != null && mask.DisplaySprite != null)
+        {
+            maskImage.sprite = mask.DisplaySprite;
+            return;
+        }
+
+        // 回退到旧逻辑
         maskImage.sprite = _composedOnce && composedMaskSprite != null ? composedMaskSprite : baseMaskSprite;
     }
     private void Update(){

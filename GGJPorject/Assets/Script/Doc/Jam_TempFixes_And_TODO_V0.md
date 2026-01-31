@@ -179,15 +179,14 @@
 ## 12) “战斗开始/结束 Gate + 可跳出遍历”的抽象化（非临时，但需要规范使用）
 
 文件：
-- `Assets/Script/Gameplay/Mask/Gates/Gate_BattleStart.cs`
-- `Assets/Script/Gameplay/Mask/Gates/Gate_BattleEnd.cs`
+- `Assets/Script/Gameplay/Mask/Gates/Gate_Phase.cs`
 - `Assets/Script/Gameplay/Mask/MaterialRuntimeRunner.cs`
 
 说明：
-- 这不是“临时兜底”，是你当前决定的正式设计：用 Gate 分段，后续组件按顺序执行并支持 break。
+- 这不是“临时兜底”，是你当前决定的正式设计：用 `Gate_Phase` 分段，后续节点按树结构执行并支持“跳过分支”。
 - 但要注意：
   - 描述阶段不再 break（避免文案被截断）
-  - “战斗结束时” Gate 目前也覆盖了持久成长收集（`GameManager.CollectAndApplyPersistentGrowth` 以 BattleEnd phase 遍历）
+  - 持久成长请使用 `Gate_Phase(PersistentGrowth)`
 
 后续 TODO：
 - 需要明确策划规范：某些效果必须放在某个 Gate 后面，否则不会触发

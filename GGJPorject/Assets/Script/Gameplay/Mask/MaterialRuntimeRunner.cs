@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// 材质运行时执行器：遍历 MaterialObj.logicTreeRoots，并触发各阶段逻辑节点。
 /// - 作为 IFightComponent：订阅战斗回调（BattleStart/BattleEnd/DamageApplied）
-/// - 作为 IAttackInfoModifier：在攻击处理链中触发 AttackModify 阶段
+/// - 作为 IAttackInfoModifier：在攻击处理链中触发 “玩家/敌人攻击前” 阶段
 /// </summary>
 public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
 {
@@ -153,8 +153,12 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
             return;
         }
 
+        var phase = context.CurrentAttackerSide == FightSide.Enemy
+            ? MaterialTraversePhase.EnemyAttackBefore
+            : MaterialTraversePhase.PlayerAttackBefore;
+
         var treeCtx = new MaterialVommandeTreeContext(
-            MaterialTraversePhase.AttackModify,
+            phase,
             mask: null,
             maskMaterials: null,
             onMaterialBound: null,
@@ -207,8 +211,12 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
         if (_material == null || context == null) return;
         if (_material.LogicTreeRoots == null || _material.LogicTreeRoots.Count == 0) return;
 
+        var phase = attackerSide == FightSide.Enemy
+            ? MaterialTraversePhase.EnemyAttackAfter
+            : MaterialTraversePhase.PlayerAttackAfter;
+
         var tctx = new MaterialVommandeTreeContext(
-            MaterialTraversePhase.DamageApplied,
+            phase,
             mask: null,
             maskMaterials: null,
             onMaterialBound: null,
@@ -260,7 +268,38 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
     {
         if (context == null || !context.DebugVerbose || context.DebugLogger == null) return;
         var name = _material != null ? (!string.IsNullOrWhiteSpace(_material.DisplayName) ? _material.DisplayName : _material.name) : "nullMaterial";
-        context.DebugLogger($"[MatGate] {name} phase={phase} gate={gate.GetType().Name} BREAK action={tctx.ActionNumber} atk#{tctx.AttackerAttackNumber} side={tctx.Side}");
+        context.DebugLogger($"[MatGate] {name} phase={phase}({ToCnPhase(tctx.Phase, tctx.Side)}) gate={gate.GetType().Name} BREAK action={tctx.ActionNumber} atk#{tctx.AttackerAttackNumber} side={tctx.Side}");
+    }
+
+    private static string ToCnPhase(MaterialTraversePhase phase, FightSide side)
+    {
+        switch (phase)
+        {
+            case MaterialTraversePhase.Bind:
+                return "绑定";
+            case MaterialTraversePhase.BattleStart:
+                return "战斗开始";
+            case MaterialTraversePhase.AttackModify:
+                return "攻击前（Legacy）";
+            case MaterialTraversePhase.DamageApplied:
+                return "攻击后（Legacy）";
+            case MaterialTraversePhase.PlayerAttackBefore:
+                return "玩家攻击前";
+            case MaterialTraversePhase.PlayerAttackAfter:
+                return "玩家攻击后";
+            case MaterialTraversePhase.EnemyAttackBefore:
+                return "敌人攻击前";
+            case MaterialTraversePhase.EnemyAttackAfter:
+                return "敌人攻击后";
+            case MaterialTraversePhase.BattleEnd:
+                return "战斗结束";
+            case MaterialTraversePhase.PersistentGrowth:
+                return "持久成长结算";
+            case MaterialTraversePhase.Description:
+                return "描述";
+            default:
+                return phase.ToString();
+        }
     }
 
     private void LogEffect(FightContext context, string phase, MonoBehaviour comp)

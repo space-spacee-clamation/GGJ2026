@@ -47,6 +47,12 @@ public class GameManager : MonoBehaviour
     [SerializeField, Min(0)] private int initialCommonMaterialCount = JamDefaultSettings.InitialCommonMaterialCount;
     private bool _initialMaterialsSpawned;
 
+    [Header("面具 Sprite 配置")]
+    [Tooltip("默认面具 Sprite（如果池为空或随机失败时使用）。")]
+    [SerializeField] private Sprite defaultMaskSprite;
+    [Tooltip("面具 Sprite 池（Compose 后随机选择）。")]
+    [SerializeField] private List<Sprite> maskSpritePool = new();
+
     [Header("Flow")]
     [SerializeField] private bool autoRunLoop = false;
 
@@ -553,6 +559,52 @@ public class GameManager : MonoBehaviour
     public MaskObj GetCurrentMask()
     {
         return maskMakeManager != null ? maskMakeManager.CurrentMask : null;
+    }
+
+    /// <summary>
+    /// 获取面具库（只读列表）。
+    /// </summary>
+    public IReadOnlyList<MaskObj> GetMaskLibrary()
+    {
+        return _maskLibrary;
+    }
+
+    /// <summary>
+    /// 为面具分配随机 Sprite（Compose 后调用）。
+    /// </summary>
+    public void AssignRandomMaskSprite(MaskObj mask)
+    {
+        if (mask == null) return;
+
+        Sprite sprite = null;
+
+        // 从池中随机选择
+        if (maskSpritePool != null && maskSpritePool.Count > 0)
+        {
+            var validSprites = new List<Sprite>();
+            foreach (var s in maskSpritePool)
+            {
+                if (s != null) validSprites.Add(s);
+            }
+
+            if (validSprites.Count > 0)
+            {
+                sprite = validSprites[Random.Range(0, validSprites.Count)];
+            }
+        }
+
+        // 如果池为空或随机失败，使用默认 sprite
+        if (sprite == null)
+        {
+            sprite = defaultMaskSprite;
+        }
+
+        mask.DisplaySprite = sprite;
+
+        if (enablePhaseDebugLogs)
+        {
+            Debug.Log($"[GameManager] 已为面具分配 Sprite：{mask.name} -> {(sprite != null ? sprite.name : "null")}");
+        }
     }
 
     /// <summary>
