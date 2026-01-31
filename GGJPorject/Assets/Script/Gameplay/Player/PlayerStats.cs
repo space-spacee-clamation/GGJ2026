@@ -15,6 +15,12 @@ public struct PlayerStats
 
     [Range(0, 100)] public int Luck;
 
+    /// <summary>百分比穿透（0~1，例如 0.3 表示 30% 穿透）</summary>
+    [Range(0f, 1f)] public float PenetrationPercent;
+
+    /// <summary>固定穿透（>=0，直接减少防御值）</summary>
+    [Min(0f)] public float PenetrationFixed;
+
     public void Clamp()
     {
         MaxHP = Mathf.Max(1f, MaxHP);
@@ -24,6 +30,8 @@ public struct PlayerStats
         CritMultiplier = Mathf.Max(1f, CritMultiplier);
         SpeedRate = Mathf.Max(0, SpeedRate);
         Luck = Mathf.Clamp(Luck, 0, 100);
+        PenetrationPercent = Mathf.Clamp01(PenetrationPercent);
+        PenetrationFixed = Mathf.Max(0f, PenetrationFixed);
     }
 }
 

@@ -33,6 +33,8 @@ public sealed class Player
         a.CritMultiplier += delta.AddCritMultiplier;
         a.SpeedRate += delta.AddSpeedRate;
         a.Luck += delta.AddLuck;
+        a.PenetrationPercent += delta.AddPenetrationPercent;
+        a.PenetrationFixed += delta.AddPenetrationFixed;
         a.Clamp();
         ActualStats = a;
     }

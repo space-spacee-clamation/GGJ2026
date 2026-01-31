@@ -33,6 +33,8 @@ public sealed class Effect_AddStatsMaterial : MonoBehaviour, IMaterialEffect, IM
     [SerializeField] private float addMaxHP = 0f;
     [SerializeField] private int addSpeedRate = 0;
     [SerializeField] private int addLuck = 0;
+    [SerializeField] private float addPenetrationPercent = 0f;
+    [SerializeField] private float addPenetrationFixed = 0f;
 
     public void Execute(in MaterialVommandeTreeContext context)
     {
@@ -49,6 +51,8 @@ public sealed class Effect_AddStatsMaterial : MonoBehaviour, IMaterialEffect, IM
             if (addCritMultiplier != 0f) c.AddCritMultiplier(addCritMultiplier);
             if (addMaxHP != 0f) c.AddMaxHP(addMaxHP, alsoHeal: true);
             if (addSpeedRate != 0) c.AddSpeedRate(addSpeedRate);
+            if (addPenetrationPercent != 0f) c.AddPenetrationPercent(addPenetrationPercent);
+            if (addPenetrationFixed != 0f) c.AddPenetrationFixed(addPenetrationFixed);
 
             // Luck 不属于 CombatantRuntime（战斗内不支持）
             if (addLuck != 0 && context.Fight.DebugVerbose)
@@ -69,6 +73,8 @@ public sealed class Effect_AddStatsMaterial : MonoBehaviour, IMaterialEffect, IM
         context.GrowthDelta.AddCritMultiplier += addCritMultiplier;
         context.GrowthDelta.AddSpeedRate += addSpeedRate;
         context.GrowthDelta.AddLuck += addLuck;
+        context.GrowthDelta.AddPenetrationPercent += addPenetrationPercent;
+        context.GrowthDelta.AddPenetrationFixed += addPenetrationFixed;
     }
 
     private static CombatantRuntime ApplyTo(FightSide side, FightContext context)
@@ -94,6 +100,8 @@ public sealed class Effect_AddStatsMaterial : MonoBehaviour, IMaterialEffect, IM
         if (addCritMultiplier != 0f) { sb.Append($"{who} 爆伤倍率 {(addCritMultiplier >= 0 ? "+" : "")}{addCritMultiplier}"); any = true; }
         if (addSpeedRate != 0) { sb.Append($"{who} 速度成长 {(addSpeedRate >= 0 ? "+" : "")}{addSpeedRate}/秒"); any = true; }
         if (ApplyAsPersistentGrowth && addLuck != 0) { sb.Append($"{who} 幸运 {(addLuck >= 0 ? "+" : "")}{addLuck}"); any = true; }
+        if (addPenetrationPercent != 0f) { sb.Append($"{who} 百分比穿透 {(addPenetrationPercent >= 0 ? "+" : "")}{addPenetrationPercent:P0}"); any = true; }
+        if (addPenetrationFixed != 0f) { sb.Append($"{who} 固定穿透 {(addPenetrationFixed >= 0 ? "+" : "")}{addPenetrationFixed}"); any = true; }
 
         if (!any) sb.Append($"{who} 属性无变化");
     }

@@ -34,6 +34,10 @@ public class PlayerInfoUI : MonoBehaviour
     [SerializeField] private SmallInfoBox speedRateBox;
     [Tooltip("幸运")]
     [SerializeField] private SmallInfoBox luckBox;
+    [Tooltip("百分比穿透")]
+    [SerializeField] private SmallInfoBox penetrationPercentBox;
+    [Tooltip("固定穿透")]
+    [SerializeField] private SmallInfoBox penetrationFixedBox;
 
     /// <summary>
     /// 设置显示模式并刷新。
@@ -79,6 +83,8 @@ public class PlayerInfoUI : MonoBehaviour
         RefreshBox(critMultiplierBox, FormatFloat(stats.CritMultiplier, 2));
         RefreshBox(speedRateBox, stats.SpeedRate.ToString());
         RefreshBox(luckBox, stats.Luck.ToString());
+        RefreshBox(penetrationPercentBox, FormatPercent(stats.PenetrationPercent));
+        RefreshBox(penetrationFixedBox, FormatFloat(stats.PenetrationFixed));
     }
 
     private void RefreshPendingGrowth()
@@ -99,6 +105,8 @@ public class PlayerInfoUI : MonoBehaviour
         RefreshBox(critMultiplierBox, FormatDelta(delta.AddCritMultiplier));
         RefreshBox(speedRateBox, FormatDelta(delta.AddSpeedRate));
         RefreshBox(luckBox, FormatDelta(delta.AddLuck));
+        RefreshBox(penetrationPercentBox, FormatDelta(delta.AddPenetrationPercent, true));
+        RefreshBox(penetrationFixedBox, FormatDelta(delta.AddPenetrationFixed));
     }
 
     private void RefreshBattleRuntime()
@@ -119,6 +127,8 @@ public class PlayerInfoUI : MonoBehaviour
         RefreshBox(speedRateBox, player.SpeedRate.ToString());
         // 战斗运行时无 Luck
         RefreshBox(luckBox, "-");
+        RefreshBox(penetrationPercentBox, FormatPercent(player.PenetrationPercent));
+        RefreshBox(penetrationFixedBox, FormatFloat(player.PenetrationFixed));
     }
 
     private void ClearAll()
@@ -130,6 +140,8 @@ public class PlayerInfoUI : MonoBehaviour
         RefreshBox(critMultiplierBox, "-");
         RefreshBox(speedRateBox, "-");
         RefreshBox(luckBox, "-");
+        RefreshBox(penetrationPercentBox, "-");
+        RefreshBox(penetrationFixedBox, "-");
     }
 
     private void RefreshBox(SmallInfoBox box, string text)

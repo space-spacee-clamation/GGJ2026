@@ -10,6 +10,8 @@ public class PlayerGrowthDelta
     public float AddCritMultiplier;
     public int AddSpeedRate;
     public int AddLuck;
+    public float AddPenetrationPercent;
+    public float AddPenetrationFixed;
 }
 
 

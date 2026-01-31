@@ -17,7 +17,9 @@ public static class JamDefaultSettings
         CritChance = 0.10f,
         CritMultiplier = 1.5f,
         SpeedRate = 6,
-        Luck = 20
+        Luck = 20,
+        PenetrationPercent = 0f,
+        PenetrationFixed = 0f
     };
 
     // ---- Drop ----

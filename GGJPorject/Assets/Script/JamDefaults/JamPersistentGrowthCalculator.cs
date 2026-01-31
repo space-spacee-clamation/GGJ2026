@@ -47,6 +47,8 @@ public sealed class JamPersistentGrowthCalculator_Default : IJamPersistentGrowth
     public static void AddCritMultiplier(PlayerGrowthDelta delta, float value) { if (delta != null) delta.AddCritMultiplier += value; }
     public static void AddSpeedRate(PlayerGrowthDelta delta, int value) { if (delta != null) delta.AddSpeedRate += value; }
     public static void AddLuck(PlayerGrowthDelta delta, int value) { if (delta != null) delta.AddLuck += value; }
+    public static void AddPenetrationPercent(PlayerGrowthDelta delta, float value) { if (delta != null) delta.AddPenetrationPercent += value; }
+    public static void AddPenetrationFixed(PlayerGrowthDelta delta, float value) { if (delta != null) delta.AddPenetrationFixed += value; }
 
     public static void Reset(PlayerGrowthDelta delta)
     {
@@ -58,6 +60,8 @@ public sealed class JamPersistentGrowthCalculator_Default : IJamPersistentGrowth
         delta.AddCritMultiplier = 0f;
         delta.AddSpeedRate = 0;
         delta.AddLuck = 0;
+        delta.AddPenetrationPercent = 0f;
+        delta.AddPenetrationFixed = 0f;
     }
 }
 

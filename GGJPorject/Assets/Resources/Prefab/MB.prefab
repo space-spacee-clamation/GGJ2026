@@ -165,5 +165,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   image: {fileID: 5648902153282670858}
-  qualityOutline: {fileID: 5648902153282670858}
-  selectedOutline: {fileID: 5648902153282670858}

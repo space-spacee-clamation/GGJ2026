@@ -21,6 +21,12 @@ public sealed class CombatantRuntime
 
     public int SpeedRate { get; private set; }
 
+    /// <summary>百分比穿透（0~1）</summary>
+    public float PenetrationPercent { get; private set; }
+
+    /// <summary>固定穿透（>=0）</summary>
+    public float PenetrationFixed { get; private set; }
+
     public bool IsDead => CurrentHP <= 0f;
 
     public CombatantRuntime(string name, CharacterConfig config)
@@ -50,6 +56,8 @@ public sealed class CombatantRuntime
         CritChance = Mathf.Clamp01(config.CritChance);
         CritMultiplier = Mathf.Max(1f, config.CritMultiplier);
         SpeedRate = Mathf.Max(0, config.SpeedRate);
+        PenetrationPercent = 0f;
+        PenetrationFixed = 0f;
     }
 
     public static CombatantRuntime FromStats(string name, PlayerStats stats, PlayerGrowthDelta pendingGrowthDelta)
@@ -63,6 +71,8 @@ public sealed class CombatantRuntime
             CritChance = stats.CritChance+pendingGrowthDelta.AddCritChance,
             CritMultiplier = stats.CritMultiplier+pendingGrowthDelta.AddCritMultiplier,
             SpeedRate = stats.SpeedRate+pendingGrowthDelta.AddSpeedRate,
+            PenetrationPercent = stats.PenetrationPercent+pendingGrowthDelta.AddPenetrationPercent,
+            PenetrationFixed = stats.PenetrationFixed+pendingGrowthDelta.AddPenetrationFixed,
         };
         c.CurrentHP = c.MaxHP;
         return c;
@@ -124,6 +134,16 @@ public sealed class CombatantRuntime
     {
         if (delta == 0f) return;
         CurrentHP = Mathf.Clamp(CurrentHP + delta, 0f, MaxHP);
+    }
+
+    public void AddPenetrationPercent(float delta)
+    {
+        PenetrationPercent = Mathf.Clamp01(PenetrationPercent + delta);
+    }
+
+    public void AddPenetrationFixed(float delta)
+    {
+        PenetrationFixed = Mathf.Max(0f, PenetrationFixed + delta);
     }
 }
 
