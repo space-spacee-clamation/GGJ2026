@@ -16,8 +16,8 @@ GameObject:
   - component: {fileID: 3285044572855207838}
   - component: {fileID: 4325590087626054010}
   - component: {fileID: 6052293670578326544}
-  - component: {fileID: 7460080861104615559}
-  - component: {fileID: 4179890873753449926}
+  - component: {fileID: 2185894545775565580}
+  - component: {fileID: 807903097169138144}
   m_Layer: 0
   m_Name: "100094_\u8150\u8680\u9501\u94FE"
   m_TagString: Untagged
@@ -62,32 +62,32 @@ MonoBehaviour:
   remainingShelfLifeTurns: 1
   logicTreeRoots:
   - Title: Gate_Phase
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 6520395854577100672}
     Role: 0
     ActionSide: 0
     Children:
     - Title: Node_Effect
-      Expanded: 0
+      Expanded: 1
       Component: {fileID: 859197943707000416}
       Role: 0
       ActionSide: 0
       Children: []
+    - Title: Node_Effect
+      Expanded: 1
+      Component: {fileID: 807903097169138144}
+      Role: 0
+      ActionSide: 0
+      Children: []
   - Title: Gate_AfterXHits
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 3285044572855207838}
     Role: 0
     ActionSide: 0
     Children:
     - Title: Node_Effect
-      Expanded: 0
+      Expanded: 1
       Component: {fileID: 6052293670578326544}
-      Role: 0
-      ActionSide: 0
-      Children: []
-    - Title: Node_Effect
-      Expanded: 0
-      Component: {fileID: 4179890873753449926}
       Role: 0
       ActionSide: 0
       Children: []
@@ -126,6 +126,8 @@ MonoBehaviour:
   addMaxHP: 0
   addSpeedRate: 0
   addLuck: 0
+  addPenetrationPercent: 0
+  addPenetrationFixed: 0
 --- !u!114 &859197943707000416
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -166,7 +168,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ApplyAsPersistentGrowth: 1
+  ApplyAsPersistentGrowth: 0
   appliesTo: 1
   addAttack: 0
   addDefense: -10
@@ -175,6 +177,8 @@ MonoBehaviour:
   addMaxHP: 0
   addSpeedRate: 0
   addLuck: 0
+  addPenetrationPercent: 0
+  addPenetrationFixed: 0
 --- !u!114 &6052293670578326544
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -188,7 +192,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Effect: {fileID: 4325590087626054010}
---- !u!114 &7460080861104615559
+--- !u!114 &2185894545775565580
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -200,8 +204,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 583a28833b0cedc45aa0b0dea82d4060, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  RestoreAmount: 2
---- !u!114 &4179890873753449926
+  RestoreAmount: 1
+--- !u!114 &807903097169138144
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -213,4 +217,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Effect: {fileID: 7460080861104615559}
+  Effect: {fileID: 2185894545775565580}
