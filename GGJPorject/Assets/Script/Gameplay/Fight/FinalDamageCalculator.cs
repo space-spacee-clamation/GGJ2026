@@ -13,7 +13,7 @@ public sealed class FinalDamageCalculator : IAttackInfoModifier
     [Tooltip("Enable critical: rand < CritChance => damage *= CritMultiplier")]
     public bool EnableCrit = true;
 
-    private float defValue;
+    private float defValue = 50;
 
     public void Modify(ref AttackInfo info, FightContext context)
     {
@@ -41,13 +41,14 @@ public sealed class FinalDamageCalculator : IAttackInfoModifier
             float reduction;
             if(curDef >= 0)
             {
-                reduction = curDef/curDef+defValue;
+                reduction = curDef/(curDef+defValue);
             }
             else
             {
                 reduction = -(1+Math.Abs(curDef)/defValue);
             }
             damage = Mathf.Max(1f,damage-damage*reduction);
+            Debug.Log("damage的伤害是"+damage);
             //damage = Mathf.Max(1f, damage - context.CurrentDefender.Defense);
         }
 
