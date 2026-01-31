@@ -31,15 +31,12 @@ public class MaterialButton : MonoBehaviour, IPointerClickHandler, IPointerEnter
     {
         IsSelected = selected;
         gameObject.SetActive(!selected);
-        if(selected)
-        {
-           _owner?.CloseInfo();
-        }
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
         _owner?.OnClickMaterialButton(this);
+        _owner?.CloseInfo();
     }
 
     public void OnPointerEnter(PointerEventData eventData)

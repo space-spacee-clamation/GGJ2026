@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using UnityEngine;
 public class GameManager : MonoBehaviour
 {
@@ -22,10 +23,21 @@ public class GameManager : MonoBehaviour
     [Header("UI")]
     [SerializeField] private MakeMuskUI makeMuskUI;
     [SerializeField] private BattleUI battleUI;
+    [Tooltip("黑屏 CanvasGroup（用于场景切换时的淡入淡出）。")]
+    [SerializeField] private CanvasGroup blackScreen;
 
     [Header("Mask Library (Runtime)")]
     [SerializeField] private Transform maskLibraryRoot;
     private readonly System.Collections.Generic.List<MaskObj> _maskLibrary = new();
+
+    [Header("持久成长（未应用）")]
+    [Tooltip("战斗结束后收集但还未应用到玩家的提升值（用于 UI 显示）。")]
+    private PlayerGrowthDelta _pendingGrowthDelta;
+
+    /// <summary>
+    /// 获取未应用的提升值（战斗结束后收集但还未应用）。
+    /// </summary>
+    public PlayerGrowthDelta PendingGrowthDelta => _pendingGrowthDelta;
 
     [Header("材料库存")]
     [SerializeField] private MaterialInventory materialInventory = new();
@@ -394,10 +406,18 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 进入“制造面具/经营阶段”：按顺序生成一个新的 MaskObj。
+    /// 进入"制造面具/经营阶段"：按顺序生成一个新的 MaskObj。
     /// </summary>
     public void EnterMakeMaskPhase()
     {
+        EnterMakeMaskPhaseAsync(_destroyToken).Forget();
+    }
+
+    private async UniTaskVoid EnterMakeMaskPhaseAsync(CancellationToken ct)
+    {
+        // 黑屏淡入淡出：从战斗到制造
+        await PlayBlackScreenTransition(ct);
+
         if (maskMakeManager == null)
         {
             Debug.LogError("[GameManager] MaskMakeManager 未初始化。", this);
@@ -407,7 +427,7 @@ public class GameManager : MonoBehaviour
         var newMask = maskMakeManager.MakeNextMask();
         if (newMask == null) return;
 
-        // 当前面具：用于本回合材料附加与本场战斗，同时也会参与“面具库注入”（但战后才正式入库）
+        // 当前面具：用于本回合材料附加与本场战斗，同时也会参与"面具库注入"（但战后才正式入库）
         if (newMask.transform.parent != transform && newMask.transform.parent != maskMakeManager.transform)
         {
             newMask.transform.SetParent(maskMakeManager.transform, false);
@@ -429,6 +449,50 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 播放黑屏淡入淡出过渡动画。
+    /// 流程：fadeIn 0.5s -> 等待 0.5s -> fadeOut 0.5s
+    /// </summary>
+    private async UniTask PlayBlackScreenTransition(CancellationToken ct)
+    {
+        if (blackScreen == null) return;
+
+        // 确保黑屏 GameObject 激活
+        if (!blackScreen.gameObject.activeSelf)
+        {
+            blackScreen.gameObject.SetActive(true);
+        }
+
+        // 初始化：alpha = 0，blocksRaycasts = true（防止点击穿透）
+        blackScreen.alpha = 0f;
+        blackScreen.blocksRaycasts = true;
+        blackScreen.interactable = false;
+
+        // FadeIn: 0 -> 1 (0.5s)
+        await blackScreen.DOFade(1f, 0.5f).SetUpdate(true).ToUniTask(cancellationToken: ct);
+
+        // 等待 0.5s
+        await UniTask.Delay(500, cancellationToken: ct);
+
+        // FadeOut: 1 -> 0 (0.5s)
+        await blackScreen.DOFade(0f, 0.5f).SetUpdate(true).ToUniTask(cancellationToken: ct);
+
+        // 淡出后禁用 blocksRaycasts
+        blackScreen.blocksRaycasts = false;
+    }
+
+    /// <summary>
+    /// 游戏结束（方法后续补充）。
+    /// </summary>
+    private void GameOver()
+    {
+        // TODO: 后续补充游戏结束逻辑
+        if (enablePhaseDebugLogs)
+        {
+            Debug.Log("[GameManager] GameOver 被调用（方法待补充）。");
+        }
+    }
+
+    /// <summary>
     /// 进入战斗阶段：使用 FightManager 开始战斗。
     /// </summary>
     public void StartBattlePhase()
@@ -445,11 +509,17 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // 清空上一场战斗的未应用提升值（因为已经应用了）
+        _pendingGrowthDelta = null;
+
         // 确保存在当前面具
         if (maskMakeManager != null && maskMakeManager.CurrentMask == null)
         {
-            EnterMakeMaskPhase();
+            await EnterMakeMaskPhaseAsync(ct);
         }
+
+        // 黑屏淡入淡出：从制造到战斗
+        await PlayBlackScreenTransition(ct);
 
         // 进入战斗阶段：关闭制造 UI，打开战斗 UI（CanvasGroup 会同时控制透明度与射线）
         if (makeMuskUI != null) SetUIActiveWithCanvasGroup(makeMuskUI.gameObject, false);
@@ -480,15 +550,36 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            System.Action<FightContext> onEnd = null;
-            onEnd = _ =>
+            System.Action<FightContext> onVictory = null;
+            System.Action<FightContext> onDefeat = null;
+            
+            onVictory = async (fightCtx) =>
             {
-                ctx.OnVictory -= onEnd;
-                ctx.OnDefeat -= onEnd;
+                ctx.OnVictory -= onVictory;
+                ctx.OnDefeat -= onDefeat;
+                
+                // 战斗胜利：停止战斗计算
+                if (fightManager != null)
+                {
+                    fightManager.StopFight();
+                }
+                
+                // 等待几秒后调用 gameOver
+                await UniTask.Delay(2000, cancellationToken: ct); // 等待 2 秒
+                GameOver();
+                
                 _battleEndTcs.TrySetResult(true);
             };
-            ctx.OnVictory += onEnd;
-            ctx.OnDefeat += onEnd;
+            
+            onDefeat = _ =>
+            {
+                ctx.OnVictory -= onVictory;
+                ctx.OnDefeat -= onDefeat;
+                _battleEndTcs.TrySetResult(true);
+            };
+            
+            ctx.OnVictory += onVictory;
+            ctx.OnDefeat += onDefeat;
         }
 
         await _battleEndTcs.Task.AttachExternalCancellation(ct);
@@ -719,6 +810,20 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        // 先存储未应用的提升值（用于 UI 显示"提升的数值（还未运用）"）
+        // 注意：这里存储的是收集到的提升值，在应用前 UI 可以显示
+        _pendingGrowthDelta = new PlayerGrowthDelta
+        {
+            AddMaxHP = delta.AddMaxHP,
+            AddAttack = delta.AddAttack,
+            AddDefense = delta.AddDefense,
+            AddCritChance = delta.AddCritChance,
+            AddCritMultiplier = delta.AddCritMultiplier,
+            AddSpeedRate = delta.AddSpeedRate,
+            AddLuck = delta.AddLuck
+        };
+
+        // 然后应用提升值
         if (JamDefaultSettings.PersistentGrowthCalculator != null)
         {
             JamDefaultSettings.PersistentGrowthCalculator.Apply(Player.I, delta, ctx);
@@ -728,6 +833,9 @@ public class GameManager : MonoBehaviour
             // 兜底：直接应用（不建议为 null）
             Player.I.ApplyGrowth(delta);
         }
+
+        // 注意：应用后不立即清空 _pendingGrowthDelta，以便 UI 可以显示"已应用的提升值"
+        // 在下一个战斗开始前清空（在 StartBattlePhaseAsync 中清空）
     }
 
     private void TraverseMaterialGrowthTree(IReadOnlyList<MaterialLogicNode> nodes, in MaterialVommandeTreeContext tctx, PlayerGrowthDelta delta, FightContext fight)
