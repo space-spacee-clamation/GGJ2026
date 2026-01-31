@@ -21,16 +21,16 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
     {
         // roundIndex 从 0 开始
         //int r = Mathf.Max(0, roundIndex);
-        int r = 1;
+        int r = 0;
         if(roundIndex <= 5 && roundIndex >1)
         {
            r = (roundIndex + 1) * 2;  
         }
-        else if(roundIndex <= 20)
+        else if(roundIndex <= 20 && roundIndex > 5)
         {
             r = (roundIndex + 1) * 3;
         }
-        else
+        else if(roundIndex > 20)
         {
             r = (roundIndex - 1) / 20;
         }
