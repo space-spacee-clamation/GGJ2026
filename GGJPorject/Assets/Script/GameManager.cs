@@ -84,6 +84,8 @@ public class GameManager : MonoBehaviour
     private CancellationToken _destroyToken;
     private bool _manualAdvanceInProgress;
     private Tween _costWarningTween; // 费用不足警告动画
+    private readonly System.Threading.SemaphoreSlim _blackScreenTransitionGate = new(1, 1);
+    private AudioKey? _currentMainBgm;
 
     private void Awake()
     {
@@ -138,6 +140,14 @@ public class GameManager : MonoBehaviour
         {
             RunMainLoopAsync().Forget();
         }
+        SwitchMainBgm(AudioKey.Game_Shop_Music);
+
+    }
+
+    private void SwitchMainBgm(AudioKey key)
+    {
+        if (audioManager == null) return;
+        audioManager.Play(key);
     }
 
     private void BuildDropPoolFromResources()
@@ -421,17 +431,21 @@ public class GameManager : MonoBehaviour
 
     private async UniTaskVoid EnterMakeMaskPhaseAsync(CancellationToken ct)
     {
+        SwitchMainBgm(AudioKey.Game_Shop_Music);
+
         // 黑屏淡入淡出：从战斗到制造（内容切换在黑屏期间执行）
-        await PlayBlackScreenTransition(() =>
+        await PlayBlackScreenTransition(_ =>
         {
+            // 商店/制造阶段音乐：尽量在黑屏中切换
+
             if (maskMakeManager == null)
             {
                 Debug.LogError("[GameManager] MaskMakeManager 未初始化。", this);
-                return;
+                return UniTask.CompletedTask;
             }
 
             var newMask = maskMakeManager.MakeNextMask();
-            if (newMask == null) return;
+            if (newMask == null) return UniTask.CompletedTask;
 
             // 当前面具：用于本回合材料附加与本场战斗，同时也会参与"面具库注入"（但战后才正式入库）
             if (newMask.transform.parent != transform && newMask.transform.parent != maskMakeManager.transform)
@@ -452,6 +466,7 @@ public class GameManager : MonoBehaviour
 
             // 进入制造阶段：关闭战斗 UI
             if (battleUI != null) SetUIActiveWithCanvasGroup(battleUI.gameObject, false);
+            return UniTask.CompletedTask;
         }, ct);
     }
 
@@ -460,10 +475,14 @@ public class GameManager : MonoBehaviour
     /// 流程：fadeIn 0.5s -> 执行内容切换回调 -> 等待 0.5s -> fadeOut 0.5s
     /// </summary>
     /// <param name="onContentSwitch">在 fadeIn 完成后、等待期间执行的内容切换回调</param>
-    private async UniTask PlayBlackScreenTransition(System.Action onContentSwitch, CancellationToken ct)
+    private async UniTask PlayBlackScreenTransition(System.Func<CancellationToken, UniTask> onContentSwitch, CancellationToken ct)
     {
         if (blackScreen == null) return;
 
+        // 强约束：黑屏转场不允许并发/重入（否则会造成 Tween Kill、时序错乱、流程异常）
+        await _blackScreenTransitionGate.WaitAsync(ct);
+        try
+        {
         // 确保黑屏 GameObject 激活
         if (!blackScreen.gameObject.activeSelf)
         {
@@ -474,29 +493,46 @@ public class GameManager : MonoBehaviour
         blackScreen.alpha = 0f;
         blackScreen.blocksRaycasts = true;
         blackScreen.interactable = false;
+        
 
         // FadeIn: 0 -> 1 (0.5s)
         var fadeInTcs = new UniTaskCompletionSource();
         var fadeInTween = blackScreen.DOFade(1f, 0.5f).SetUpdate(true);
         fadeInTween.OnComplete(() => fadeInTcs.TrySetResult());
-        fadeInTween.OnKill(() => fadeInTcs.TrySetCanceled());
+        fadeInTween.OnKill(() =>
+        {
+            // 被外部 Kill 时尽量保证状态一致，避免 await 抛异常导致流程中断
+            if (blackScreen != null) blackScreen.alpha = 1f;
+            fadeInTcs.TrySetResult();
+        });
         await fadeInTcs.Task.AttachExternalCancellation(ct);
 
-        // 在黑屏完全显示后立即执行内容切换
-        onContentSwitch?.Invoke();
+    
 
         // 等待 0.5s（让内容切换完成）
-        await UniTask.Delay(500, cancellationToken: ct);
+        await UniTask.Delay(200, cancellationToken: ct);
+        // 在黑屏完全显示后立即执行内容切换
+        if (onContentSwitch != null) await onContentSwitch(ct);
+        await UniTask.Delay(200, cancellationToken: ct);
 
         // FadeOut: 1 -> 0 (0.5s)
         var fadeOutTcs = new UniTaskCompletionSource();
         var fadeOutTween = blackScreen.DOFade(0f, 0.5f).SetUpdate(true);
         fadeOutTween.OnComplete(() => fadeOutTcs.TrySetResult());
-        fadeOutTween.OnKill(() => fadeOutTcs.TrySetCanceled());
+        fadeOutTween.OnKill(() =>
+        {
+            if (blackScreen != null) blackScreen.alpha = 0f;
+            fadeOutTcs.TrySetResult();
+        });
         await fadeOutTcs.Task.AttachExternalCancellation(ct);
 
         // 淡出后禁用 blocksRaycasts
         blackScreen.blocksRaycasts = false;
+        }
+        finally
+        {
+            _blackScreenTransitionGate.Release();
+        }
     }
 
     /// <summary>
@@ -550,27 +586,36 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+        SwitchMainBgm(AudioKey.Game_Fight_Music);
 
         // 黑屏淡入淡出：从制造到战斗（内容切换在黑屏期间执行）
-        await PlayBlackScreenTransition(() =>
+        await PlayBlackScreenTransition(_ =>
         {
+            // 战斗音乐：尽量在黑屏中切换
+
             // 进入战斗阶段：关闭制造 UI，打开战斗 UI（CanvasGroup 会同时控制透明度与射线）
-            if (makeMuskUI != null) SetUIActiveWithCanvasGroup(makeMuskUI.gameObject, false);
+            if (makeMuskUI != null) {
+                SetUIActiveWithCanvasGroup(makeMuskUI.gameObject, false);
+            }
             if (battleUI != null) 
             {
                 SetUIActiveWithCanvasGroup(battleUI.gameObject, true);
-                 var injectors = new System.Collections.Generic.List<IMaskBattleInjector>();
-        for (int i = 0; i < _maskLibrary.Count; i++)
-        {
-            if (_maskLibrary[i] != null) injectors.Add(_maskLibrary[i]);
-        }
-        if (maskMakeManager != null && maskMakeManager.CurrentMask != null)
-        {
-            injectors.Add(maskMakeManager.CurrentMask);
-        }
-        fightManager.SetMaskBattleInjector(new MaskLibraryInjector(injectors));
-                fightManager.StartFight();
             }
+
+            // 注入面具库 + 当前面具（不依赖 battleUI 是否存在）
+            var injectors = new System.Collections.Generic.List<IMaskBattleInjector>();
+            for (int i = 0; i < _maskLibrary.Count; i++)
+            {
+                if (_maskLibrary[i] != null) injectors.Add(_maskLibrary[i]);
+            }
+            if (maskMakeManager != null && maskMakeManager.CurrentMask != null)
+            {
+                injectors.Add(maskMakeManager.CurrentMask);
+            }
+            fightManager.SetMaskBattleInjector(new MaskLibraryInjector(injectors));
+            fightManager.StartFight();
+
+            return UniTask.CompletedTask;
         }, ct);
         _battleEndTcs = new UniTaskCompletionSource<bool>();
 
@@ -622,7 +667,8 @@ public class GameManager : MonoBehaviour
         PostBattleSettlement(ctx);
 
         // 战斗结束：关闭战斗 UI（制造阶段会在下一轮再打开）
-        if (battleUI != null) SetUIActiveWithCanvasGroup(battleUI.gameObject, false);
+        // 重要：不要在这里关 battleUI；否则会出现“还没黑屏战斗界面就关闭”的观感问题。
+        // battleUI 的关闭应统一放到 EnterMakeMaskPhaseAsync 的黑屏内容切换中执行。
     }
 
     private static void SetUIActiveWithCanvasGroup(GameObject go, bool active)

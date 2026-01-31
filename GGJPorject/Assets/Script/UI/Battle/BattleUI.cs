@@ -38,6 +38,7 @@ public sealed class BattleUI : MonoBehaviour
     private Vector2 _enemyInitialPos;
     private Tween _playerAttackTween;
     private Tween _enemyAttackTween;
+    private bool _warnedMissingAttackAnimRefs;
 
     private void OnEnable()
     {
@@ -140,17 +141,29 @@ public sealed class BattleUI : MonoBehaviour
 
     private void OnBeforePlayerAttack(FightContext ctx, AttackInfo info)
     {
-        PlayAttackAnimation(playerRect, enemyDamageAnchor, _playerInitialPos, isPlayer: true);
+        // 容错：很多场景只配置了 enemyRect，而没配置 enemyDamageAnchor（飘字锚点）
+        // 这会让动画“看起来像回调没触发”。这里做 fallback。
+        var target = enemyDamageAnchor != null ? enemyDamageAnchor : enemyRect;
+        PlayAttackAnimation(playerRect, target, _playerInitialPos, isPlayer: true);
     }
 
     private void OnBeforeEnemyAttack(FightContext ctx, AttackInfo info)
     {
-        PlayAttackAnimation(enemyRect, playerDamageAnchor, _enemyInitialPos, isPlayer: false);
+        var target = playerDamageAnchor != null ? playerDamageAnchor : playerRect;
+        PlayAttackAnimation(enemyRect, target, _enemyInitialPos, isPlayer: false);
     }
 
     private void PlayAttackAnimation(RectTransform attackerRect, RectTransform targetAnchor, Vector2 initialPos, bool isPlayer)
     {
-        if (attackerRect == null || targetAnchor == null) return;
+        if (attackerRect == null || targetAnchor == null)
+        {
+            if (!_warnedMissingAttackAnimRefs)
+            {
+                _warnedMissingAttackAnimRefs = true;
+                Debug.LogWarning("[BattleUI] 攻击前动画缺少引用：请检查 BattleUI 的 playerRect/enemyRect 以及 playerDamageAnchor/enemyDamageAnchor（可缺锚点但至少要有 Rect）。", this);
+            }
+            return;
+        }
 
         // 停止之前的动画
         if (isPlayer)
@@ -180,7 +193,8 @@ public sealed class BattleUI : MonoBehaviour
         Vector2 localDirection = new Vector2(localDirection3D.x, localDirection3D.y).normalized;
 
         // 计算命中位置：从目标位置向攻击者方向偏移
-        Vector2 hitLocalPos = targetLocalPos - localDirection * GameSetting.AttackHitDistance;
+        float hitDistance = attackHitDistance > 0f ? attackHitDistance : GameSetting.AttackHitDistance;
+        Vector2 hitLocalPos = targetLocalPos - localDirection * hitDistance;
 
         // 动画：去程（50% 时间）+ 回程（50% 时间）
         float halfDuration = GameSetting.AttackTweenTotalSeconds * 0.5f;

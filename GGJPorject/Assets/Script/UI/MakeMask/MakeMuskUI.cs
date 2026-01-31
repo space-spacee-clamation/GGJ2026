@@ -134,7 +134,7 @@ public class MakeMuskUI : MonoBehaviour
             int cost = Mathf.Max(0, mat.ManaCost);
             foreach(var choiced in _choiced.Values)
             {
-                cost -= choiced.Material.ManaCost;
+                cost += choiced.Material.ManaCost;
             }
             if (mask.CurrentMana < cost)
             {
@@ -261,7 +261,6 @@ public class MakeMuskUI : MonoBehaviour
     {
         if (_choiced.Count > 0) return; // 安全：有未处理的已选材料禁止进入战斗
         GameManager.I?.NotifyMakeMaskFinished();
-        gameObject.SetActive(false);
     }
 
     private void UpdateNextInteractable()

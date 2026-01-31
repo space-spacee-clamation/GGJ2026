@@ -52,7 +52,7 @@ MonoBehaviour:
   Type: 1
   ManaCost: 2
   Quality: 0
-  BaseSprite: {fileID: 0}
+  BaseSprite: {fileID: 1215414946, guid: 61fa58eba8ae79d448d20da75cfa4a04, type: 3}
   ShelfLifeTurns: 1
   remainingShelfLifeTurns: 1
   logicTreeRoots:

@@ -4,6 +4,9 @@ public enum AudioKey
     BGM_TEST_1 = 0,
     BGM_TEST_2 = 1,
 
+    Game_Base_Music = 2,
+    Game_Shop_Music = 3,
+    Game_Fight_Music = 4,
 }
 
 

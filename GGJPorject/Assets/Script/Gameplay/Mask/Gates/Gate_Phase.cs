@@ -27,16 +27,6 @@ public sealed class Gate_Phase : MonoBehaviour, IMaterialLogicNode, IMaterialTra
     {
         if (actual == configured) return true;
 
-        // 兼容旧配置：AttackModify/DamageApplied 视为“玩家/敌人两侧都匹配”
-        if (configured == MaterialTraversePhase.AttackModify)
-        {
-            return actual == MaterialTraversePhase.PlayerAttackBefore || actual == MaterialTraversePhase.EnemyAttackBefore;
-        }
-        if (configured == MaterialTraversePhase.DamageApplied)
-        {
-            return actual == MaterialTraversePhase.PlayerAttackAfter || actual == MaterialTraversePhase.EnemyAttackAfter;
-        }
-
         return false;
     }
 
