@@ -52,7 +52,7 @@ MonoBehaviour:
   Type: 3
   ManaCost: 3
   Quality: 2
-  BaseSprite: {fileID: 0}
+  BaseSprite: {fileID: 865285123, guid: 61fa58eba8ae79d448d20da75cfa4a04, type: 3}
   ShelfLifeTurns: 3
   remainingShelfLifeTurns: 3
   logicTreeRoots:
@@ -103,6 +103,8 @@ MonoBehaviour:
   addMaxHP: 0
   addSpeedRate: 0
   addLuck: 3
+  addPenetrationPercent: 0
+  addPenetrationFixed: 0
 --- !u!114 &5341590697391249842
 MonoBehaviour:
   m_ObjectHideFlags: 0

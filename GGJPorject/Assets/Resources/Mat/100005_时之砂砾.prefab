@@ -59,7 +59,7 @@ MonoBehaviour:
   Type: 0
   ManaCost: 0
   Quality: 1
-  BaseSprite: {fileID: 0}
+  BaseSprite: {fileID: 226971943, guid: 61fa58eba8ae79d448d20da75cfa4a04, type: 3}
   ShelfLifeTurns: 2
   remainingShelfLifeTurns: 1
   logicTreeRoots:
@@ -128,6 +128,8 @@ MonoBehaviour:
   addMaxHP: 0
   addSpeedRate: 16
   addLuck: 0
+  addPenetrationPercent: 0
+  addPenetrationFixed: 0
 --- !u!114 &917062039358644278
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -162,6 +164,8 @@ MonoBehaviour:
   addMaxHP: 0
   addSpeedRate: 0
   addLuck: 0
+  addPenetrationPercent: 0
+  addPenetrationFixed: 0
 --- !u!114 &4777719365680377884
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -236,6 +240,8 @@ MonoBehaviour:
   addMaxHP: 0
   addSpeedRate: 0
   addLuck: 0
+  addPenetrationPercent: 0
+  addPenetrationFixed: 0
 --- !u!114 &4248431637902370012
 MonoBehaviour:
   m_ObjectHideFlags: 0
