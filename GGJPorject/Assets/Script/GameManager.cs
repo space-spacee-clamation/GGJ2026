@@ -1133,6 +1133,12 @@ public class GameManager : MonoBehaviour
     {
         if (costWarningCanvasGroup == null) return;
 
+        // 播放费用不足音效
+        if (audioManager != null)
+        {
+            audioManager.PlaySfxOnce(AudioKey.FBX_Cost_Not_Enough);
+        }
+
         // 停止当前动画
         _costWarningTween?.Kill();
 

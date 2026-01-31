@@ -228,6 +228,12 @@ public class FightManager : MonoBehaviour
 
         // 通知：攻击前（不用于修改）
         Context.RaiseBeforeAttack(side, info);
+        
+        // 播放攻击音效（玩家攻击时）
+        if (side == FightSide.Player && AudioManager.I != null)
+        {
+            AudioManager.I.PlaySfxOnce(AudioKey.FBX_Attack);
+        }
 
         // 通知：攻击后
         Context.RaiseAfterAttack(side, info);

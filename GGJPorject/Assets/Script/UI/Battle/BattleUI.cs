@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -33,12 +34,19 @@ public sealed class BattleUI : MonoBehaviour
 
     [SerializeField] private float attackHitDistance = 50f;
 
+    [Header("Monster Spawn")]
+    [Tooltip("怪物 Prefab 池：每次战斗开始时随机选择一个并生成到怪物节点位置。")]
+    [SerializeField] private List<GameObject> monsterPrefabs = new List<GameObject>();
+    [Tooltip("怪物生成位置节点（Transform 或 RectTransform）。")]
+    [SerializeField] private Transform monsterSpawnNode;
+
     private FightContext _bound;
     private Vector2 _playerInitialPos;
     private Vector2 _enemyInitialPos;
     private Tween _playerAttackTween;
     private Tween _enemyAttackTween;
     private bool _warnedMissingAttackAnimRefs;
+    private GameObject _currentMonsterInstance;
 
     private void OnEnable()
     {
@@ -72,6 +80,8 @@ public sealed class BattleUI : MonoBehaviour
         _bound.OnDamageApplied += OnDamageApplied;
         _bound.OnBeforePlayerAttack += OnBeforePlayerAttack;
         _bound.OnBeforeEnemyAttack += OnBeforeEnemyAttack;
+        _bound.OnBattleStart += OnBattleStart;
+        _bound.OnBattleEnd += OnBattleEnd;
 
         // 保存初始位置
         if (playerRect != null) _playerInitialPos = playerRect.anchoredPosition;
@@ -85,6 +95,8 @@ public sealed class BattleUI : MonoBehaviour
             _bound.OnDamageApplied -= OnDamageApplied;
             _bound.OnBeforePlayerAttack -= OnBeforePlayerAttack;
             _bound.OnBeforeEnemyAttack -= OnBeforeEnemyAttack;
+            _bound.OnBattleStart -= OnBattleStart;
+            _bound.OnBattleEnd -= OnBattleEnd;
         }
         _bound = null;
 
@@ -93,6 +105,9 @@ public sealed class BattleUI : MonoBehaviour
         _enemyAttackTween?.Kill();
         _playerAttackTween = null;
         _enemyAttackTween = null;
+
+        // 清理怪物实例
+        ClearMonsterInstance();
     }
 
     private void RefreshBars()
@@ -214,6 +229,73 @@ public sealed class BattleUI : MonoBehaviour
         {
             _enemyAttackTween = sequence;
             sequence.OnComplete(() => _enemyAttackTween = null);
+        }
+    }
+
+    private void OnBattleStart(FightContext ctx)
+    {
+        SpawnRandomMonster();
+    }
+
+    private void OnBattleEnd(FightContext ctx)
+    {
+        ClearMonsterInstance();
+    }
+
+    private void SpawnRandomMonster()
+    {
+        // 先清理之前的怪物
+        ClearMonsterInstance();
+
+        // 检查是否有可用的 Prefab
+        if (monsterPrefabs == null || monsterPrefabs.Count == 0)
+        {
+            Debug.LogWarning("[BattleUI] 怪物 Prefab 池为空，无法生成怪物。", this);
+            return;
+        }
+
+        // 检查生成节点
+        if (monsterSpawnNode == null)
+        {
+            Debug.LogWarning("[BattleUI] 怪物生成节点未设置，无法生成怪物。", this);
+            return;
+        }
+
+        // 过滤掉 null 的 Prefab
+        var validPrefabs = new System.Collections.Generic.List<GameObject>();
+        for (int i = 0; i < monsterPrefabs.Count; i++)
+        {
+            if (monsterPrefabs[i] != null)
+            {
+                validPrefabs.Add(monsterPrefabs[i]);
+            }
+        }
+
+        if (validPrefabs.Count == 0)
+        {
+            Debug.LogWarning("[BattleUI] 怪物 Prefab 池中没有有效的 Prefab。", this);
+            return;
+        }
+
+        // 随机选择一个 Prefab
+        int randomIndex = Random.Range(0, validPrefabs.Count);
+        GameObject selectedPrefab = validPrefabs[randomIndex];
+
+        // 实例化到指定位置
+        _currentMonsterInstance = Instantiate(selectedPrefab, monsterSpawnNode);
+        
+        // 重置位置和旋转（确保对齐到生成节点）
+        _currentMonsterInstance.transform.localPosition = Vector3.zero;
+        _currentMonsterInstance.transform.localRotation = Quaternion.identity;
+        _currentMonsterInstance.transform.localScale = Vector3.one;
+    }
+
+    private void ClearMonsterInstance()
+    {
+        if (_currentMonsterInstance != null)
+        {
+            Destroy(_currentMonsterInstance);
+            _currentMonsterInstance = null;
         }
     }
 }

@@ -7,6 +7,11 @@ public enum AudioKey
     Game_Base_Music = 2,
     Game_Shop_Music = 3,
     Game_Fight_Music = 4,
+
+    FBX_Attack,
+    FBX_Cost_Not_Enough,
+    FBX_Compose_Met,
+    FBX_Click_Met,
 }
 
 

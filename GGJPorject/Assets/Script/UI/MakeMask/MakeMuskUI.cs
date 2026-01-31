@@ -10,6 +10,10 @@ public class MakeMuskUI : MonoBehaviour
 
     [SerializeField] private TextMeshProUGUI CostText;
 
+    [Header("Selected Cost Display")]
+    [Tooltip("显示选中材料总消耗的 TMP 文本。")]
+    [SerializeField] private TextMeshProUGUI selectedCostText;
+
     [Header("Mask View")]
     [SerializeField] private Image maskImage;
     [SerializeField] private Sprite baseMaskSprite;
@@ -59,6 +63,7 @@ public class MakeMuskUI : MonoBehaviour
         RefreshInventoryUI();
         UpdateNextInteractable();
         UpdateMaskSprite();
+        UpdateSelectedCostDisplay();
     }
 
     private void OnDisable()
@@ -84,7 +89,10 @@ public class MakeMuskUI : MonoBehaviour
         }
         _choiced.Clear();
 
-        // 按“加入库存顺序”展示：MaterialInventory.Items 的顺序就是加入顺序
+        // 更新选中消耗显示（清空后应该隐藏）
+        UpdateSelectedCostDisplay();
+
+        // 按"加入库存顺序"展示：MaterialInventory.Items 的顺序就是加入顺序
         var inv = GameManager.I != null ? GameManager.I.GetMaterialInventoryItems() : null;
         if (inv == null) return;
 
@@ -145,6 +153,12 @@ public class MakeMuskUI : MonoBehaviour
             }
         }
 
+        // 播放点击材料音效
+        if (AudioManager.I != null)
+        {
+            AudioManager.I.PlaySfxOnce(AudioKey.FBX_Click_Met);
+        }
+
         // 生成 ChoicedMaterial（UI），但不移动材料实例（材料仍在库存中）
         ChoicedMaterial c = null;
         if (choicedMaterialPrefab != null && chosenSpawnArea != null)
@@ -159,6 +173,7 @@ public class MakeMuskUI : MonoBehaviour
         btn.SetSelected(true);
         ShowMaterialInfo(mat);
         UpdateNextInteractable();
+        UpdateSelectedCostDisplay();
     }
 
     public void OnClickChoiced(ChoicedMaterial c)
@@ -177,6 +192,7 @@ public class MakeMuskUI : MonoBehaviour
         }
 
         UpdateNextInteractable();
+        UpdateSelectedCostDisplay();
     }
 
     private void OnClickCompose()
@@ -212,6 +228,12 @@ public class MakeMuskUI : MonoBehaviour
             var result = mask.BindMaterial(mat);
             if (result.Success)
             {
+                // 播放合成材料音效
+                if (AudioManager.I != null)
+                {
+                    AudioManager.I.PlaySfxOnce(AudioKey.FBX_Compose_Met);
+                }
+                
                 if (enableLogs) Debug.Log($"[MakeMuskUI] Compose 成功：Bind {mat.DisplayName} cost={mat.ManaCost} maskMana={mask.CurrentMana}/{mask.BaseMana}", this);
                 // 从库存移除（材料成为面具一部分，不再参与库存结算）
                 GameManager.I.RemoveMaterialFromInventory(mat);
@@ -255,6 +277,7 @@ public class MakeMuskUI : MonoBehaviour
 
         UpdateMaskSprite();
         UpdateNextInteractable();
+        UpdateSelectedCostDisplay();
     }
 
     private void OnClickNext()
@@ -285,5 +308,32 @@ public class MakeMuskUI : MonoBehaviour
     }
     private void Update(){
         CostText.text = MaskMakeManager.I.CurrentMask.CurrentMana.ToString();
+    }
+
+    /// <summary>
+    /// 更新选中材料消耗显示：计算当前选中材料的总消耗，如果大于0则显示并更新文本，否则隐藏。
+    /// </summary>
+    private void UpdateSelectedCostDisplay()
+    {
+        // 计算当前选中材料的总消耗
+        int totalCost = 0;
+        foreach (var choiced in _choiced.Values)
+        {
+            if (choiced != null && choiced.Material != null)
+            {
+                totalCost += Mathf.Max(0, choiced.Material.ManaCost);
+            }
+        }
+
+        // 如果消耗大于0，显示并更新文本；否则隐藏
+        if (totalCost > 0)
+        {
+            selectedCostText.gameObject.SetActive(true);
+            selectedCostText.text = $"-{totalCost}";
+        }
+        else
+        {
+            selectedCostText.gameObject.SetActive(false);
+        }
     }
 }

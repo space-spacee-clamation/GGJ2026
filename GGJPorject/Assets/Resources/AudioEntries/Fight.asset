@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   key: Game_Fight_Music
   clip: {fileID: 8300000, guid: 606e251ee24db934b95c4aef7f3f51e9, type: 3}
-  volume: 1
+  volume: 0.4
   track: 1
   useReplaceLogic: 1
   isBackground: 0
