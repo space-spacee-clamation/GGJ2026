@@ -1040,9 +1040,7 @@ public class GameManager : MonoBehaviour
                 gm.maskMakeManager.EnsureBaseMaskPrefabForTest(10);
             }
 
-            // 怪物生成：如果当前链条生成不出怪物，自动挂一个测试逻辑并重建链
-            if (gm.monsterSpawnSystem != null)
-            {
+
                 var testCfg = gm.monsterSpawnSystem.Spawn(0, null);
                 if (testCfg == null)
                 {
@@ -1053,7 +1051,6 @@ public class GameManager : MonoBehaviour
                     }
                     gm.monsterSpawnSystem.Initialize();
                 }
-            }
 
             // 制造 UI：如果没配 UI 且没开 autoCompleteMakePhase，会卡住等待
             if (gm.makeMuskUI == null && !gm.autoCompleteMakePhase)
