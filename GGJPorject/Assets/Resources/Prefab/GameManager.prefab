@@ -227,6 +227,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5670019165565491699}
   - component: {fileID: 8538369949452993988}
+  - component: {fileID: 8484849153038366624}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -273,7 +274,6 @@ MonoBehaviour:
   maskMakeManager: {fileID: 7108327857735227525}
   makeMuskUI: {fileID: 0}
   battleUI: {fileID: 0}
-  playerConfig: {fileID: 11400000, guid: 07b301303c7a1ee45be2a2557b9ede8d, type: 2}
   maskLibraryRoot: {fileID: 0}
   materialInventory:
     items: []
@@ -282,10 +282,22 @@ MonoBehaviour:
   dropPool: {fileID: 0}
   dropMethod: {fileID: 0}
   dropCount: 10
-  autoBuildDropPoolFromResources: 1
   resourcesMatFolder: Mat
   initialCommonMaterialCount: 4
   autoRunLoop: 0
   autoCompleteMakePhase: 0
   enableJamAutoFixes: 1
   enablePhaseDebugLogs: 1
+--- !u!114 &8484849153038366624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8659007490375052099}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c574e7ca620187409ec5b98b9d74bb2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaterialPrefab: {fileID: 0}

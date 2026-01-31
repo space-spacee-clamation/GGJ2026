@@ -587,6 +587,37 @@ public class GameManager : MonoBehaviour
         materialInventory?.Remove(mat);
     }
 
+    /// <summary>
+    /// Jam 调试工具：手动生成一个材料实例并加入库存。
+    /// </summary>
+    public MaterialObj DebugSpawnMaterialToInventory(MaterialObj prefab)
+    {
+        if (prefab == null)
+        {
+            Debug.LogWarning("[GameManager] DebugSpawnMaterialToInventory：prefab 为空。", this);
+            return null;
+        }
+        if (materialInventory == null)
+        {
+            Debug.LogError("[GameManager] DebugSpawnMaterialToInventory：materialInventory 为空。", this);
+            return null;
+        }
+
+        var parent = materialInventoryRoot != null ? materialInventoryRoot : transform;
+        var inst = Instantiate(prefab, parent, false);
+        inst.name = $"{prefab.name}_Inv_Debug";
+        inst.ResetInventoryShelfLife();
+        materialInventory.Add(inst);
+
+        if (makeMuskUI != null && makeMuskUI.gameObject.activeInHierarchy)
+        {
+            makeMuskUI.RefreshInventoryUI();
+        }
+
+        Debug.Log($"[GameManager] DebugSpawnMaterialToInventory：已入库 {inst.name}", inst);
+        return inst;
+    }
+
     private void CollectAndApplyPersistentGrowth(FightContext ctx)
     {
         if (Player.I == null) return;
