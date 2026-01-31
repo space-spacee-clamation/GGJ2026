@@ -743,6 +743,7 @@ public class MaterialEditorWindow : OdinEditorWindow
             public Type NewType;
             public string Name;
             public string Desc;
+            public string Keywords;
             public bool Disabled;
         }
 
@@ -781,12 +782,19 @@ public class MaterialEditorWindow : OdinEditorWindow
                 bool hasOne = editingInstance != null && editingInstance.GetComponent(t) != null;
                 bool disabled = disallow && hasOne;
                 var extra = disabled ? "（该脚本带 DisallowMultipleComponent，不能重复添加）" : "";
+
+                GetCnMeta(t, out var cnName, out var keywords);
+                var displayName = string.IsNullOrWhiteSpace(cnName)
+                    ? $"{t.Name}（新建）"
+                    : $"{cnName}（{t.Name}）（新建）";
+
                 _entries.Add(new Entry
                 {
                     IsExisting = false,
                     NewType = t,
-                    Name = $"{t.Name}（新建）",
+                    Name = displayName,
                     Desc = GetDefaultComponentDescription(t) + extra,
+                    Keywords = keywords,
                     Disabled = disabled,
                 });
             }
@@ -819,7 +827,8 @@ public class MaterialEditorWindow : OdinEditorWindow
                 if (!string.IsNullOrWhiteSpace(s))
                 {
                     bool hit = (e.Name != null && e.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                               (e.Desc != null && e.Desc.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
+                               (e.Desc != null && e.Desc.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                               (e.Keywords != null && e.Keywords.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
                     if (!hit) continue;
                 }
 
@@ -849,6 +858,10 @@ public class MaterialEditorWindow : OdinEditorWindow
                     if (!string.IsNullOrWhiteSpace(e.Desc))
                     {
                         EditorGUILayout.LabelField(e.Desc, EditorStyles.miniLabel);
+                    }
+                    if (!string.IsNullOrWhiteSpace(e.Keywords))
+                    {
+                        EditorGUILayout.LabelField("关键词：" + e.Keywords, EditorStyles.miniLabel);
                     }
                 }
             }
@@ -907,6 +920,24 @@ public class MaterialEditorWindow : OdinEditorWindow
             }
             catch { /* ignore */ }
             return string.Empty;
+        }
+
+        private static void GetCnMeta(Type t, out string cnName, out string keywords)
+        {
+            cnName = string.Empty;
+            keywords = string.Empty;
+            if (t == null) return;
+            try
+            {
+                var a = Attribute.GetCustomAttribute(t, typeof(MaterialCnMetaAttribute), inherit: false) as MaterialCnMetaAttribute;
+                if (a == null) return;
+                cnName = a.Name ?? string.Empty;
+                keywords = a.Keywords ?? string.Empty;
+            }
+            catch
+            {
+                // ignore
+            }
         }
     }
 

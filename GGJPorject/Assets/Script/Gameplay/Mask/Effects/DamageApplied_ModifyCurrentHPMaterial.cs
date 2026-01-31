@@ -18,6 +18,7 @@ public enum CurrentHpModifyMode
 /// - Flat：直接加/减固定值
 /// - Percent：按目标 MaxHP 的百分比加/减
 /// </summary>
+[MaterialCnMeta("行动后改当前生命", "吸血 反伤 治疗 生命 行动后 结算后")]
 public sealed class DamageApplied_ModifyCurrentHPMaterial : MonoBehaviour, IMaterialEffect, IMaterialDescriptionProvider
 {
     [SerializeField] private CurrentHpModifyTarget target = CurrentHpModifyTarget.Attacker;

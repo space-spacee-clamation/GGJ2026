@@ -8,6 +8,24 @@ public interface IMaterialLogicNode
 }
 
 /// <summary>
+/// 材质节点/效果器的中文元数据（用于策划友好的显示与中文关键词检索）。
+/// - Name：中文名（用于显示）
+/// - Keywords：关键词（用于检索，建议用空格分隔）
+/// </summary>
+[System.AttributeUsage(System.AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+public sealed class MaterialCnMetaAttribute : System.Attribute
+{
+    public string Name { get; }
+    public string Keywords { get; }
+
+    public MaterialCnMetaAttribute(string name, string keywords = "")
+    {
+        Name = name ?? string.Empty;
+        Keywords = keywords ?? string.Empty;
+    }
+}
+
+/// <summary>
 /// 纯“效果器”：只负责根据统一上下文执行效果。
 /// - 不实现 IMaterialBindEffect / IMaterialBattleStartEffect 等注入接口
 /// - 注入/触发由“逻辑节点（IMaterialLogicNode）”负责

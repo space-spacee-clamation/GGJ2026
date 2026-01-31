@@ -13,6 +13,7 @@ public enum AttackInfoNumericField
 /// 行动阶段（AttackModify）：按面具数量缩放数值。
 /// 例：每有 1 个面具，RawAttack +2。
 /// </summary>
+[MaterialCnMeta("按面具数量加成", "面具数量 缩放 叠加 攻击 暴击 爆伤")]
 public sealed class AttackInfo_AddByMaskCountMaterial : MonoBehaviour, IMaterialAttackInfoEffect, IMaterialDescriptionProvider
 {
     [SerializeField] private AttackInfoNumericField field = AttackInfoNumericField.RawAttack;
