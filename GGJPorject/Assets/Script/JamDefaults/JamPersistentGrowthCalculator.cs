@@ -28,15 +28,15 @@ public sealed class JamPersistentGrowthCalculator_Default : IJamPersistentGrowth
     {
         if (player == null || delta == null) return;
 
-        // 这里就是“公式入口”，你可以在 ApplyGrowth 之前对 delta 做任意处理：
+        // 这里就是"公式入口"，你可以在 ApplyGrowth 之前对 delta 做任意处理：
         // - 倍率、上限、衰减
         // - 基于玩家当前 ActualStats 或 battle stats（fightContext.Player）做缩放
         // - 例如：delta.AddAttack = Mathf.Floor(delta.AddAttack * 0.5f);
 
         player.ApplyGrowth(delta);
 
-        // Jam 防呆：应用完清零（即使目前 delta 是临时对象，也能避免未来改成复用时踩坑）
-        Reset(delta);
+        // 注意：不再进行 reset，允许成长值累积
+        // 如果需要清零，由调用方负责（例如在 GameManager 中创建新的 delta 对象）
     }
 
     // ---- 辅助方法：统一写 delta（让公式代码更好读）----

@@ -52,17 +52,17 @@ public sealed class CombatantRuntime
         SpeedRate = Mathf.Max(0, config.SpeedRate);
     }
 
-    public static CombatantRuntime FromStats(string name, PlayerStats stats)
+    public static CombatantRuntime FromStats(string name, PlayerStats stats, PlayerGrowthDelta pendingGrowthDelta)
     {
         stats.Clamp();
         var c = new CombatantRuntime(name, null)
         {
-            MaxHP = stats.MaxHP,
-            Attack = stats.Attack,
-            Defense = stats.Defense,
-            CritChance = stats.CritChance,
-            CritMultiplier = stats.CritMultiplier,
-            SpeedRate = stats.SpeedRate,
+            MaxHP = stats.MaxHP+pendingGrowthDelta.AddMaxHP,
+            Attack = stats.Attack+pendingGrowthDelta.AddAttack,
+            Defense = stats.Defense+pendingGrowthDelta.AddDefense,
+            CritChance = stats.CritChance+pendingGrowthDelta.AddCritChance,
+            CritMultiplier = stats.CritMultiplier+pendingGrowthDelta.AddCritMultiplier,
+            SpeedRate = stats.SpeedRate+pendingGrowthDelta.AddSpeedRate,
         };
         c.CurrentHP = c.MaxHP;
         return c;

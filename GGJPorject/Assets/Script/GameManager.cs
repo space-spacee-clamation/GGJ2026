@@ -99,7 +99,7 @@ public class GameManager : MonoBehaviour
         BootstrapMask();
         BootstrapPlayer();
         BootstrapRuntimeRoots();
-_pendingGrowthDelta= new PlayerGrowthDelta();
+        _pendingGrowthDelta= new PlayerGrowthDelta();
         _destroyToken = this.GetCancellationTokenOnDestroy();
 
         if (enablePhaseDebugLogs)
@@ -921,10 +921,6 @@ _pendingGrowthDelta= new PlayerGrowthDelta();
             // 兜底：直接应用（不建议为 null）
             Player.I.ApplyGrowth(delta);
         }
-
-        // 应用后立即创建新的 _pendingGrowthDelta（用于下一轮累积）
-        // 这样制造阶段就可以往这个新的 delta 中添加成长值
-        _pendingGrowthDelta = new PlayerGrowthDelta();
 
         if (enablePhaseDebugLogs)
         {
