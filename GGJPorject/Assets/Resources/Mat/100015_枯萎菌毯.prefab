@@ -62,7 +62,7 @@ MonoBehaviour:
   remainingShelfLifeTurns: 3
   logicTreeRoots:
   - Title: Gate_Phase
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 1857480156782168980}
     Role: 0
     ActionSide: 0
@@ -80,7 +80,7 @@ MonoBehaviour:
       ActionSide: 0
       Children: []
   - Title: Gate_WaitEveryX
-    Expanded: 1
+    Expanded: 0
     Component: {fileID: 7125657477363998970}
     Role: 0
     ActionSide: 0
@@ -117,7 +117,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ApplyAsPersistentGrowth: 0
+  ApplyAsPersistentGrowth: 1
   appliesTo: 1
   addAttack: 0
   addDefense: 0

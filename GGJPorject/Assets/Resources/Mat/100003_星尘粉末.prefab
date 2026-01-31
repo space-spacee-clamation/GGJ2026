@@ -10,12 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 3147823768498827867}
   - component: {fileID: 1493931688796890208}
-  - component: {fileID: 7706054645526948868}
   - component: {fileID: 661799104351630557}
   - component: {fileID: 7541761313465589749}
   - component: {fileID: 1636183387861322525}
-  - component: {fileID: 8173330070675615818}
-  - component: {fileID: 1695320061924870931}
   - component: {fileID: 5958152785851483082}
   - component: {fileID: 1792786522417879064}
   m_Layer: 0
@@ -62,13 +59,13 @@ MonoBehaviour:
   remainingShelfLifeTurns: 3
   logicTreeRoots:
   - Title: Gate_Phase
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 661799104351630557}
     Role: 0
     ActionSide: 0
     Children:
     - Title: Node_Effect
-      Expanded: 0
+      Expanded: 1
       Component: {fileID: 1636183387861322525}
       Role: 0
       ActionSide: 0
@@ -79,32 +76,6 @@ MonoBehaviour:
       Role: 0
       ActionSide: 0
       Children: []
-  - Title: Gate_Phase
-    Expanded: 0
-    Component: {fileID: 7706054645526948868}
-    Role: 0
-    ActionSide: 0
-    Children:
-    - Title: Node_Effect
-      Expanded: 1
-      Component: {fileID: 1695320061924870931}
-      Role: 0
-      ActionSide: 0
-      Children: []
---- !u!114 &7706054645526948868
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6903284507592388165}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bdce60ac543361f428c11fb667e61ca6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Phase: 1
-  Invert: 0
 --- !u!114 &661799104351630557
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -131,10 +102,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ApplyAsPersistentGrowth: 0
+  ApplyAsPersistentGrowth: 1
   appliesTo: 1
   addAttack: 0
-  addDefense: 0
+  addDefense: -20
   addCritChance: 0
   addCritMultiplier: 0
   addMaxHP: 40
@@ -153,40 +124,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Effect: {fileID: 7541761313465589749}
---- !u!114 &8173330070675615818
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6903284507592388165}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ApplyAsPersistentGrowth: 0
-  appliesTo: 1
-  addAttack: 0
-  addDefense: -10
-  addCritChance: 0
-  addCritMultiplier: 0
-  addMaxHP: 0
-  addSpeedRate: 0
-  addLuck: 0
---- !u!114 &1695320061924870931
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6903284507592388165}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Effect: {fileID: 8173330070675615818}
 --- !u!114 &5958152785851483082
 MonoBehaviour:
   m_ObjectHideFlags: 0
