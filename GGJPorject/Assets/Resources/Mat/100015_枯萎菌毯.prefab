@@ -13,6 +13,11 @@ GameObject:
   - component: {fileID: 1857480156782168980}
   - component: {fileID: 8402744678750688779}
   - component: {fileID: 2493283114770357796}
+  - component: {fileID: 6702027219913264322}
+  - component: {fileID: 2877036794480621450}
+  - component: {fileID: 7125657477363998970}
+  - component: {fileID: 2598037019545810251}
+  - component: {fileID: 437042344882350970}
   m_Layer: 0
   m_Name: "100015_\u67AF\u840E\u83CC\u6BEF"
   m_TagString: Untagged
@@ -51,13 +56,13 @@ MonoBehaviour:
   DisplayName: "\u67AF\u840E\u83CC\u6BEF"
   Type: 0
   ManaCost: 0
-  Quality: 0
+  Quality: 2
   BaseSprite: {fileID: 0}
   ShelfLifeTurns: 3
   remainingShelfLifeTurns: 3
   logicTreeRoots:
   - Title: Gate_Phase
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 1857480156782168980}
     Role: 0
     ActionSide: 0
@@ -65,6 +70,24 @@ MonoBehaviour:
     - Title: Node_Effect
       Expanded: 0
       Component: {fileID: 2493283114770357796}
+      Role: 0
+      ActionSide: 0
+      Children: []
+    - Title: Node_Effect
+      Expanded: 0
+      Component: {fileID: 2877036794480621450}
+      Role: 0
+      ActionSide: 0
+      Children: []
+  - Title: Gate_WaitEveryX
+    Expanded: 0
+    Component: {fileID: 7125657477363998970}
+    Role: 0
+    ActionSide: 0
+    Children:
+    - Title: Node_Effect
+      Expanded: 0
+      Component: {fileID: 437042344882350970}
       Role: 0
       ActionSide: 0
       Children: []
@@ -94,7 +117,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ApplyAsPersistentGrowth: 0
+  ApplyAsPersistentGrowth: 1
   appliesTo: 1
   addAttack: 0
   addDefense: 0
@@ -116,3 +139,78 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Effect: {fileID: 8402744678750688779}
+--- !u!114 &6702027219913264322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6686173433787450941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 583a28833b0cedc45aa0b0dea82d4060, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  RestoreAmount: 1
+--- !u!114 &2877036794480621450
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6686173433787450941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Effect: {fileID: 6702027219913264322}
+--- !u!114 &7125657477363998970
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6686173433787450941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ece0463e2863e59449b4edc83e157b6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  EveryX: 2
+  Invert: 0
+  _counter: 0
+--- !u!114 &2598037019545810251
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6686173433787450941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ApplyAsPersistentGrowth: 0
+  appliesTo: 1
+  addAttack: 0
+  addDefense: 0
+  addCritChance: 0
+  addCritMultiplier: 0
+  addMaxHP: 0
+  addSpeedRate: -12
+  addLuck: 0
+--- !u!114 &437042344882350970
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6686173433787450941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Effect: {fileID: 2598037019545810251}

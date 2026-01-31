@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &6903284507592388165
+--- !u!1 &5250354234848583891
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,27 +8,25 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 3147823768498827867}
-  - component: {fileID: 1493931688796890208}
-  - component: {fileID: 661799104351630557}
-  - component: {fileID: 7541761313465589749}
-  - component: {fileID: 1636183387861322525}
-  - component: {fileID: 5958152785851483082}
-  - component: {fileID: 1792786522417879064}
+  - component: {fileID: 6237307002655601301}
+  - component: {fileID: 4080541762964183138}
+  - component: {fileID: 931686466462587829}
+  - component: {fileID: 1508074543811197049}
+  - component: {fileID: 5341590697391249842}
   m_Layer: 0
-  m_Name: "100003_\u661F\u5C18\u7C89\u672B"
+  m_Name: "100016_\u8815\u52A8\u539F\u751F\u8D28"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &3147823768498827867
+--- !u!4 &6237307002655601301
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6903284507592388165}
+  m_GameObject: {fileID: 5250354234848583891}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -37,22 +35,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1493931688796890208
+--- !u!114 &4080541762964183138
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6903284507592388165}
+  m_GameObject: {fileID: 5250354234848583891}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71969320e5d8ad849b48f9c4e064b7e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Id: 100003
-  DisplayName: "\u661F\u5C18\u7C89\u672B"
-  Type: 0
-  ManaCost: 0
+  Id: 100016
+  DisplayName: "\u8815\u52A8\u539F\u751F\u8D28"
+  Type: 3
+  ManaCost: 3
   Quality: 2
   BaseSprite: {fileID: 0}
   ShelfLifeTurns: 3
@@ -60,29 +58,23 @@ MonoBehaviour:
   logicTreeRoots:
   - Title: Gate_Phase
     Expanded: 1
-    Component: {fileID: 661799104351630557}
+    Component: {fileID: 931686466462587829}
     Role: 0
     ActionSide: 0
     Children:
     - Title: Node_Effect
       Expanded: 1
-      Component: {fileID: 1636183387861322525}
+      Component: {fileID: 5341590697391249842}
       Role: 0
       ActionSide: 0
       Children: []
-    - Title: Node_Effect
-      Expanded: 0
-      Component: {fileID: 1792786522417879064}
-      Role: 0
-      ActionSide: 0
-      Children: []
---- !u!114 &661799104351630557
+--- !u!114 &931686466462587829
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6903284507592388165}
+  m_GameObject: {fileID: 5250354234848583891}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bdce60ac543361f428c11fb667e61ca6, type: 3}
@@ -90,13 +82,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Phase: 0
   Invert: 0
---- !u!114 &7541761313465589749
+--- !u!114 &1508074543811197049
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6903284507592388165}
+  m_GameObject: {fileID: 5250354234848583891}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
@@ -104,49 +96,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ApplyAsPersistentGrowth: 1
   appliesTo: 1
-  addAttack: 0
-  addDefense: -20
+  addAttack: 75
+  addDefense: 0
   addCritChance: 0
   addCritMultiplier: 0
-  addMaxHP: 40
+  addMaxHP: 0
   addSpeedRate: 0
-  addLuck: 0
---- !u!114 &1636183387861322525
+  addLuck: 3
+--- !u!114 &5341590697391249842
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6903284507592388165}
+  m_GameObject: {fileID: 5250354234848583891}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Effect: {fileID: 7541761313465589749}
---- !u!114 &5958152785851483082
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6903284507592388165}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 583a28833b0cedc45aa0b0dea82d4060, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  RestoreAmount: 1
---- !u!114 &1792786522417879064
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6903284507592388165}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Effect: {fileID: 5958152785851483082}
+  Effect: {fileID: 1508074543811197049}

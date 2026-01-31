@@ -68,7 +68,7 @@ MonoBehaviour:
     ActionSide: 0
     Children:
     - Title: Node_Effect
-      Expanded: 0
+      Expanded: 1
       Component: {fileID: 5223314187938346145}
       Role: 0
       ActionSide: 0
@@ -131,7 +131,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ApplyAsPersistentGrowth: 0
+  ApplyAsPersistentGrowth: 1
   appliesTo: 1
   addAttack: 0
   addDefense: 0
