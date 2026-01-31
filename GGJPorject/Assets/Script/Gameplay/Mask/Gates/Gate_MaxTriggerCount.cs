@@ -46,7 +46,7 @@ public sealed class Gate_MaxTriggerCount : MonoBehaviour, IMaterialLogicNode, IM
     public void AppendDescription(StringBuilder sb)
     {
         if (sb == null) return;
-        sb.AppendLine(Invert
+        sb.Append(Invert
             ? $"前 {MaxTimes} 次不执行后续效果（之后执行）"
             : $"最多触发 {MaxTimes} 次后续效果");
     }

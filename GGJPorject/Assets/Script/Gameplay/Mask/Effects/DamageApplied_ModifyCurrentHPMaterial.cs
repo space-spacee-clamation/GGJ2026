@@ -67,11 +67,11 @@ public sealed class DamageApplied_ModifyCurrentHPMaterial : MonoBehaviour, IMate
         var who = target == CurrentHpModifyTarget.Defender ? "受击者" : "攻击者";
         if (mode == CurrentHpModifyMode.PercentOfMaxHP)
         {
-            sb.AppendLine($"{who} 当前生命 {(percentOfMaxHpDelta >= 0 ? "+" : "")}{percentOfMaxHpDelta:P0}（按最大生命）");
+            sb.Append($"{who} 当前生命 {(percentOfMaxHpDelta >= 0 ? "+" : "")}{percentOfMaxHpDelta:P0}（按最大生命）");
         }
         else
         {
-            sb.AppendLine($"{who} 当前生命 {(flatDelta >= 0 ? "+" : "")}{flatDelta:0.##}");
+            sb.Append($"{who} 当前生命 {(flatDelta >= 0 ? "+" : "")}{flatDelta:0.##}");
         }
     }
 }

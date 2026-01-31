@@ -1150,7 +1150,7 @@ public class MaterialEditorWindow : OdinEditorWindow
             if (f != null && f.FieldType == typeof(string))
             {
                 var v = f.GetValue(comp) as string;
-                if (!string.IsNullOrWhiteSpace(v)) sb.AppendLine(v);
+                if (!string.IsNullOrWhiteSpace(v)) sb.Append(v);
             }
         }
 

@@ -59,7 +59,7 @@ public sealed class PersistentGrowth_StatPercentAttachMaterial : MonoBehaviour, 
     {
         if (sb == null) return;
         // 去掉“战后/永久提高”等修饰；时间点交给 Gate_Phase(PersistentGrowth) 表达
-        sb.AppendLine($"将 {StatMathUtil.ToCnName(sourceStat)} 的 {percent:P0} 附加到 {StatMathUtil.ToCnName(targetStat)}");
+        sb.Append($"将 {StatMathUtil.ToCnName(sourceStat)} 的 {percent:P0} 附加到 {StatMathUtil.ToCnName(targetStat)}");
     }
 }
 

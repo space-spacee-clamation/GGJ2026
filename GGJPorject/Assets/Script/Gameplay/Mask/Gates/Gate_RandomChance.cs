@@ -26,7 +26,7 @@ public sealed class Gate_RandomChance : MonoBehaviour, IMaterialLogicNode, IMate
     {
         if (sb == null) return;
         var c = Mathf.Clamp01(Chance01);
-        sb.AppendLine(Invert ? $"未触发（{c:P0}）时执行后续效果" : $"{c:P0} 概率执行后续效果");
+        sb.Append(Invert ? $"未触发（{c:P0}）时执行后续效果" : $"{c:P0} 概率执行后续效果");
     }
 }
 

@@ -87,15 +87,15 @@ public sealed class Effect_AddStatsMaterial : MonoBehaviour, IMaterialEffect, IM
         var who = ApplyAsPersistentGrowth ? "玩家" : (appliesTo == FightSide.Enemy ? "敌人" : "玩家");
 
         var any = false;
-        if (addMaxHP != 0f) { sb.AppendLine($"{who} 最大生命 {(addMaxHP >= 0 ? "+" : "")}{addMaxHP}"); any = true; }
-        if (addAttack != 0f) { sb.AppendLine($"{who} 攻击 {(addAttack >= 0 ? "+" : "")}{addAttack}"); any = true; }
-        if (addDefense != 0f) { sb.AppendLine($"{who} 防御 {(addDefense >= 0 ? "+" : "")}{addDefense}"); any = true; }
-        if (addCritChance != 0f) { sb.AppendLine($"{who} 暴击率 {(addCritChance >= 0 ? "+" : "")}{addCritChance:P0}"); any = true; }
-        if (addCritMultiplier != 0f) { sb.AppendLine($"{who} 爆伤倍率 {(addCritMultiplier >= 0 ? "+" : "")}{addCritMultiplier}"); any = true; }
-        if (addSpeedRate != 0) { sb.AppendLine($"{who} 速度成长 {(addSpeedRate >= 0 ? "+" : "")}{addSpeedRate}/秒"); any = true; }
-        if (ApplyAsPersistentGrowth && addLuck != 0) { sb.AppendLine($"{who} 幸运 {(addLuck >= 0 ? "+" : "")}{addLuck}"); any = true; }
+        if (addMaxHP != 0f) { sb.Append($"{who} 最大生命 {(addMaxHP >= 0 ? "+" : "")}{addMaxHP}"); any = true; }
+        if (addAttack != 0f) { sb.Append($"{who} 攻击 {(addAttack >= 0 ? "+" : "")}{addAttack}"); any = true; }
+        if (addDefense != 0f) { sb.Append($"{who} 防御 {(addDefense >= 0 ? "+" : "")}{addDefense}"); any = true; }
+        if (addCritChance != 0f) { sb.Append($"{who} 暴击率 {(addCritChance >= 0 ? "+" : "")}{addCritChance:P0}"); any = true; }
+        if (addCritMultiplier != 0f) { sb.Append($"{who} 爆伤倍率 {(addCritMultiplier >= 0 ? "+" : "")}{addCritMultiplier}"); any = true; }
+        if (addSpeedRate != 0) { sb.Append($"{who} 速度成长 {(addSpeedRate >= 0 ? "+" : "")}{addSpeedRate}/秒"); any = true; }
+        if (ApplyAsPersistentGrowth && addLuck != 0) { sb.Append($"{who} 幸运 {(addLuck >= 0 ? "+" : "")}{addLuck}"); any = true; }
 
-        if (!any) sb.AppendLine($"{who} 属性无变化");
+        if (!any) sb.Append($"{who} 属性无变化");
     }
 }
 

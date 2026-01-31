@@ -66,11 +66,11 @@ public sealed class BattleStart_StatPercentAttachMaterial : MonoBehaviour, IMate
 
         if (sourceStat == StatKey.Luck || targetStat == StatKey.Luck)
         {
-            sb.AppendLine("（战斗内不支持 幸运 属性转换）");
+            sb.Append("（战斗内不支持 幸运 属性转换）");
             return;
         }
 
-        sb.AppendLine($"将 {srcWho}{StatMathUtil.ToCnName(sourceStat)} 的 {percent:P0} 附加到 {dstWho}{StatMathUtil.ToCnName(targetStat)}");
+        sb.Append($"将 {srcWho}{StatMathUtil.ToCnName(sourceStat)} 的 {percent:P0} 附加到 {dstWho}{StatMathUtil.ToCnName(targetStat)}");
     }
 }
 

@@ -25,7 +25,7 @@ public class Gate_AtXAttack : MonoBehaviour, IMaterialLogicNode, IMaterialTraver
     public void AppendDescription(StringBuilder sb)
     {
         if (sb == null) return;
-        sb.AppendLine(Invert ? $"第{AttackIndex}次攻击不执行后续效果" : $"第{AttackIndex}次攻击执行后续效果");
+        sb.Append(Invert ? $"第{AttackIndex}次攻击不执行后续效果" : $"第{AttackIndex}次攻击执行后续效果");
     }
 }
 

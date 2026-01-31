@@ -81,32 +81,71 @@ public class MaterialObj : MonoBehaviour
         if (sb == null) return;
         if (!HasLogicTree)
         {
-            sb.AppendLine("（该材质未配置逻辑树）");
+            sb.Append("（该材质未配置逻辑树）");
             return;
         }
 
-        // 树状描述：使用 \t 表达层级；不做“跳出”（描述阶段不应截断）。
+        // 树状描述：逻辑节点用红色标记，组件间用逗号分隔，每个 tree（根节点分支）结束时用句号和换行。
         // 注意：组件允许复用，因此这里不做去重，保证结构可读。
-        BuildTreeDescription(sb, logicTreeRoots, depth: 0);
+        for (int i = 0; i < logicTreeRoots.Count; i++)
+        {
+            var root = logicTreeRoots[i];
+            if (root == null) continue;
+            
+            // 遍历当前根节点及其所有子节点
+            BuildTreeDescriptionForNode(sb, root);
+            
+            // 每个 tree 结束时添加句号和换行
+            if (sb.Length > 0)
+            {
+                // 检查末尾是否是"。\n"
+                bool endsWithPeriodAndNewline = sb.Length >= 2 && 
+                    sb[sb.Length - 1] == '\n' && 
+                    sb[sb.Length - 2] == '。';
+                
+                if (!endsWithPeriodAndNewline)
+                {
+                    // 如果末尾是句号但没有换行，先移除句号再添加"。\n"
+                    if (sb.Length > 0 && sb[sb.Length - 1] == '。')
+                    {
+                        sb.Length--; // 移除句号
+                    }
+                    sb.Append("。\n");
+                }
+            }
+        }
     }
 
-    private static void BuildTreeDescription(StringBuilder sb, List<MaterialLogicNode> nodes, int depth)
+    private static void BuildTreeDescriptionForNode(StringBuilder sb, MaterialLogicNode node)
     {
-        if (nodes == null) return;
-        for (int i = 0; i < nodes.Count; i++)
+        if (node == null) return;
+        
+        var c = node.Component;
+        if (c != null && c is IMaterialDescriptionProvider p)
         {
-            var n = nodes[i];
-            if (n == null) continue;
-            var c = n.Component;
-            if (c != null && c is IMaterialDescriptionProvider p)
+            bool isLogicNode = c is IMaterialLogicNode;
+            if (isLogicNode)
             {
-                var tmp = new StringBuilder(128);
-                p.AppendDescription(tmp);
-                var text = tmp.ToString();
+                sb.Append($"<color=red>");
+                p.AppendDescription(sb);
+                sb.Append($"</color>");
             }
-            if (n.Children != null && n.Children.Count > 0)
+            else{
+                p.AppendDescription(sb);
+                char lastChar = sb[sb.Length - 1];
+                if (lastChar != '，' && lastChar != '。' && lastChar != '\n')
+                {
+                    sb.Append("，");
+                }
+            }
+        }
+        
+        // 递归处理子节点
+        if (node.Children != null && node.Children.Count > 0)
+        {
+            for (int i = 0; i < node.Children.Count; i++)
             {
-                BuildTreeDescription(sb, n.Children, depth + 1);
+                BuildTreeDescriptionForNode(sb, node.Children[i]);
             }
         }
     }

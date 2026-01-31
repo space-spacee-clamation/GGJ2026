@@ -58,7 +58,7 @@ public sealed class Gate_Phase : MonoBehaviour, IMaterialLogicNode, IMaterialTra
             _ => Phase.ToString()
         };
 
-        sb.AppendLine(Invert ? $"{name}不执行后续效果" : $"{name}：");
+        sb.Append(Invert ? $"{name}不执行后续效果" : $"{name}：");
     }
 }
 

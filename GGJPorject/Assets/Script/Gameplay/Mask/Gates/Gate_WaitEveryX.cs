@@ -41,7 +41,7 @@ public sealed class Gate_WaitEveryX : MonoBehaviour, IMaterialLogicNode, IMateri
     public void AppendDescription(StringBuilder sb)
     {
         if (sb == null) return;
-        sb.AppendLine(Invert
+        sb.Append(Invert
             ? $"等待每 {EveryX} 次（本节点计数）不执行后续效果"
             : $"等待每 {EveryX} 次（本节点计数）执行后续效果");
     }

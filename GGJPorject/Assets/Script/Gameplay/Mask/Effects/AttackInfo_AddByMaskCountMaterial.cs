@@ -58,7 +58,7 @@ public sealed class AttackInfo_AddByMaskCountMaterial : MonoBehaviour, IMaterial
             AttackInfoNumericField.CritMultiplier => "爆伤倍率",
             _ => field.ToString()
         };
-        sb.AppendLine($"每有 1 个面具，{name} {(addPerMask >= 0 ? "+" : "")}{addPerMask:0.##}");
+        sb.Append($"每有 1 个面具，{name} {(addPerMask >= 0 ? "+" : "")}{addPerMask:0.##}");
     }
 }
 

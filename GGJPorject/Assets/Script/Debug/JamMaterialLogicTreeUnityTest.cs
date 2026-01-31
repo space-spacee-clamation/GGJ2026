@@ -197,7 +197,7 @@ public sealed class JamMaterialLogicTreeUnityTest : MonoBehaviour
         public void AppendDescription(System.Text.StringBuilder sb)
         {
             if (sb == null) return;
-            sb.AppendLine($"攻击 {(Add >= 0 ? "+" : "")}{Add:0.##}");
+            sb.Append($"攻击 {(Add >= 0 ? "+" : "")}{Add:0.##}");
         }
     }
 
@@ -214,7 +214,7 @@ public sealed class JamMaterialLogicTreeUnityTest : MonoBehaviour
         public void AppendDescription(System.Text.StringBuilder sb)
         {
             if (sb == null) return;
-            sb.AppendLine($"成长攻击 {(Add >= 0 ? "+" : "")}{Add:0.##}");
+            sb.Append($"成长攻击 {(Add >= 0 ? "+" : "")}{Add:0.##}");
         }
     }
 }

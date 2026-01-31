@@ -154,11 +154,11 @@ public sealed class Node_Effect : MonoBehaviour,
         }
         if (Effect != null)
         {
-            sb.AppendLine($"执行效果：{Effect.GetType().Name}");
+            sb.Append($"执行效果：{Effect.GetType().Name}");
         }
         else
         {
-            sb.AppendLine("（未绑定效果器）");
+            sb.Append("（未绑定效果器）");
         }
     }
 }

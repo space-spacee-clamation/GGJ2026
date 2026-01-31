@@ -51,7 +51,7 @@ public sealed class Gate_AfterXHits : MonoBehaviour, IMaterialLogicNode, IMateri
     {
         if (sb == null) return;
         var who = Target == FightSide.Enemy ? "敌人" : "玩家";
-        sb.AppendLine(Invert
+        sb.Append(Invert
             ? $"{who} 受击达到 {AfterXHits} 次后不执行后续效果"
             : $"{who} 受击达到 {AfterXHits} 次后执行后续效果");
     }

@@ -17,7 +17,7 @@ public sealed class RestoreManaImmediateEffect : MonoBehaviour, IMaterialEffect,
     public void AppendDescription(StringBuilder sb)
     {
         if (sb == null) return;
-        sb.AppendLine($"绑定时：恢复法力值 +{RestoreAmount}");
+        sb.Append($"绑定时：恢复法力值 +{RestoreAmount}");
     }
 }
 
