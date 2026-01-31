@@ -212,14 +212,14 @@
   - Bind/BattleStart/AttackModify/BattleEnd/DamageApplied：按树 DFS 遍历
     - 遇到 `IMaterialTraversalGate.ShouldBreak==true`：**仅跳过该节点的子树（分支）**，不影响同级节点
     - `ActionSide`：仅在 `AttackModify/DamageApplied` 阶段生效，可筛选“玩家行动/敌人行动/两者”
-- `logicTreeRoots` 为空时：继续走旧 `orderedComponents`（兼容旧 prefab）
+- `logicTreeRoots` 为空时：**不再执行**（已删除链式兼容路径；会输出警告帮助定位漏配 prefab）
 
 新增支持：
 - 概率条件 Gate：`Gate_RandomChance`
 - 行动后阶段：`MaterialTraversePhase.DamageApplied` + `IMaterialDamageAppliedEffect`
 
 后续 TODO：
-- 正式版可移除 `orderedComponents` 或在编辑器明确标记为 Legacy
+- （已完成）移除 `orderedComponents` 链式兼容路径：减少两套系统并行带来的复杂度
 - 给策划提供更友好的“节点模板/拖拽复用/阶段预览”工具（当前已提供基础递归编辑）
 
 ---

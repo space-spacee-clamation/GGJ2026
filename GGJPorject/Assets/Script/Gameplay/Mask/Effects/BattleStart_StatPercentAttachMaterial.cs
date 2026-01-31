@@ -5,7 +5,7 @@ using UnityEngine;
 /// 战斗开始时：将“来源属性 * 百分比”附加到“目标属性”。
 /// 例：将 玩家攻击 的 50% 附加到 玩家防御。
 /// </summary>
-public sealed class BattleStart_StatPercentAttachMaterial : MonoBehaviour, IMaterialBattleStartEffect, IMaterialDescriptionProvider
+public sealed class BattleStart_StatPercentAttachMaterial : MonoBehaviour, IMaterialEffect, IMaterialDescriptionProvider
 {
     [Header("Source")]
     [SerializeField] private FightSide sourceSide = FightSide.Player;
@@ -22,17 +22,17 @@ public sealed class BattleStart_StatPercentAttachMaterial : MonoBehaviour, IMate
     [Tooltip("当目标为 MaxHP 时，是否同时治疗（保持血量比例/补差值）。")]
     [SerializeField] private bool maxHpAlsoHeal = true;
 
-    public void OnBattleStart(FightContext context)
+    public void Execute(in MaterialVommandeTreeContext context)
     {
-        if (context == null) return;
+        if (context.Fight == null) return;
 
-        var src = ApplyTo(sourceSide, context);
-        var dst = ApplyTo(targetSide, context);
+        var src = ApplyTo(sourceSide, context.Fight);
+        var dst = ApplyTo(targetSide, context.Fight);
         if (src == null || dst == null) return;
 
         if (sourceStat == StatKey.Luck || targetStat == StatKey.Luck)
         {
-            if (context.DebugVerbose)
+            if (context.Fight.DebugVerbose)
                 Debug.LogWarning($"[BattleStart_StatPercentAttachMaterial] 战斗运行时不支持 Luck；source={sourceStat}, target={targetStat}", this);
             return;
         }
@@ -41,7 +41,7 @@ public sealed class BattleStart_StatPercentAttachMaterial : MonoBehaviour, IMate
         var add = srcValue * percent;
         StatMathUtil.AddToCombatant(dst, targetStat, add, maxHpAlsoHeal);
 
-        if (context.DebugVerbose)
+        if (context.Fight.DebugVerbose)
         {
             Debug.Log(
                 $"[BattleStart_StatPercentAttachMaterial] {sourceSide}.{sourceStat}({srcValue}) * {percent:P0} => add {add} to {targetSide}.{targetStat}",

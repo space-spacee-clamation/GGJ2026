@@ -192,6 +192,7 @@ public class MaterialEditorWindow : OdinEditorWindow
 
             mat.Id = Mathf.Max(0, EditorGUILayout.IntField("ID", mat.Id));
             mat.DisplayName = EditorGUILayout.TextField("材质名", mat.DisplayName);
+            mat.Type = (MaterialObj.MaterialType)EditorGUILayout.EnumPopup("类型", mat.Type);
             mat.BaseSprite = (Sprite)EditorGUILayout.ObjectField("Sprite", mat.BaseSprite, typeof(Sprite), false);
             mat.Quality = (MaterialQuality)EditorGUILayout.EnumPopup("品质", mat.Quality);
             mat.ManaCost = Mathf.Max(0, EditorGUILayout.IntField("法力消耗", mat.ManaCost));
@@ -205,123 +206,7 @@ public class MaterialEditorWindow : OdinEditorWindow
         }
     }
 
-    private void DrawAddComponentPanel()
-    {
-        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-        {
-            EditorGUILayout.LabelField("添加组件", EditorStyles.boldLabel);
-            _componentSearch = EditorGUILayout.TextField("搜索", _componentSearch ?? string.Empty);
-
-            var filtered = _materialComponentTypes
-                .Where(t => string.IsNullOrWhiteSpace(_componentSearch) || t.Name.IndexOf(_componentSearch, StringComparison.OrdinalIgnoreCase) >= 0)
-                .Take(50)
-                .ToList();
-
-            for (int i = 0; i < filtered.Count; i++)
-            {
-                var t = filtered[i];
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    if (GUILayout.Button("添加", GUILayout.Width(48)))
-                    {
-                        AddComponentToEditing(t);
-                    }
-
-                    EditorGUILayout.LabelField(t.Name, GUILayout.Width(220));
-
-                    var desc = GetDefaultComponentDescription(t);
-                    EditorGUILayout.LabelField(desc, EditorStyles.miniLabel);
-                }
-            }
-        }
-    }
-
-    private void DrawComponentEditors()
-    {
-        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-        {
-            EditorGUILayout.LabelField("组件参数", EditorStyles.boldLabel);
-
-            if (_editingMaterial == null || _editingInstance == null)
-            {
-                EditorGUILayout.HelpBox("未选择可编辑的材质对象。", MessageType.Info);
-                return;
-            }
-
-            // 确保 orderedComponents 有内容（老 prefab 兼容）
-            if (_editingMaterial.OrderedComponents == null || _editingMaterial.OrderedComponents.Count == 0)
-            {
-                EditorGUILayout.HelpBox("该材质未配置组件顺序列表（orderedComponents）。点击下方按钮会按当前组件顺序初始化。", MessageType.Warning);
-                if (GUILayout.Button("初始化顺序列表（按当前组件顺序）", GUILayout.Height(26)))
-                {
-                    RebuildOrderedComponentsFromCurrent();
-                }
-            }
-
-            var ordered = _editingMaterial.OrderedComponents != null && _editingMaterial.OrderedComponents.Count > 0;
-            var comps = ordered
-                ? _editingMaterial.OrderedComponents.ToArray()
-                : (_editingInstance != null ? _editingInstance.GetComponents<MonoBehaviour>() : Array.Empty<MonoBehaviour>());
-
-            for (int i = 0; i < comps.Length; i++)
-            {
-                var c = comps[i];
-                if (c == null) continue;
-                if (c is MaterialObj) continue;
-
-                EditorGUILayout.Space(6);
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    EditorGUILayout.LabelField(c.GetType().Name, EditorStyles.boldLabel);
-
-                    // 仅对 orderedComponents 生效：排序/删除
-                    if (ordered)
-                    {
-                        GUI.enabled = i > 0;
-                        if (GUILayout.Button("↑", GUILayout.Width(28))) MoveOrderedComponent(i, i - 1);
-                        GUI.enabled = i < comps.Length - 1;
-                        if (GUILayout.Button("↓", GUILayout.Width(28))) MoveOrderedComponent(i, i + 1);
-                        GUI.enabled = true;
-
-                        if (GUILayout.Button("删除", GUILayout.Width(50)))
-                        {
-                            DeleteComponentAtOrderedIndex(i);
-                            // 列表已变化，停止本次绘制避免索引错乱
-                            GUIUtility.ExitGUI();
-                        }
-                    }
-                }
-
-                // Draw serialized fields
-                var so = new SerializedObject(c);
-                so.Update();
-                var it = so.GetIterator();
-                bool enterChildren = true;
-                while (it.NextVisible(enterChildren))
-                {
-                    enterChildren = false;
-                    if (it.name == "m_Script") continue;
-                    // “描述”统一在下方以只读方式展示（由 IMaterialDescriptionProvider 生成）
-                    if (it.propertyType == SerializedPropertyType.String && it.name == "description") continue;
-                    EditorGUILayout.PropertyField(it, true);
-                }
-                if (so.ApplyModifiedProperties())
-                {
-                    EditorUtility.SetDirty(c);
-                }
-            }
-
-            // 最终描述预览：在结尾统一生成，而不是每个组件分段生成
-            if (_editingMaterial != null)
-            {
-                EditorGUILayout.Space(10);
-                EditorGUILayout.LabelField("最终描述预览（只读）", EditorStyles.boldLabel);
-                var desc = _editingMaterial.BuildDescription();
-                if (string.IsNullOrWhiteSpace(desc)) desc = "(空)";
-                EditorGUILayout.HelpBox(desc, MessageType.None);
-            }
-        }
-    }
+    // orderedComponents 链式方案已移除；材质编辑器只保留“逻辑树”配置入口。
 
     private void DrawLogicTreeEditor()
     {
@@ -329,7 +214,7 @@ public class MaterialEditorWindow : OdinEditorWindow
         {
             EditorGUILayout.LabelField("逻辑树（树状配置）", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "说明：logicTreeRoots 非空时，运行时将优先使用“树状逻辑”而不是 orderedComponents 链式逻辑。\n" +
+                "说明：运行时只使用“树状逻辑”。\n" +
                 "条件节点（Gate）不满足时只会跳过该分支，不会终止整个遍历。组件可被多个节点复用（节点只是引用）。",
                 MessageType.Info);
 
@@ -455,14 +340,18 @@ public class MaterialEditorWindow : OdinEditorWindow
                 if (GUILayout.Button("↓", GUILayout.Width(28))) parentArray.MoveArrayElement(index, index + 1);
                 GUI.enabled = true;
 
-                // 节点内直接添加子节点（搜索）
-                if (GUILayout.Button("+", GUILayout.Width(28)))
+                // 只有“逻辑节点（gate/未选组件）”允许添加子节点
+                bool isLogicNode = comp == null || comp is IMaterialTraversalGate;
+                if (isLogicNode)
                 {
-                    var childArray = node.FindPropertyRelative("Children");
-                    if (childArray != null && childArray.isArray)
+                    if (GUILayout.Button("+", GUILayout.Width(28)))
                     {
-                        var r = GUILayoutUtility.GetLastRect();
-                        ShowAddNodePopup(r, childArray.propertyPath);
+                        var childArray = node.FindPropertyRelative("Children");
+                        if (childArray != null && childArray.isArray)
+                        {
+                            var r = GUILayoutUtility.GetLastRect();
+                            ShowAddNodePopup(r, childArray.propertyPath);
+                        }
                     }
                 }
 
@@ -490,6 +379,15 @@ public class MaterialEditorWindow : OdinEditorWindow
                 var compProp = node.FindPropertyRelative("Component");
                 GUILayout.Space(indent * 14);
                 if (compProp != null) EditorGUILayout.PropertyField(compProp);
+            }
+
+            // 严格约束：非逻辑节点不允许挂在树里
+            var compCheck = node.FindPropertyRelative("Component")?.objectReferenceValue as MonoBehaviour;
+            if (compCheck != null && !(compCheck is IMaterialLogicNode))
+            {
+                EditorGUILayout.HelpBox("该组件不是逻辑节点（未实现 IMaterialLogicNode），不允许挂在逻辑树里：已自动清空。", MessageType.Error);
+                node.FindPropertyRelative("Component").objectReferenceValue = null;
+                compCheck = null;
             }
 
             using (new EditorGUILayout.HorizontalScope())
@@ -533,6 +431,31 @@ public class MaterialEditorWindow : OdinEditorWindow
                 }
             }
 
+            // Node_Effect：额外把 Effect 的参数直接嵌入显示（策划真正需要配置的是 Effect）
+            if (comp2 is Node_Effect ne && ne != null && ne.Effect != null)
+            {
+                EditorGUILayout.Space(4);
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    EditorGUILayout.LabelField($"效果器参数（{ne.Effect.GetType().Name}）", EditorStyles.miniBoldLabel);
+                    var soE = new SerializedObject(ne.Effect);
+                    soE.Update();
+                    var itE = soE.GetIterator();
+                    bool enterChildrenE = true;
+                    while (itE.NextVisible(enterChildrenE))
+                    {
+                        enterChildrenE = false;
+                        if (itE.name == "m_Script") continue;
+                        if (itE.propertyType == SerializedPropertyType.String && itE.name == "description") continue;
+                        EditorGUILayout.PropertyField(itE, true);
+                    }
+                    if (soE.ApplyModifiedProperties())
+                    {
+                        EditorUtility.SetDirty(ne.Effect);
+                    }
+                }
+            }
+
             var children = node.FindPropertyRelative("Children");
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -554,7 +477,8 @@ public class MaterialEditorWindow : OdinEditorWindow
                 }
             }
 
-            if (children != null && children.isArray && children.arraySize > 0)
+            // 非逻辑节点不显示子节点配置
+            if ((comp2 == null || comp2 is IMaterialTraversalGate) && children != null && children.isArray && children.arraySize > 0)
             {
                 EditorGUILayout.Space(4);
                 DrawNodeArray(children, indent + 1);
@@ -576,22 +500,127 @@ public class MaterialEditorWindow : OdinEditorWindow
 
         so.Update();
 
-        // 先递归清空 Children，确保“删除树节点 = 删除整棵子树”
-        var node = parentArray.GetArrayElementAtIndex(index);
-        RecursiveClearChildren(node);
-
-        int oldSize = parentArray.arraySize;
-        parentArray.DeleteArrayElementAtIndex(index);
-        // 某些情况下第一次 Delete 只会置空不缩容，这里做一次兜底
-        if (parentArray.arraySize == oldSize && index >= 0 && index < parentArray.arraySize)
+        // 删除节点时，也删除对应的组件（会做引用计数，避免误删“被多个节点复用”的组件）
+        // - 删除规则：只有当组件不再被任何树节点引用时才 Destroy
+        // - 组件必须在当前 _editingInstance 上（避免误删引用到别处的对象）
+        var toMaybeDeleteNodes = new List<MonoBehaviour>(8);
+        var toMaybeDeleteEffects = new List<MonoBehaviour>(8);
+        try
         {
+            var roots = so.FindProperty("logicTreeRoots");
+            var nodeForCollect = parentArray.GetArrayElementAtIndex(index);
+            CollectComponentsInSubtree(nodeForCollect, toMaybeDeleteNodes, toMaybeDeleteEffects);
+
+            // 先递归清空 Children，确保“删除树节点 = 删除整棵子树”
+            var node = parentArray.GetArrayElementAtIndex(index);
+            RecursiveClearChildren(node);
+
+            int oldSize = parentArray.arraySize;
             parentArray.DeleteArrayElementAtIndex(index);
+            // 某些情况下第一次 Delete 只会置空不缩容，这里做一次兜底
+            if (parentArray.arraySize == oldSize && index >= 0 && index < parentArray.arraySize)
+            {
+                parentArray.DeleteArrayElementAtIndex(index);
+            }
+
+            so.ApplyModifiedProperties();
+
+            // 结构更新后：检查引用计数再删组件
+            if (_editingInstance != null && roots != null && roots.isArray)
+            {
+                // 先删 Effect（避免 Node_Effect 先删后引用丢失导致计数误判）
+                for (int i = 0; i < toMaybeDeleteEffects.Count; i++)
+                {
+                    var eff = toMaybeDeleteEffects[i];
+                    if (eff == null) continue;
+                    if (eff.gameObject != _editingInstance) continue;
+                    if (CountEffectRefsInTree(roots, eff) > 0) continue;
+                    Undo.DestroyObjectImmediate(eff);
+                }
+
+                for (int i = 0; i < toMaybeDeleteNodes.Count; i++)
+                {
+                    var c = toMaybeDeleteNodes[i];
+                    if (c == null) continue;
+                    if (c.gameObject != _editingInstance) continue;
+                    if (CountComponentRefsInTree(roots, c) > 0) continue;
+                    Undo.DestroyObjectImmediate(c);
+                }
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+        finally
+        {
+            if (_editingMaterial != null) EditorUtility.SetDirty(_editingMaterial);
+            Repaint();
         }
 
-        so.ApplyModifiedProperties();
+        return;
 
-        if (_editingMaterial != null) EditorUtility.SetDirty(_editingMaterial);
-        Repaint();
+    }
+
+    private static void CollectComponentsInSubtree(SerializedProperty nodeProp, List<MonoBehaviour> outNodeComps, List<MonoBehaviour> outEffects)
+    {
+        if (nodeProp == null) return;
+        var compProp = nodeProp.FindPropertyRelative("Component");
+        var comp = compProp != null ? compProp.objectReferenceValue as MonoBehaviour : null;
+        if (comp != null)
+        {
+            outNodeComps?.Add(comp);
+            if (comp is Node_Effect ne && ne != null && ne.Effect != null)
+            {
+                outEffects?.Add(ne.Effect);
+            }
+        }
+
+        var children = nodeProp.FindPropertyRelative("Children");
+        if (children == null || !children.isArray) return;
+        for (int i = 0; i < children.arraySize; i++)
+        {
+            var child = children.GetArrayElementAtIndex(i);
+            CollectComponentsInSubtree(child, outNodeComps, outEffects);
+        }
+    }
+
+    private static int CountComponentRefsInTree(SerializedProperty nodesArray, MonoBehaviour target)
+    {
+        if (nodesArray == null || !nodesArray.isArray || target == null) return 0;
+        int count = 0;
+        for (int i = 0; i < nodesArray.arraySize; i++)
+        {
+            var node = nodesArray.GetArrayElementAtIndex(i);
+            var comp = node.FindPropertyRelative("Component")?.objectReferenceValue as MonoBehaviour;
+            if (comp == target) count++;
+
+            var children = node.FindPropertyRelative("Children");
+            if (children != null && children.isArray && children.arraySize > 0)
+            {
+                count += CountComponentRefsInTree(children, target);
+            }
+        }
+        return count;
+    }
+
+    private static int CountEffectRefsInTree(SerializedProperty nodesArray, MonoBehaviour targetEffect)
+    {
+        if (nodesArray == null || !nodesArray.isArray || targetEffect == null) return 0;
+        int count = 0;
+        for (int i = 0; i < nodesArray.arraySize; i++)
+        {
+            var node = nodesArray.GetArrayElementAtIndex(i);
+            var comp = node.FindPropertyRelative("Component")?.objectReferenceValue as MonoBehaviour;
+            if (comp is Node_Effect ne && ne != null && ne.Effect == targetEffect) count++;
+
+            var children = node.FindPropertyRelative("Children");
+            if (children != null && children.isArray && children.arraySize > 0)
+            {
+                count += CountEffectRefsInTree(children, targetEffect);
+            }
+        }
+        return count;
     }
 
     private static void RecursiveClearChildren(SerializedProperty nodeProp)
@@ -624,19 +653,6 @@ public class MaterialEditorWindow : OdinEditorWindow
             activatorRect,
             _editingInstance,
             _materialComponentTypes,
-            onPickExisting: comp =>
-            {
-                if (comp == null) return;
-                var so = new SerializedObject(_editingMaterial);
-                so.Update();
-                var arr = so.FindProperty(targetArrayPath);
-                if (arr == null || !arr.isArray) return;
-                Undo.RecordObject(_editingMaterial, "Add Logic Node");
-                AddNewNodeToArray(arr, comp);
-                so.ApplyModifiedProperties();
-                EditorUtility.SetDirty(_editingMaterial);
-                Repaint();
-            },
             onPickNew: t =>
             {
                 if (t == null) return;
@@ -647,13 +663,40 @@ public class MaterialEditorWindow : OdinEditorWindow
                 var arr = so.FindProperty(targetArrayPath);
                 if (arr == null || !arr.isArray) return;
                 Undo.RecordObject(_editingMaterial, "Add Logic Node");
-                AddNewNodeToArray(arr, added);
+                AddPickedComponentAsNode(arr, added);
                 so.ApplyModifiedProperties();
                 EditorUtility.SetDirty(_editingMaterial);
                 EditorUtility.SetDirty(added);
                 Repaint();
             }
         );
+    }
+
+    /// <summary>
+    /// 弹窗选择后：把“逻辑节点”直接加入树；把“纯效果器”包装成 Node_Effect 再加入树。
+    /// </summary>
+    private void AddPickedComponentAsNode(SerializedProperty targetArray, MonoBehaviour picked)
+    {
+        if (targetArray == null || !targetArray.isArray) return;
+        if (picked == null) return;
+
+        // 逻辑节点：可直接进入树
+        if (picked is IMaterialLogicNode)
+        {
+            AddNewNodeToArray(targetArray, picked);
+            return;
+        }
+
+        // 纯效果器：必须用 Node_Effect 包装后才能进树
+        if (picked is IMaterialEffect || picked is IMaterialAttackInfoEffect)
+        {
+            var node = Undo.AddComponent(_editingInstance, typeof(Node_Effect)) as Node_Effect;
+            if (node == null) return;
+            node.Effect = picked;
+            EditorUtility.SetDirty(node);
+            AddNewNodeToArray(targetArray, node);
+            return;
+        }
     }
 
     private static string BuildNodeHeader(string title, MonoBehaviour comp, SerializedProperty roleProp, SerializedProperty sideProp)
@@ -706,20 +749,19 @@ public class MaterialEditorWindow : OdinEditorWindow
         private readonly List<Entry> _entries = new();
         private Vector2 _scroll;
         private string _search = "";
+        private bool _foldLogic = true;
+        private bool _foldEffects = true;
 
-        private Action<MonoBehaviour> _onPickExisting;
         private Action<Type> _onPickNew;
 
         public static void Show(
             Rect activatorRect,
             GameObject editingInstance,
             IReadOnlyList<Type> candidateTypes,
-            Action<MonoBehaviour> onPickExisting,
             Action<Type> onPickNew)
         {
             var w = CreateInstance<NodeAddPopupWindow>();
             w.titleContent = new GUIContent("添加节点");
-            w._onPickExisting = onPickExisting;
             w._onPickNew = onPickNew;
             w.BuildEntries(editingInstance, candidateTypes);
             w.ShowAsDropDown(activatorRect, new Vector2(520, 420));
@@ -729,31 +771,6 @@ public class MaterialEditorWindow : OdinEditorWindow
         {
             _entries.Clear();
             if (candidateTypes == null) return;
-
-            // Existing comps on this prefab
-            if (editingInstance != null)
-            {
-                var comps = editingInstance.GetComponents<MonoBehaviour>();
-                var typeCounter = new Dictionary<Type, int>();
-                for (int i = 0; i < comps.Length; i++)
-                {
-                    var c = comps[i];
-                    if (c == null) continue;
-                    if (c is MaterialObj) continue;
-                    var t = c.GetType();
-                    if (!candidateTypes.Contains(t)) continue;
-                    typeCounter.TryGetValue(t, out var idx);
-                    idx += 1;
-                    typeCounter[t] = idx;
-                    _entries.Add(new Entry
-                    {
-                        IsExisting = true,
-                        ExistingComp = c,
-                        Name = $"{t.Name}（已有 #{idx}）",
-                        Desc = BuildComponentDescription(c),
-                    });
-                }
-            }
 
             // New component types
             for (int i = 0; i < candidateTypes.Count; i++)
@@ -776,7 +793,6 @@ public class MaterialEditorWindow : OdinEditorWindow
 
             _entries.Sort((a, b) =>
             {
-                if (a.IsExisting != b.IsExisting) return a.IsExisting ? -1 : 1;
                 return string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
             });
         }
@@ -790,13 +806,12 @@ public class MaterialEditorWindow : OdinEditorWindow
                 if (GUILayout.Button("清空", GUILayout.Width(50))) _search = string.Empty;
             }
 
+            DrawCategoryToggles();
+
             EditorGUILayout.Space(6);
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
 
             var s = _search ?? string.Empty;
-            // 先展示“已有组件”，再展示“新建组件”（更符合人类：先复用）
-            bool shownExistingHeader = false;
-            bool shownNewHeader = false;
             for (int i = 0; i < _entries.Count; i++)
             {
                 var e = _entries[i];
@@ -808,17 +823,12 @@ public class MaterialEditorWindow : OdinEditorWindow
                     if (!hit) continue;
                 }
 
-                if (e.IsExisting && !shownExistingHeader)
-                {
-                    shownExistingHeader = true;
-                    EditorGUILayout.LabelField("已挂在该材质上的组件（复用）", EditorStyles.miniBoldLabel);
-                }
-                if (!e.IsExisting && !shownNewHeader)
-                {
-                    shownNewHeader = true;
-                    EditorGUILayout.Space(6);
-                    EditorGUILayout.LabelField("新建组件（会自动 AddComponent 到材质 prefab）", EditorStyles.miniBoldLabel);
-                }
+                // 分类：逻辑节点 / 纯效果器
+                bool isLogic = e.IsExisting
+                    ? (e.ExistingComp is IMaterialLogicNode)
+                    : (e.NewType != null && typeof(IMaterialLogicNode).IsAssignableFrom(e.NewType));
+                if (isLogic && !_foldLogic) continue;
+                if (!isLogic && !_foldEffects) continue;
 
                 using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                 {
@@ -827,14 +837,13 @@ public class MaterialEditorWindow : OdinEditorWindow
                         GUI.enabled = !e.Disabled;
                         if (GUILayout.Button("选用", GUILayout.Width(60)))
                         {
-                            if (e.IsExisting) _onPickExisting?.Invoke(e.ExistingComp);
-                            else _onPickNew?.Invoke(e.NewType);
+                            _onPickNew?.Invoke(e.NewType);
                             Close();
                             GUIUtility.ExitGUI();
                         }
                         GUI.enabled = true;
 
-                        EditorGUILayout.LabelField(e.Name, EditorStyles.boldLabel);
+                        EditorGUILayout.LabelField((isLogic ? "[逻辑] " : "[效果器] ") + e.Name, EditorStyles.boldLabel);
                     }
 
                     if (!string.IsNullOrWhiteSpace(e.Desc))
@@ -845,6 +854,23 @@ public class MaterialEditorWindow : OdinEditorWindow
             }
 
             EditorGUILayout.EndScrollView();
+        }
+
+        private void OnInspectorUpdate()
+        {
+            // keep repaint smooth for dropdown
+            Repaint();
+        }
+
+        private void DrawCategoryToggles()
+        {
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.helpBox))
+            {
+                _foldLogic = EditorGUILayout.ToggleLeft("逻辑节点", _foldLogic, GUILayout.Width(100));
+                _foldEffects = EditorGUILayout.ToggleLeft("效果器", _foldEffects, GUILayout.Width(100));
+                GUILayout.FlexibleSpace();
+                EditorGUILayout.LabelField("（可折叠过滤）", EditorStyles.miniLabel, GUILayout.Width(90));
+            }
         }
 
         private static string GetDefaultComponentDescription(Type t)
@@ -884,95 +910,7 @@ public class MaterialEditorWindow : OdinEditorWindow
         }
     }
 
-    private SerializedProperty GetOrderedComponentsProp(SerializedObject matSO)
-    {
-        // MaterialObj: [SerializeField] private List<MonoBehaviour> orderedComponents;
-        return matSO.FindProperty("orderedComponents");
-    }
-
-    private void RebuildOrderedComponentsFromCurrent()
-    {
-        if (_editingMaterial == null || _editingInstance == null) return;
-
-        var matSO = new SerializedObject(_editingMaterial);
-        matSO.Update();
-        var list = GetOrderedComponentsProp(matSO);
-        if (list == null || !list.isArray)
-        {
-            Debug.LogError("[材料编辑器] 找不到 MaterialObj.orderedComponents 序列化字段。");
-            return;
-        }
-
-        list.ClearArray();
-        var bs = _editingInstance.GetComponents<MonoBehaviour>();
-        for (int i = 0; i < bs.Length; i++)
-        {
-            if (bs[i] == null) continue;
-            if (bs[i] is MaterialObj) continue;
-
-            int idx = list.arraySize;
-            list.InsertArrayElementAtIndex(idx);
-            list.GetArrayElementAtIndex(idx).objectReferenceValue = bs[i];
-        }
-
-        matSO.ApplyModifiedProperties();
-        EditorUtility.SetDirty(_editingMaterial);
-        Repaint();
-    }
-
-    private void MoveOrderedComponent(int from, int to)
-    {
-        if (_editingMaterial == null) return;
-        if (from == to) return;
-
-        var matSO = new SerializedObject(_editingMaterial);
-        matSO.Update();
-        var list = GetOrderedComponentsProp(matSO);
-        if (list == null || !list.isArray) return;
-
-        if (from < 0 || from >= list.arraySize) return;
-        if (to < 0 || to >= list.arraySize) return;
-
-        list.MoveArrayElement(from, to);
-        matSO.ApplyModifiedProperties();
-        EditorUtility.SetDirty(_editingMaterial);
-        Repaint();
-    }
-
-    private void DeleteComponentAtOrderedIndex(int index)
-    {
-        if (_editingMaterial == null || _editingInstance == null) return;
-
-        var matSO = new SerializedObject(_editingMaterial);
-        matSO.Update();
-        var list = GetOrderedComponentsProp(matSO);
-        if (list == null || !list.isArray) return;
-
-        if (index < 0 || index >= list.arraySize) return;
-
-        var elem = list.GetArrayElementAtIndex(index);
-        var target = elem.objectReferenceValue as MonoBehaviour;
-
-        // 先从 orderedComponents 移除引用
-        elem.objectReferenceValue = null;
-        // Unity 对 ObjectReference 的删除通常需要两次
-        list.DeleteArrayElementAtIndex(index);
-        if (index < list.arraySize && list.GetArrayElementAtIndex(index).objectReferenceValue == null)
-        {
-            list.DeleteArrayElementAtIndex(index);
-        }
-
-        matSO.ApplyModifiedProperties();
-        EditorUtility.SetDirty(_editingMaterial);
-
-        // 再删除组件本体（支持 Undo）
-        if (target != null)
-        {
-            Undo.DestroyObjectImmediate(target);
-        }
-
-        Repaint();
-    }
+    // orderedComponents 链式方案已移除：不再提供 “顺序列表” 的初始化/排序/删除 API。
 
     private void Save()
     {
@@ -1120,16 +1058,9 @@ public class MaterialEditorWindow : OdinEditorWindow
     {
         _materialComponentTypes.Clear();
 
-        var markerInterfaces = new[]
-        {
-            typeof(IMaterialBindEffect),
-            typeof(IFightComponent),
-            typeof(IAttackInfoModifier),
-            typeof(IMaterialDamageAppliedEffect),
-            typeof(IPersistentGrowthProvider),
-            typeof(IMaterialDescriptionProvider),
-            typeof(IMaterialTraversalGate),
-        };
+        // 弹窗候选类型：
+        // - 逻辑节点：IMaterialLogicNode（可直接进入树）
+        // - 纯效果器：IMaterialEffect / IMaterialAttackInfoEffect（选中后会自动创建 Node_Effect 包装进树）
 
         foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
         {
@@ -1145,12 +1076,9 @@ public class MaterialEditorWindow : OdinEditorWindow
                 if (t == typeof(MaterialObj)) continue;
                 if (t.Namespace != null && t.Namespace.StartsWith("Unity", StringComparison.Ordinal)) continue;
 
-                bool ok = false;
-                for (int k = 0; k < markerInterfaces.Length; k++)
-                {
-                    if (markerInterfaces[k].IsAssignableFrom(t)) { ok = true; break; }
-                }
-                if (!ok) continue;
+                bool isLogicNode = typeof(IMaterialLogicNode).IsAssignableFrom(t);
+                bool isEffector = typeof(IMaterialEffect).IsAssignableFrom(t) || typeof(IMaterialAttackInfoEffect).IsAssignableFrom(t);
+                if (!isLogicNode && !isEffector) continue;
 
                 _materialComponentTypes.Add(t);
             }
@@ -1164,11 +1092,7 @@ public class MaterialEditorWindow : OdinEditorWindow
         if (_editingInstance == null || t == null) return;
         // Jam：允许同一材质挂多个“同类型”组件实例（用于逻辑树不同分支复用同类型节点）。
         // 若该组件脚本带 [DisallowMultipleComponent]，Unity 会阻止重复添加（这属于 Unity 规则，而不是编辑器限制）。
-        var added = Undo.AddComponent(_editingInstance, t) as MonoBehaviour;
-        if (_editingMaterial != null && added != null)
-        {
-            _editingMaterial.EditorAppendOrderedComponent(added);
-        }
+        Undo.AddComponent(_editingInstance, t);
     }
 
     private static string GetDefaultComponentDescription(Type t)

@@ -29,6 +29,13 @@ public static class JamDefaultSettings
 
     /// <summary>开局发放的 Common 材质数量（用于第一回合能做面具）。</summary>
     public const int InitialCommonMaterialCount = 4;
+
+    // ---- Persistent Growth (Post Battle) ----
+    /// <summary>
+    /// 持久成长结算器（战后把 PlayerGrowthDelta 套公式后再实际加到玩家身上）。
+    /// Jam 默认实现为“直接加上去”；策划要改成长公式，就改 JamPersistentGrowthCalculator_Default.Apply。
+    /// </summary>
+    public static readonly IJamPersistentGrowthCalculator PersistentGrowthCalculator = new JamPersistentGrowthCalculator_Default();
 }
 
 

@@ -13,16 +13,16 @@ public enum AttackInfoNumericField
 /// 行动阶段（AttackModify）：按面具数量缩放数值。
 /// 例：每有 1 个面具，RawAttack +2。
 /// </summary>
-public sealed class AttackInfo_AddByMaskCountMaterial : MonoBehaviour, IAttackInfoModifier, IMaterialDescriptionProvider
+public sealed class AttackInfo_AddByMaskCountMaterial : MonoBehaviour, IMaterialAttackInfoEffect, IMaterialDescriptionProvider
 {
     [SerializeField] private AttackInfoNumericField field = AttackInfoNumericField.RawAttack;
     [Tooltip("每个面具提供的加成（可负数）。")]
     [SerializeField] private float addPerMask = 1f;
 
-    public void Modify(ref AttackInfo info, FightContext context)
+    public void Modify(ref AttackInfo info, in MaterialVommandeTreeContext context)
     {
-        if (context == null) return;
-        int count = Mathf.Max(0, context.MaskCount);
+        if (context.Fight == null) return;
+        int count = Mathf.Max(0, context.Fight.MaskCount);
         if (count <= 0) return;
 
         var add = count * addPerMask;

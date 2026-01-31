@@ -1,5 +1,6 @@
-using UnityEngine;
-
+/// <summary>
+/// 仅保留阶段枚举（旧的 TraverseContext 结构体已移除，统一使用 MaterialVommandeTreeContext）。
+/// </summary>
 public enum MaterialTraversePhase
 {
     Bind = 0,
@@ -9,31 +10,6 @@ public enum MaterialTraversePhase
     BattleEnd = 4,
     PersistentGrowth = 5,
     Description = 6,
-}
-
-/// <summary>
-/// 遍历上下文：供“每X次行动/第X次攻击/前X次行动/前X次攻击”等 gate 使用。
-/// </summary>
-public readonly struct MaterialTraverseContext
-{
-    public readonly MaterialTraversePhase Phase;
-    public readonly FightContext Fight;
-    public readonly FightSide Side;
-
-    /// <summary>本次“行动序号”（从 1 开始；每发生一次攻击事件 +1）。</summary>
-    public readonly int ActionNumber;
-
-    /// <summary>本次攻击方“第几次攻击”（从 1 开始）。</summary>
-    public readonly int AttackerAttackNumber;
-
-    public MaterialTraverseContext(MaterialTraversePhase phase, FightContext fight, FightSide side, int actionNumber, int attackerAttackNumber)
-    {
-        Phase = phase;
-        Fight = fight;
-        Side = side;
-        ActionNumber = Mathf.Max(0, actionNumber);
-        AttackerAttackNumber = Mathf.Max(0, attackerAttackNumber);
-    }
 }
 
 

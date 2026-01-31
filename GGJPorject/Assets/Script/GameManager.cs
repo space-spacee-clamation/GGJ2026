@@ -564,7 +564,7 @@ public class GameManager : MonoBehaviour
 
         var delta = new PlayerGrowthDelta();
 
-        // 面具库顺序 → 材料顺序 → 组件顺序（MaterialObj.orderedComponents / 编辑器配置顺序）
+        // 面具库顺序 → 材料顺序 → 逻辑树遍历顺序（运行时只使用 logicTreeRoots）
         for (int mi = 0; mi < _maskLibrary.Count; mi++)
         {
             var mask = _maskLibrary[mi];
@@ -576,43 +576,73 @@ public class GameManager : MonoBehaviour
                 var mat = mats[i];
                 if (mat == null) continue;
 
-                var comps = mat.OrderedComponents;
-                // Jam 容错：若未配置 orderedComponents，则 fallback 到 GetComponents 顺序
-                if (comps == null || comps.Count == 0)
+                // 树状逻辑优先：PersistentGrowth 阶段（建议配 Gate_Phase(PersistentGrowth)）
+                if (mat.LogicTreeRoots != null && mat.LogicTreeRoots.Count > 0)
                 {
-                    var bs = mat.GetComponents<MonoBehaviour>();
-                    for (int bi = 0; bi < bs.Length; bi++)
-                    {
-                        if (bs[bi] == null) continue;
-                        if (bs[bi] is MaterialObj) continue;
-                        if (bs[bi] is IMaterialTraversalGate g)
-                        {
-                    // “战斗结束时” Gate：持久成长也视为战斗结束阶段
-                    var tctx = new MaterialTraverseContext(MaterialTraversePhase.BattleEnd, ctx, FightSide.None, ctx.BattleActionCount, 0);
-                            if (g.ShouldBreak(in tctx)) break;
-                        }
-                        if (bs[bi] is IPersistentGrowthProvider p)
-                        {
-                            p.OnCollectPersistentGrowth(Player.I, delta, ctx);
-                        }
-                    }
+                    var tctx = new MaterialVommandeTreeContext(
+                        MaterialTraversePhase.PersistentGrowth,
+                        mask: null,
+                        maskMaterials: null,
+                        onMaterialBound: null,
+                        fight: null,
+                        side: FightSide.None,
+                        defenderSide: FightSide.None,
+                        actionNumber: ctx.BattleActionCount,
+                        attackerAttackNumber: 0,
+                        attackInfo: default,
+                        damage: 0f,
+                        player: null,
+                        growthDelta: delta
+                    );
+                    TraverseMaterialGrowthTree(mat.LogicTreeRoots, in tctx, delta, ctx);
+                    continue;
                 }
-                else
+
+                // 不再兼容链式：没有树就跳过并输出提示
+                if (ctx.DebugVerbose)
                 {
-            // “战斗结束时” Gate：持久成长也视为战斗结束阶段
-            var tctx = new MaterialTraverseContext(MaterialTraversePhase.BattleEnd, ctx, FightSide.None, ctx.BattleActionCount, 0);
-                    for (int bi = 0; bi < comps.Count; bi++)
-                    {
-                        var c = comps[bi];
-                        if (c == null) continue;
-                        if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx)) break;
-                        if (c is IPersistentGrowthProvider p) p.OnCollectPersistentGrowth(Player.I, delta, ctx);
-                    }
+                    ctx.DebugLogger?.Invoke($"[GameManager] PersistentGrowth Skip：Material={mat.name} 未配置 logicTreeRoots。");
                 }
             }
         }
 
-        Player.I.ApplyGrowth(delta);
+        if (JamDefaultSettings.PersistentGrowthCalculator != null)
+        {
+            JamDefaultSettings.PersistentGrowthCalculator.Apply(Player.I, delta, ctx);
+        }
+        else
+        {
+            // 兜底：直接应用（不建议为 null）
+            Player.I.ApplyGrowth(delta);
+        }
+    }
+
+    private void TraverseMaterialGrowthTree(IReadOnlyList<MaterialLogicNode> nodes, in MaterialVommandeTreeContext tctx, PlayerGrowthDelta delta, FightContext fight)
+    {
+        if (nodes == null) return;
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            var n = nodes[i];
+            if (n == null) continue;
+            var c = n.Component;
+
+            if (c is IMaterialTraversalGate gate && gate.ShouldBreak(in tctx))
+            {
+                // 仅跳过该分支
+                continue;
+            }
+
+            if (c is IPersistentGrowthProvider p)
+            {
+                p.OnCollectPersistentGrowth(Player.I, delta, fight);
+            }
+
+            // 只有逻辑节点（gate/空节点）允许子节点
+            if ((c == null || c is IMaterialTraversalGate) && n.Children != null && n.Children.Count > 0)
+            {
+                TraverseMaterialGrowthTree(n.Children, in tctx, delta, fight);
+            }
+        }
     }
 
     private void RunDrops()

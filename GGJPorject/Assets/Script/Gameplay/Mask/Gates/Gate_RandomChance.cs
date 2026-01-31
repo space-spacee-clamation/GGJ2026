@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// Gate：按概率决定是否执行后续分支（否则跳过该分支）。
 /// </summary>
-public sealed class Gate_RandomChance : MonoBehaviour, IMaterialTraversalGate, IMaterialDescriptionProvider
+public sealed class Gate_RandomChance : MonoBehaviour, IMaterialLogicNode, IMaterialTraversalGate, IMaterialDescriptionProvider
 {
     [Range(0f, 1f)]
     [Tooltip("通过概率：0~1。每次触发都会重新抽一次。")]
@@ -13,7 +13,7 @@ public sealed class Gate_RandomChance : MonoBehaviour, IMaterialTraversalGate, I
     [Tooltip("取反：在未通过时执行（通过时不执行）。")]
     public bool Invert = false;
 
-    public bool ShouldBreak(in MaterialTraverseContext context)
+    public bool ShouldBreak(in MaterialVommandeTreeContext context)
     {
         if (context.Phase == MaterialTraversePhase.Description) return false;
         var c = Mathf.Clamp01(Chance01);

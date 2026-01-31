@@ -14,7 +14,7 @@ public enum PersistentGrowthSourceDomain
 /// 战后成长：将“来源属性 * 百分比”附加到“目标属性”（写入 PlayerGrowthDelta）。
 /// 例：将 最大生命 的 10% 附加到 攻击（按当前 ActualStats 计算）。
 /// </summary>
-public sealed class PersistentGrowth_StatPercentAttachMaterial : MonoBehaviour, IPersistentGrowthProvider, IMaterialDescriptionProvider
+public sealed class PersistentGrowth_StatPercentAttachMaterial : MonoBehaviour, IMaterialEffect, IMaterialDescriptionProvider
 {
     [Header("Source")]
     [SerializeField] private PersistentGrowthSourceDomain sourceDomain = PersistentGrowthSourceDomain.ActualStats;
@@ -27,26 +27,27 @@ public sealed class PersistentGrowth_StatPercentAttachMaterial : MonoBehaviour, 
     [Tooltip("百分比系数：0.2=20%，1=100%，可填负数")]
     [SerializeField] private float percent = 0.1f;
 
-    public void OnCollectPersistentGrowth(Player player, PlayerGrowthDelta delta, FightContext battleContext)
+    public void Execute(in MaterialVommandeTreeContext context)
     {
-        if (player == null || delta == null) return;
+        if (context.GrowthDelta == null) return;
+        if (context.Player == null) return;
 
         float srcValue;
         switch (sourceDomain)
         {
             case PersistentGrowthSourceDomain.BattleStats:
-                srcValue = StatMathUtil.GetFromCombatant(battleContext == null ? null : battleContext.Player, sourceStat);
+                srcValue = StatMathUtil.GetFromCombatant(context.Fight == null ? null : context.Fight.Player, sourceStat);
                 break;
             case PersistentGrowthSourceDomain.ActualStats:
             default:
-                srcValue = StatMathUtil.GetFromPlayerStats(player.ActualStats, sourceStat);
+                srcValue = StatMathUtil.GetFromPlayerStats(context.Player.ActualStats, sourceStat);
                 break;
         }
 
         var add = srcValue * percent;
-        StatMathUtil.AddToGrowth(delta, targetStat, add);
+        StatMathUtil.AddToGrowth(context.GrowthDelta, targetStat, add);
 
-        if (battleContext != null && battleContext.DebugVerbose)
+        if (context.Fight != null && context.Fight.DebugVerbose)
         {
             Debug.Log(
                 $"[PersistentGrowth_StatPercentAttachMaterial] {sourceDomain}.{sourceStat}({srcValue}) * {percent:P0} => add {add} to Growth.{targetStat}",

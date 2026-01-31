@@ -5,12 +5,12 @@ using UnityEngine;
 /// Gate：战斗开始时执行后续效果；其它阶段直接跳出。
 /// 用于把“战斗开始时”作为可组合的词条前缀，而不是写死在效果组件里。
 /// </summary>
-public class Gate_BattleStart : MonoBehaviour, IMaterialTraversalGate, IMaterialDescriptionProvider
+public class Gate_BattleStart : MonoBehaviour, IMaterialLogicNode, IMaterialTraversalGate, IMaterialDescriptionProvider
 {
     [Tooltip("取反：战斗开始时不执行后续效果（其它阶段执行）。")]
     public bool Invert = false;
 
-    public bool ShouldBreak(in MaterialTraverseContext context)
+    public bool ShouldBreak(in MaterialVommandeTreeContext context)
     {
         // 描述阶段不跳出，避免截断文案
         if (context.Phase == MaterialTraversePhase.Description) return false;

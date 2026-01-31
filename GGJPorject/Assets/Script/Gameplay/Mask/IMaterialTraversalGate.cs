@@ -3,7 +3,7 @@
 /// </summary>
 public interface IMaterialTraversalGate
 {
-    bool ShouldBreak(in MaterialTraverseContext context);
+    bool ShouldBreak(in MaterialVommandeTreeContext context);
 }
 
 

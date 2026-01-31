@@ -21,6 +21,25 @@
 
 ---
 
+## 材质逻辑树（重要：逻辑节点 vs 效果器）
+
+核心目标：**“注入/触发”由逻辑节点负责，效果器只负责执行**，避免效果脚本到处实现 `IMaterialBindEffect / IPersistentGrowthProvider / IAttackInfoModifier` 造成职责混乱。
+
+- **统一上下文**：`Assets/Script/Gameplay/Mask/MaterialVommandeTreeContext.cs`  
+  所有阶段（Bind / BattleStart / AttackModify / DamageApplied / BattleEnd / PersistentGrowth / Description）共用同一份 context。
+
+- **逻辑节点（可进树）**：实现 `IMaterialLogicNode` 的 `MonoBehaviour`  
+  - Gate：实现 `IMaterialTraversalGate`（控制分支是否继续）
+  - `Node_Effect`：负责实现注入接口，并把 `MaterialVommandeTreeContext` 转发给纯效果器
+
+- **纯效果器（不可直接进树）**：实现以下任一接口
+  - `IMaterialEffect`：`Execute(in MaterialVommandeTreeContext ctx)`
+  - `IMaterialAttackInfoEffect`：`Modify(ref AttackInfo info, in MaterialVommandeTreeContext ctx)`
+
+- **编辑器行为**：在 `MaterialEditorWindow` 的“添加节点”弹窗里选中“效果器”时，会**自动创建**一个 `Node_Effect` 并把效果器绑定到其 `Effect` 字段，然后把 `Node_Effect` 加入逻辑树。
+
+---
+
 ## 游戏主循环（代码入口）
 
 文件：`Assets/Script/GameManager.cs`
@@ -131,19 +150,19 @@ Luck：
 ### 材料对象（Prefab）
 文件：`Assets/Script/Gameplay/Mask/MaterialObj.cs`
 - 基础字段：`Id / DisplayName / BaseSprite / ManaCost / Quality / ShelfLifeTurns`
-- **关键：`orderedComponents`**  
-  材料组件的执行顺序由该列表决定（用于 Gate 跳出与所有效果执行顺序）。
+- **关键：`logicTreeRoots`（逻辑树）**  
+  材料组件的执行顺序与条件分支由逻辑树决定（运行时不再保留链式 orderedComponents）。
 
 ### 材料组件执行与“跳出 Gate”
 相关文件：
 - `Assets/Script/Gameplay/Mask/IMaterialTraversalGate.cs`
-- `Assets/Script/Gameplay/Mask/MaterialTraverseContext.cs`
+- `Assets/Script/Gameplay/Mask/MaterialVommandeTreeContext.cs`
 - `Assets/Script/Gameplay/Mask/Gates/*.cs`
 
 规则：
-- 进入某个阶段时，会按 `orderedComponents` 从上到下遍历
-- 如果遇到实现了 `IMaterialTraversalGate` 的组件，且 `ShouldBreak(...) == true`，则 **提前 break**（后续组件不执行）
-- Gate 支持：每X回合/前X回合/第X攻击/前X攻击，并支持 `Invert` 取反
+- 进入某个阶段时，会按逻辑树遍历（深度优先）
+- 如果遇到实现了 `IMaterialTraversalGate` 的节点且 `ShouldBreak(...) == true`，则 **仅跳过该分支**（不影响兄弟分支）
+- Gate 支持：每X行动/前X行动/第X攻击/前X攻击，并支持 `Invert` 取反
 
 ---
 
@@ -159,8 +178,7 @@ Luck：
 用法要点：
 - 左侧选择/创建 `MaterialObj` prefab（Id 自动递增）
 - 右侧编辑基本字段（名字、Sprite、品质、消耗、保质期）
-- “Add Component” 会反射列出所有材料组件类型
-- **添加组件后会自动写入 `MaterialObj.orderedComponents`，确保顺序可控**
+- “添加节点”弹窗会列出逻辑节点/效果器类型；选择效果器会自动创建 `Node_Effect` 包装并绑定
 - “保存”会按 `"{id}_{材质名}"` 命名（会尝试 MoveAsset 保留 GUID）
 
 ---
@@ -171,7 +189,7 @@ Luck：
 做法：
 - 在材料 prefab 上添加 `Gate_FirstXAttacks`
 - `FirstX = 3`
-- 把 Gate 放在 `orderedComponents` 列表中要控制的效果组件之前
+- 在逻辑树上把 Gate 作为父节点，把要控制的节点挂在其 Children 下
 
 ### 示例 2：想让某个材料“每 2 回合不生效”
 做法：

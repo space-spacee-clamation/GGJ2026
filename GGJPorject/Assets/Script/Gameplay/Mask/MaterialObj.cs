@@ -10,10 +10,21 @@ using UnityEngine;
 /// </summary>
 public class MaterialObj : MonoBehaviour
 {
+    public enum MaterialType
+    {
+        Cost = 0,
+        Attack = 1,
+        Survival = 2,
+        Special = 3,
+    }
+
     [Header("Base Data")]
     [Min(0)] public int Id = 0;
     [Tooltip("材质名（用于 UI 与保存命名）。")]
     public string DisplayName;
+
+    [Tooltip("材质类型。")]
+    public MaterialType Type = MaterialType.Attack;
 
     [Min(0)] public int ManaCost = 0;
 
@@ -47,68 +58,13 @@ public class MaterialObj : MonoBehaviour
         return remainingShelfLifeTurns <= 0;
     }
 
-    [Header("Ordered Components (Editor)")]
-    [Tooltip("材质组件执行顺序（由编辑器/材质编辑器维护）。用于跳出 Gate 与顺序触发。")]
-    [SerializeField] private List<MonoBehaviour> orderedComponents = new();
-
-    public IReadOnlyList<MonoBehaviour> OrderedComponents => orderedComponents;
-
     [Header("Logic Tree (Editor)")]
-    [Tooltip("材质逻辑树：条件节点可挂子节点；条件不满足时仅跳过该分支。若此列表非空，运行时将优先使用树状逻辑，而不是 orderedComponents 链式逻辑。")]
+    [Tooltip("材质逻辑树：条件节点可挂子节点；条件不满足时仅跳过该分支。运行时只使用树状逻辑（不再兼容旧链式）。")]
     [SerializeField] private List<MaterialLogicNode> logicTreeRoots = new();
 
     public IReadOnlyList<MaterialLogicNode> LogicTreeRoots => logicTreeRoots;
 
     private bool HasLogicTree => logicTreeRoots != null && logicTreeRoots.Count > 0;
-
-    private IReadOnlyList<MonoBehaviour> GetOrderedComponentsRuntime()
-    {
-        // Jam 容错：老 prefab 未配置顺序时，退化为 GetComponents 顺序
-        if (orderedComponents == null || orderedComponents.Count == 0)
-        {
-            var list = new List<MonoBehaviour>();
-            var bs = GetComponents<MonoBehaviour>();
-            for (int i = 0; i < bs.Length; i++)
-            {
-                if (bs[i] == null) continue;
-                if (bs[i] is MaterialObj) continue;
-                list.Add(bs[i]);
-            }
-            return list;
-        }
-
-        // 清理空引用
-        for (int i = orderedComponents.Count - 1; i >= 0; i--)
-        {
-            if (orderedComponents[i] == null) orderedComponents.RemoveAt(i);
-        }
-        return orderedComponents;
-    }
-
-#if UNITY_EDITOR
-    [ContextMenu("Rebuild Ordered Components From Current")]
-    private void EditorRebuildOrderedComponentsFromCurrent()
-    {
-        orderedComponents ??= new List<MonoBehaviour>();
-        orderedComponents.Clear();
-        var bs = GetComponents<MonoBehaviour>();
-        for (int i = 0; i < bs.Length; i++)
-        {
-            if (bs[i] == null) continue;
-            if (bs[i] is MaterialObj) continue;
-            orderedComponents.Add(bs[i]);
-        }
-        UnityEditor.EditorUtility.SetDirty(this);
-    }
-
-    public void EditorAppendOrderedComponent(MonoBehaviour comp)
-    {
-        if (comp == null || comp is MaterialObj) return;
-        orderedComponents ??= new List<MonoBehaviour>();
-        if (!orderedComponents.Contains(comp)) orderedComponents.Add(comp);
-        UnityEditor.EditorUtility.SetDirty(this);
-    }
-#endif
 
     /// <summary>
     /// 按“配置好的顺序”生成描述：依次调用 IMaterialDescriptionProvider；遇到 Gate 跳出则提前结束。
@@ -123,22 +79,15 @@ public class MaterialObj : MonoBehaviour
     public void BuildDescription(StringBuilder sb)
     {
         if (sb == null) return;
-        if (HasLogicTree)
+        if (!HasLogicTree)
         {
-            // 树状描述：使用 \t 表达层级；不做“跳出”（描述阶段不应截断）。
-            // 注意：组件允许复用，因此这里不做去重，保证结构可读。
-            BuildTreeDescription(sb, logicTreeRoots, depth: 0);
+            sb.AppendLine("（该材质未配置逻辑树）");
             return;
         }
 
-        // 旧链式描述（兼容）
-        var comps = GetOrderedComponentsRuntime();
-        for (int i = 0; i < comps.Count; i++)
-        {
-            var c = comps[i];
-            if (c == null) continue;
-            if (c is IMaterialDescriptionProvider p) p.AppendDescription(sb);
-        }
+        // 树状描述：使用 \t 表达层级；不做“跳出”（描述阶段不应截断）。
+        // 注意：组件允许复用，因此这里不做去重，保证结构可读。
+        BuildTreeDescription(sb, logicTreeRoots, depth: 0);
     }
 
     private static void BuildTreeDescription(StringBuilder sb, List<MaterialLogicNode> nodes, int depth)
@@ -176,27 +125,31 @@ public class MaterialObj : MonoBehaviour
 
     public void RunBindEffects(in BindContext context)
     {
-        if (HasLogicTree)
+        if (!HasLogicTree)
         {
-            var tctx = new MaterialTraverseContext(MaterialTraversePhase.Bind, null, FightSide.None, 0, 0);
-            TraverseTreeBind(logicTreeRoots, in tctx, in context);
+            Debug.LogWarning($"[MaterialObj] {name} 未配置 logicTreeRoots，无法执行 Bind。", this);
             return;
         }
 
-        // 旧链式（兼容）
-        var comps = GetOrderedComponentsRuntime();
-        var tctx2 = new MaterialTraverseContext(MaterialTraversePhase.Bind, null, FightSide.None, 0, 0);
-        for (int i = 0; i < comps.Count; i++)
-        {
-            var c = comps[i];
-            if (c == null) continue;
-            if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx2)) break;
-            if (c is IMaterialAutoInit init) init.Initialize(this);
-            if (c is IMaterialBindEffect bind) bind.OnBind(in context);
-        }
+        var tctx = new MaterialVommandeTreeContext(
+            MaterialTraversePhase.Bind,
+            mask: context.Mask,
+            maskMaterials: context.Materials,
+            onMaterialBound: context.OnMaterialBound,
+            fight: null,
+            side: FightSide.None,
+            defenderSide: FightSide.None,
+            actionNumber: 0,
+            attackerAttackNumber: 0,
+            attackInfo: default,
+            damage: 0f,
+            player: null,
+            growthDelta: null
+        );
+        TraverseTreeBind(logicTreeRoots, in tctx);
     }
 
-    private void TraverseTreeBind(List<MaterialLogicNode> nodes, in MaterialTraverseContext tctx, in BindContext bindCtx)
+    private void TraverseTreeBind(List<MaterialLogicNode> nodes, in MaterialVommandeTreeContext tctx)
     {
         if (nodes == null) return;
         for (int i = 0; i < nodes.Count; i++)
@@ -212,11 +165,11 @@ public class MaterialObj : MonoBehaviour
             }
 
             if (c is IMaterialAutoInit init) init.Initialize(this);
-            if (c is IMaterialBindEffect bind) bind.OnBind(in bindCtx);
+            if (c is IMaterialBindEffect bind) bind.OnBind(in tctx);
 
-            if (n.Children != null && n.Children.Count > 0)
+            if ((c == null || c is IMaterialTraversalGate) && n.Children != null && n.Children.Count > 0)
             {
-                TraverseTreeBind(n.Children, in tctx, in bindCtx);
+                TraverseTreeBind(n.Children, in tctx);
             }
         }
     }
@@ -224,8 +177,13 @@ public class MaterialObj : MonoBehaviour
     public void InjectBattle(FightContext context)
     {
         if (context == null) return;
+        if (!HasLogicTree)
+        {
+            Debug.LogWarning($"[MaterialObj] {name} 未配置 logicTreeRoots，无法注入战斗。", this);
+            return;
+        }
 
-        // 每个材料注入一个“运行时执行器”，它会按 orderedComponents 顺序执行，并支持 Gate 跳出
+        // 每个材料注入一个“运行时执行器”，它会遍历逻辑树并触发对应阶段的逻辑节点
         var runner = new MaterialRuntimeRunner(this);
         context.AddFightComponent(runner);
         context.PlayerAttackProcessor.Add(runner);

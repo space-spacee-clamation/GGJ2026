@@ -5,13 +5,13 @@ using UnityEngine;
 /// Gate：前 X 次行动允许执行（否则跳出）。
 /// 取反：前 X 次行动不执行（从第 X+1 次行动开始执行）。
 /// </summary>
-public class Gate_FirstXTurns : MonoBehaviour, IMaterialTraversalGate, IMaterialDescriptionProvider
+public class Gate_FirstXTurns : MonoBehaviour, IMaterialLogicNode, IMaterialTraversalGate, IMaterialDescriptionProvider
 {
     [Min(1)] public int FirstX = 2;
     [Tooltip("取反：前X次行动不执行。")]
     public bool Invert = false;
 
-    public bool ShouldBreak(in MaterialTraverseContext context)
+    public bool ShouldBreak(in MaterialVommandeTreeContext context)
     {
         if (context.Phase == MaterialTraversePhase.Description) return false;
         if (FirstX <= 0) return false;

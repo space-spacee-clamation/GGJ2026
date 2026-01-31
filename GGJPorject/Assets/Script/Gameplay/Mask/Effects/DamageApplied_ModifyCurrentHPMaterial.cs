@@ -18,7 +18,7 @@ public enum CurrentHpModifyMode
 /// - Flat：直接加/减固定值
 /// - Percent：按目标 MaxHP 的百分比加/减
 /// </summary>
-public sealed class DamageApplied_ModifyCurrentHPMaterial : MonoBehaviour, IMaterialDamageAppliedEffect, IMaterialDescriptionProvider
+public sealed class DamageApplied_ModifyCurrentHPMaterial : MonoBehaviour, IMaterialEffect, IMaterialDescriptionProvider
 {
     [SerializeField] private CurrentHpModifyTarget target = CurrentHpModifyTarget.Attacker;
     [SerializeField] private CurrentHpModifyMode mode = CurrentHpModifyMode.Flat;
@@ -29,18 +29,18 @@ public sealed class DamageApplied_ModifyCurrentHPMaterial : MonoBehaviour, IMate
     [Tooltip("按 MaxHP 的百分比变化（可负数）。0.1=+10%，-0.2=-20%。")]
     [SerializeField] private float percentOfMaxHpDelta = 0f;
 
-    public void OnDamageApplied(FightContext context, FightSide attackerSide, FightSide defenderSide, AttackInfo info, float damage)
+    public void Execute(in MaterialVommandeTreeContext context)
     {
-        if (context == null) return;
+        if (context.Fight == null) return;
 
         CombatantRuntime t;
         if (target == CurrentHpModifyTarget.Defender)
         {
-            t = defenderSide == FightSide.Player ? context.Player : context.Enemy;
+            t = context.DefenderSide == FightSide.Player ? context.Fight.Player : context.Fight.Enemy;
         }
         else
         {
-            t = attackerSide == FightSide.Player ? context.Player : context.Enemy;
+            t = context.Side == FightSide.Player ? context.Fight.Player : context.Fight.Enemy;
         }
 
         if (t == null) return;

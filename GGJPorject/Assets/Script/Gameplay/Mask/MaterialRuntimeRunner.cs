@@ -3,9 +3,9 @@ using System.Text;
 using UnityEngine;
 
 /// <summary>
-/// 材质运行时执行器：按 MaterialObj 的 orderedComponents 顺序执行，并支持 Gate 跳出。
-/// - 作为 IFightComponent：订阅战斗开始回调
-/// - 作为 IAttackInfoModifier：在攻击处理链中按顺序执行所有 IAttackInfoModifier 组件
+/// 材质运行时执行器：遍历 MaterialObj.logicTreeRoots，并触发各阶段逻辑节点。
+/// - 作为 IFightComponent：订阅战斗回调（BattleStart/BattleEnd/DamageApplied）
+/// - 作为 IAttackInfoModifier：在攻击处理链中触发 AttackModify 阶段
 /// </summary>
 public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
 {
@@ -27,52 +27,34 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
     private void OnBattleStart(FightContext context)
     {
         if (_material == null) return;
-        // 优先树状逻辑；无树则兼容旧链式
-        if (_material.LogicTreeRoots != null && _material.LogicTreeRoots.Count > 0)
+        if (_material.LogicTreeRoots == null || _material.LogicTreeRoots.Count == 0)
         {
-            var treeCtx = new MaterialTraverseContext(MaterialTraversePhase.BattleStart, context, FightSide.None, 0, 0);
-            TraverseTree_BattleStart(_material.LogicTreeRoots, in treeCtx);
+            if (context != null && context.DebugVerbose)
+            {
+                context.DebugLogger?.Invoke($"[MaterialRuntimeRunner] {_material.name} 未配置 logicTreeRoots，跳过 BattleStart。");
+            }
             return;
         }
 
-        var comps = _material.OrderedComponents;
-
-        // 如果未配置 orderedComponents，MaterialObj 会在运行时 fallback GetComponents（但 OrderedComponents 可能为空）
-        IReadOnlyList<MonoBehaviour> runtimeList = comps as IReadOnlyList<MonoBehaviour>;
-        if (runtimeList == null || runtimeList.Count == 0)
-        {
-            // 触发一次描述生成会走 fallback 清理，复用其逻辑不划算；这里直接走 material 的内部 fallback
-            // 通过 Bind 描述的 GetOrderedComponentsRuntime 是 private，因此保持简单：用 GetComponents 顺序兜底
-            var bs = _material.GetComponents<MonoBehaviour>();
-            var tmp = new List<MonoBehaviour>();
-            for (int i = 0; i < bs.Length; i++)
-            {
-                if (bs[i] == null) continue;
-                if (bs[i] is MaterialObj) continue;
-                tmp.Add(bs[i]);
-            }
-            runtimeList = tmp;
-        }
-
-        var tctx = new MaterialTraverseContext(MaterialTraversePhase.BattleStart, context, FightSide.None, 0, 0);
-        for (int i = 0; i < runtimeList.Count; i++)
-        {
-            var c = runtimeList[i];
-            if (c == null) continue;
-            if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx))
-            {
-                LogGateBreak(context, "BattleStart", g, tctx);
-                break;
-            }
-            if (c is IMaterialBattleStartEffect start)
-            {
-                LogEffect(context, "BattleStart", c);
-                start.OnBattleStart(context);
-            }
-        }
+        var treeCtx = new MaterialVommandeTreeContext(
+            MaterialTraversePhase.BattleStart,
+            mask: null,
+            maskMaterials: null,
+            onMaterialBound: null,
+            fight: null,
+            side: FightSide.None,
+            defenderSide: FightSide.None,
+            actionNumber: 0,
+            attackerAttackNumber: 0,
+            attackInfo: default,
+            damage: 0f,
+            player: null,
+            growthDelta: null
+        );
+        TraverseTree_BattleStart(_material.LogicTreeRoots, in treeCtx);
     }
 
-    private void TraverseTree_BattleStart(IReadOnlyList<MaterialLogicNode> nodes, in MaterialTraverseContext tctx)
+    private void TraverseTree_BattleStart(IReadOnlyList<MaterialLogicNode> nodes, in MaterialVommandeTreeContext tctx)
     {
         if (nodes == null) return;
         for (int i = 0; i < nodes.Count; i++)
@@ -93,7 +75,8 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
                 start.OnBattleStart(tctx.Fight);
             }
 
-            if (n.Children != null && n.Children.Count > 0)
+            // 只有“逻辑节点（gate/空节点）”允许有子节点；效果节点不遍历 children
+            if ((c == null || c is IMaterialTraversalGate) && n.Children != null && n.Children.Count > 0)
             {
                 TraverseTree_BattleStart(n.Children, in tctx);
             }
@@ -103,46 +86,34 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
     private void OnBattleEnd(FightContext context)
     {
         if (_material == null) return;
-        if (_material.LogicTreeRoots != null && _material.LogicTreeRoots.Count > 0)
+        if (_material.LogicTreeRoots == null || _material.LogicTreeRoots.Count == 0)
         {
-            var treeCtx = new MaterialTraverseContext(MaterialTraversePhase.BattleEnd, context, FightSide.None, context.BattleActionCount, 0);
-            TraverseTree_BattleEnd(_material.LogicTreeRoots, in treeCtx);
+            if (context != null && context.DebugVerbose)
+            {
+                context.DebugLogger?.Invoke($"[MaterialRuntimeRunner] {_material.name} 未配置 logicTreeRoots，跳过 BattleEnd。");
+            }
             return;
         }
 
-        IReadOnlyList<MonoBehaviour> runtimeList = _material.OrderedComponents;
-        if (runtimeList == null || runtimeList.Count == 0)
-        {
-            var bs = _material.GetComponents<MonoBehaviour>();
-            var tmp = new List<MonoBehaviour>();
-            for (int i = 0; i < bs.Length; i++)
-            {
-                if (bs[i] == null) continue;
-                if (bs[i] is MaterialObj) continue;
-                tmp.Add(bs[i]);
-            }
-            runtimeList = tmp;
-        }
-
-        var tctx = new MaterialTraverseContext(MaterialTraversePhase.BattleEnd, context, FightSide.None, context.BattleActionCount, 0);
-        for (int i = 0; i < runtimeList.Count; i++)
-        {
-            var c = runtimeList[i];
-            if (c == null) continue;
-            if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx))
-            {
-                LogGateBreak(context, "BattleEnd", g, tctx);
-                break;
-            }
-            if (c is IMaterialBattleEndEffect end)
-            {
-                LogEffect(context, "BattleEnd", c);
-                end.OnBattleEnd(context);
-            }
-        }
+        var treeCtx = new MaterialVommandeTreeContext(
+            MaterialTraversePhase.BattleEnd,
+            mask: null,
+            maskMaterials: null,
+            onMaterialBound: null,
+            fight: null,
+            side: FightSide.None,
+            defenderSide: FightSide.None,
+            actionNumber: context != null ? context.BattleActionCount : 0,
+            attackerAttackNumber: 0,
+            attackInfo: default,
+            damage: 0f,
+            player: null,
+            growthDelta: null
+        );
+        TraverseTree_BattleEnd(_material.LogicTreeRoots, in treeCtx);
     }
 
-    private void TraverseTree_BattleEnd(IReadOnlyList<MaterialLogicNode> nodes, in MaterialTraverseContext tctx)
+    private void TraverseTree_BattleEnd(IReadOnlyList<MaterialLogicNode> nodes, in MaterialVommandeTreeContext tctx)
     {
         if (nodes == null) return;
         for (int i = 0; i < nodes.Count; i++)
@@ -163,7 +134,7 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
                 end.OnBattleEnd(tctx.Fight);
             }
 
-            if (n.Children != null && n.Children.Count > 0)
+            if ((c == null || c is IMaterialTraversalGate) && n.Children != null && n.Children.Count > 0)
             {
                 TraverseTree_BattleEnd(n.Children, in tctx);
             }
@@ -173,59 +144,34 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
     public void Modify(ref AttackInfo info, FightContext context)
     {
         if (_material == null || context == null) return;
-        if (_material.LogicTreeRoots != null && _material.LogicTreeRoots.Count > 0)
+        if (_material.LogicTreeRoots == null || _material.LogicTreeRoots.Count == 0)
         {
-            var treeCtx = new MaterialTraverseContext(
-                MaterialTraversePhase.AttackModify,
-                context,
-                context.CurrentAttackerSide,
-                context.CurrentActionNumber,
-                context.CurrentAttackerAttackNumber
-            );
-            TraverseTree_AttackModify(_material.LogicTreeRoots, ref info, in treeCtx);
+            if (context != null && context.DebugVerbose)
+            {
+                context.DebugLogger?.Invoke($"[MaterialRuntimeRunner] {_material.name} 未配置 logicTreeRoots，跳过 AttackModify。");
+            }
             return;
         }
 
-        IReadOnlyList<MonoBehaviour> runtimeList = _material.OrderedComponents;
-        if (runtimeList == null || runtimeList.Count == 0)
-        {
-            var bs = _material.GetComponents<MonoBehaviour>();
-            var tmp = new List<MonoBehaviour>();
-            for (int i = 0; i < bs.Length; i++)
-            {
-                if (bs[i] == null) continue;
-                if (bs[i] is MaterialObj) continue;
-                tmp.Add(bs[i]);
-            }
-            runtimeList = tmp;
-        }
-
-        var tctx = new MaterialTraverseContext(
+        var treeCtx = new MaterialVommandeTreeContext(
             MaterialTraversePhase.AttackModify,
-            context,
-            context.CurrentAttackerSide,
-            context.CurrentActionNumber,
-            context.CurrentAttackerAttackNumber
+            mask: null,
+            maskMaterials: null,
+            onMaterialBound: null,
+            fight: null,
+            side: context.CurrentAttackerSide,
+            actionNumber: context.CurrentActionNumber,
+            attackerAttackNumber: context.CurrentAttackerAttackNumber,
+            defenderSide: context.CurrentAttackerSide == FightSide.Player ? FightSide.Enemy : FightSide.Player,
+            attackInfo: info,
+            damage: 0f,
+            player: null,
+            growthDelta: null
         );
-
-        for (int i = 0; i < runtimeList.Count; i++)
-        {
-            var c = runtimeList[i];
-            if (c == null) continue;
-            if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx))
-            {
-                LogGateBreak(context, "AttackModify", g, tctx);
-                break;
-            }
-            if (c is IAttackInfoModifier mod)
-            {
-                LogEffect(context, "AttackModify", c);
-                mod.Modify(ref info, context);
-            }
-        }
+        TraverseTree_AttackModify(_material.LogicTreeRoots, ref info, in treeCtx);
     }
 
-    private void TraverseTree_AttackModify(IReadOnlyList<MaterialLogicNode> nodes, ref AttackInfo info, in MaterialTraverseContext tctx)
+    private void TraverseTree_AttackModify(IReadOnlyList<MaterialLogicNode> nodes, ref AttackInfo info, in MaterialVommandeTreeContext tctx)
     {
         if (nodes == null) return;
         for (int i = 0; i < nodes.Count; i++)
@@ -249,7 +195,7 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
                 mod2.Modify(ref info, tctx.Fight);
             }
 
-            if (n.Children != null && n.Children.Count > 0)
+            if ((c == null || c is IMaterialTraversalGate) && n.Children != null && n.Children.Count > 0)
             {
                 TraverseTree_AttackModify(n.Children, ref info, in tctx);
             }
@@ -261,11 +207,25 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
         if (_material == null || context == null) return;
         if (_material.LogicTreeRoots == null || _material.LogicTreeRoots.Count == 0) return;
 
-        var tctx = new MaterialTraverseContext(MaterialTraversePhase.DamageApplied, context, attackerSide, context.CurrentActionNumber, context.CurrentAttackerAttackNumber);
+        var tctx = new MaterialVommandeTreeContext(
+            MaterialTraversePhase.DamageApplied,
+            mask: null,
+            maskMaterials: null,
+            onMaterialBound: null,
+            fight: null,
+            side: attackerSide,
+            defenderSide: defenderSide,
+            actionNumber: context.CurrentActionNumber,
+            attackerAttackNumber: context.CurrentAttackerAttackNumber,
+            attackInfo: info,
+            damage: damage,
+            player: null,
+            growthDelta: null
+        );
         TraverseTree_DamageApplied(_material.LogicTreeRoots, attackerSide, defenderSide, info, damage, in tctx);
     }
 
-    private void TraverseTree_DamageApplied(IReadOnlyList<MaterialLogicNode> nodes, FightSide attackerSide, FightSide defenderSide, AttackInfo info, float damage, in MaterialTraverseContext tctx)
+    private void TraverseTree_DamageApplied(IReadOnlyList<MaterialLogicNode> nodes, FightSide attackerSide, FightSide defenderSide, AttackInfo info, float damage, in MaterialVommandeTreeContext tctx)
     {
         if (nodes == null) return;
         for (int i = 0; i < nodes.Count; i++)
@@ -289,14 +249,14 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
                 LogEffect(tctx.Fight, "DamageApplied(Tree)", c);
                 e.OnDamageApplied(tctx.Fight, attackerSide, defenderSide, info, damage);
             }
-            if (n.Children != null && n.Children.Count > 0)
+            if ((c == null || c is IMaterialTraversalGate) && n.Children != null && n.Children.Count > 0)
             {
                 TraverseTree_DamageApplied(n.Children, attackerSide, defenderSide, info, damage, in tctx);
             }
         }
     }
 
-    private void LogGateBreak(FightContext context, string phase, IMaterialTraversalGate gate, in MaterialTraverseContext tctx)
+    private void LogGateBreak(FightContext context, string phase, IMaterialTraversalGate gate, in MaterialVommandeTreeContext tctx)
     {
         if (context == null || !context.DebugVerbose || context.DebugLogger == null) return;
         var name = _material != null ? (!string.IsNullOrWhiteSpace(_material.DisplayName) ? _material.DisplayName : _material.name) : "nullMaterial";

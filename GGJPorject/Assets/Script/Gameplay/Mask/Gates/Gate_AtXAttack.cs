@@ -5,13 +5,13 @@ using UnityEngine;
 /// Gate：第 X 次攻击允许执行（否则跳出）。
 /// 取反：第 X 次攻击不执行（其它攻击执行）。
 /// </summary>
-public class Gate_AtXAttack : MonoBehaviour, IMaterialTraversalGate, IMaterialDescriptionProvider
+public class Gate_AtXAttack : MonoBehaviour, IMaterialLogicNode, IMaterialTraversalGate, IMaterialDescriptionProvider
 {
     [Min(1)] public int AttackIndex = 1;
     [Tooltip("取反：第X次攻击不执行。")]
     public bool Invert = false;
 
-    public bool ShouldBreak(in MaterialTraverseContext context)
+    public bool ShouldBreak(in MaterialVommandeTreeContext context)
     {
         if (context.Phase == MaterialTraversePhase.Description) return false;
         if (AttackIndex <= 0) return false;
