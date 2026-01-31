@@ -1,0 +1,90 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4480420700342463905
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 367861037334349102}
+  - component: {fileID: 5389931702512028558}
+  - component: {fileID: 6461833035832756422}
+  - component: {fileID: 5170609255460030004}
+  m_Layer: 0
+  m_Name: "100003_\u661F\u5C18\u7C89\u672B"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &367861037334349102
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4480420700342463905}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5389931702512028558
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4480420700342463905}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71969320e5d8ad849b48f9c4e064b7e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Id: 100003
+  DisplayName: "\u661F\u5C18\u7C89\u672B"
+  ManaCost: 0
+  Quality: 2
+  BaseSprite: {fileID: 0}
+  ShelfLifeTurns: 3
+  remainingShelfLifeTurns: 3
+  orderedComponents:
+  - {fileID: 6461833035832756422}
+  - {fileID: 5170609255460030004}
+--- !u!114 &6461833035832756422
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4480420700342463905}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0206ff6736098294dab3c3bfa9dc85d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  appliesTo: 1
+  addAttack: 0
+  addDefense: -20
+  addCritChance: 0
+  addCritMultiplier: 0
+  addMaxHP: 13
+  addSpeedRate: 0
+--- !u!114 &5170609255460030004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4480420700342463905}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 583a28833b0cedc45aa0b0dea82d4060, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  RestoreAmount: 1
