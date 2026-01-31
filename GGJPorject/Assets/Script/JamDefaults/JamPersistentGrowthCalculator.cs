@@ -32,8 +32,24 @@ public sealed class JamPersistentGrowthCalculator_Default : IJamPersistentGrowth
         // - 倍率、上限、衰减
         // - 基于玩家当前 ActualStats 或 battle stats（fightContext.Player）做缩放
         // - 例如：delta.AddAttack = Mathf.Floor(delta.AddAttack * 0.5f);
+        var delta2 = new PlayerGrowthDelta();
+       int allQuality= 0;
+       foreach(var item in MaskMakeManager.I.CurrentMask.Materials)
+        {
+            allQuality += (int)item.Quality;
+        }
+        int value = allQuality/300;
 
-        player.ApplyGrowth(delta);
+        delta2.AddAttack = delta.AddAttack*value;
+        delta2.AddDefense = delta.AddDefense*value;
+        delta2.AddMaxHP = delta.AddMaxHP*value;
+        delta2.AddCritChance = delta.AddCritChance*value;
+        delta2.AddCritMultiplier = delta.AddCritMultiplier*value;
+        delta2.AddSpeedRate = delta.AddSpeedRate*value;
+        delta2.AddPenetrationFixed = delta.AddPenetrationFixed*value;
+        delta2.AddPenetrationPercent = delta.AddPenetrationPercent*value;
+       
+        player.ApplyGrowth(delta2);
 
         // 注意：不再进行 reset，允许成长值累积
         // 如果需要清零，由调用方负责（例如在 GameManager 中创建新的 delta 对象）

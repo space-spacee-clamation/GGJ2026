@@ -20,6 +20,10 @@ public struct AttackInfo
 
     /// <summary>最终伤害（由数值计算器写入；若未写入则 FightManager 可回退使用 RawAttack）。</summary>
     public float FinalDamage;
+
+    public float PenetrationFixed; // 穿透固定值
+    public float PenetrationPercent;
+
 }
 
 

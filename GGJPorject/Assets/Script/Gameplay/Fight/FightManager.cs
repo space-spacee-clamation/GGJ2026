@@ -211,6 +211,8 @@ public class FightManager : MonoBehaviour
             CritChance = attacker.CritChance,
             CritMultiplier = attacker.CritMultiplier,
             RawAttack = attacker.Attack,
+            PenetrationFixed = attacker.PenetrationFixed,
+            PenetrationPercent = attacker.PenetrationPercent,
             IsCrit = false,
             FinalDamage = 0f,
         };
