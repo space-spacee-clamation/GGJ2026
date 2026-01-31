@@ -53,6 +53,14 @@ public class MaterialObj : MonoBehaviour
 
     public IReadOnlyList<MonoBehaviour> OrderedComponents => orderedComponents;
 
+    [Header("Logic Tree (Editor)")]
+    [Tooltip("材质逻辑树：条件节点可挂子节点；条件不满足时仅跳过该分支。若此列表非空，运行时将优先使用树状逻辑，而不是 orderedComponents 链式逻辑。")]
+    [SerializeField] private List<MaterialLogicNode> logicTreeRoots = new();
+
+    public IReadOnlyList<MaterialLogicNode> LogicTreeRoots => logicTreeRoots;
+
+    private bool HasLogicTree => logicTreeRoots != null && logicTreeRoots.Count > 0;
+
     private IReadOnlyList<MonoBehaviour> GetOrderedComponentsRuntime()
     {
         // Jam 容错：老 prefab 未配置顺序时，退化为 GetComponents 顺序
@@ -115,29 +123,101 @@ public class MaterialObj : MonoBehaviour
     public void BuildDescription(StringBuilder sb)
     {
         if (sb == null) return;
+        if (HasLogicTree)
+        {
+            // 树状描述：使用 \t 表达层级；不做“跳出”（描述阶段不应截断）。
+            // 注意：组件允许复用，因此这里不做去重，保证结构可读。
+            BuildTreeDescription(sb, logicTreeRoots, depth: 0);
+            return;
+        }
+
+        // 旧链式描述（兼容）
         var comps = GetOrderedComponentsRuntime();
-        var ctx = new MaterialTraverseContext(MaterialTraversePhase.Description, null, FightSide.None, 0, 0);
         for (int i = 0; i < comps.Count; i++)
         {
             var c = comps[i];
             if (c == null) continue;
-            // 描述阶段不做“跳出”，避免 Gate 把后续词条描述截断；
-            // Gate 自己可以在 AppendDescription 里输出“战斗开始时/战斗结束时”等前缀文案。
             if (c is IMaterialDescriptionProvider p) p.AppendDescription(sb);
+        }
+    }
+
+    private static void BuildTreeDescription(StringBuilder sb, List<MaterialLogicNode> nodes, int depth)
+    {
+        if (nodes == null) return;
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            var n = nodes[i];
+            if (n == null) continue;
+            var c = n.Component;
+            if (c != null && c is IMaterialDescriptionProvider p)
+            {
+                var tmp = new StringBuilder(128);
+                p.AppendDescription(tmp);
+                var text = tmp.ToString();
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    // 给每一行加上层级缩进
+                    var lines = text.Replace("\r", "").Split('\n');
+                    for (int li = 0; li < lines.Length; li++)
+                    {
+                        var line = lines[li];
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        for (int t = 0; t < depth; t++) sb.Append('\t');
+                        sb.AppendLine(line);
+                    }
+                }
+            }
+            if (n.Children != null && n.Children.Count > 0)
+            {
+                BuildTreeDescription(sb, n.Children, depth + 1);
+            }
         }
     }
 
     public void RunBindEffects(in BindContext context)
     {
+        if (HasLogicTree)
+        {
+            var tctx = new MaterialTraverseContext(MaterialTraversePhase.Bind, null, FightSide.None, 0, 0);
+            TraverseTreeBind(logicTreeRoots, in tctx, in context);
+            return;
+        }
+
+        // 旧链式（兼容）
         var comps = GetOrderedComponentsRuntime();
-        var tctx = new MaterialTraverseContext(MaterialTraversePhase.Bind, null, FightSide.None, 0, 0);
+        var tctx2 = new MaterialTraverseContext(MaterialTraversePhase.Bind, null, FightSide.None, 0, 0);
         for (int i = 0; i < comps.Count; i++)
         {
             var c = comps[i];
             if (c == null) continue;
-            if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx)) break;
+            if (c is IMaterialTraversalGate g && g.ShouldBreak(in tctx2)) break;
             if (c is IMaterialAutoInit init) init.Initialize(this);
             if (c is IMaterialBindEffect bind) bind.OnBind(in context);
+        }
+    }
+
+    private void TraverseTreeBind(List<MaterialLogicNode> nodes, in MaterialTraverseContext tctx, in BindContext bindCtx)
+    {
+        if (nodes == null) return;
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            var n = nodes[i];
+            if (n == null) continue;
+            var c = n.Component;
+
+            // 条件节点：break 仅影响该分支（跳过 Children），不影响兄弟节点
+            if (c is IMaterialTraversalGate gate)
+            {
+                if (gate.ShouldBreak(in tctx)) continue;
+            }
+
+            if (c is IMaterialAutoInit init) init.Initialize(this);
+            if (c is IMaterialBindEffect bind) bind.OnBind(in bindCtx);
+
+            if (n.Children != null && n.Children.Count > 0)
+            {
+                TraverseTreeBind(n.Children, in tctx, in bindCtx);
+            }
         }
     }
 

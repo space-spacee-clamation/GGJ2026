@@ -6,15 +6,37 @@ using System.Collections.Generic;
 public sealed class AttackInfoProcessorChain
 {
     private readonly List<IAttackInfoModifier> _modifiers = new();
+    private IAttackInfoModifier _finalizer;
 
     public IReadOnlyList<IAttackInfoModifier> Modifiers => _modifiers;
+    public IAttackInfoModifier Finalizer => _finalizer;
 
-    public void Clear() => _modifiers.Clear();
+    public void Clear()
+    {
+        _modifiers.Clear();
+        _finalizer = null;
+    }
 
     public void Add(IAttackInfoModifier modifier)
     {
         if (modifier == null) return;
         _modifiers.Add(modifier);
+    }
+
+    /// <summary>
+    /// 设置“最终结算器”，永远在所有 modifiers 之后执行。
+    /// 用于确保“最终伤害/暴击/防御等结算”不会被材料动态 Add 的 modifier 插到后面。
+    /// </summary>
+    public void SetFinalizer(IAttackInfoModifier finalizer)
+    {
+        _finalizer = finalizer;
+
+        // 避免同一个对象既在 modifiers 又在 finalizer 里导致重复执行
+        if (_finalizer == null) return;
+        for (int i = _modifiers.Count - 1; i >= 0; i--)
+        {
+            if (ReferenceEquals(_modifiers[i], _finalizer)) _modifiers.RemoveAt(i);
+        }
     }
 
     public void Process(ref AttackInfo info, FightContext context)
@@ -36,6 +58,20 @@ public sealed class AttackInfoProcessorChain
                     context.DebugLogger($"[Proc] {m.GetType().Name} (no change)");
                 }
             }
+
+            if (_finalizer != null)
+            {
+                var before = info;
+                _finalizer.Modify(ref info, context);
+                if (!ApproxEqual(before, info))
+                {
+                    context.DebugLogger($"[Final] {_finalizer.GetType().Name} {FmtDiff(before, info)}");
+                }
+                else
+                {
+                    context.DebugLogger($"[Final] {_finalizer.GetType().Name} (no change)");
+                }
+            }
             return;
         }
 
@@ -43,6 +79,8 @@ public sealed class AttackInfoProcessorChain
         {
             _modifiers[i].Modify(ref info, context);
         }
+
+        _finalizer?.Modify(ref info, context);
     }
 
     private static bool ApproxEqual(AttackInfo a, AttackInfo b)

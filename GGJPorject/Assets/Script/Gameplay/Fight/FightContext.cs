@@ -23,6 +23,12 @@ public sealed class FightContext
     public float PlayerSpeedValue { get; internal set; }
     public float EnemySpeedValue { get; internal set; }
 
+    /// <summary>
+    /// 本场战斗参与生效的面具数量（面具库 + 当前面具）。
+    /// 用于“按面具数量缩放”的词条。
+    /// </summary>
+    public int MaskCount { get; internal set; }
+
     /// <summary>可选：面具实例（后续材料系统用）。</summary>
     public IMaskBattleInjector MaskInjector { get; internal set; }
 
@@ -50,9 +56,6 @@ public sealed class FightContext
     // ---- Processors ----
     public AttackInfoProcessorChain PlayerAttackProcessor { get; } = new();
     public AttackInfoProcessorChain EnemyAttackProcessor { get; } = new();
-
-    // ---- Calculator ----
-    public IAttackInfoCalculator AttackInfoCalculator { get; internal set; }
 
     // ---- Fight Components (optional) ----
     private readonly List<IFightComponent> _fightComponents = new();

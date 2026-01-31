@@ -115,6 +115,16 @@ public sealed class CombatantRuntime
         if (amount <= 0f) return;
         CurrentHP = Mathf.Max(0f, CurrentHP - amount);
     }
+
+    /// <summary>
+    /// 改变当前生命值（可正可负）：会 clamp 到 [0, MaxHP]。
+    /// 用于“行动后改变当前生命值（百分比/固定值）”等材料效果。
+    /// </summary>
+    public void AddCurrentHP(float delta)
+    {
+        if (delta == 0f) return;
+        CurrentHP = Mathf.Clamp(CurrentHP + delta, 0f, MaxHP);
+    }
 }
 
 

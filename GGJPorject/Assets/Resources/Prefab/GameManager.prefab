@@ -216,6 +216,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   autoStartOnPlay: 0
   enableLogs: 0
+  forceLogsInJam: 1
 --- !u!1 &8659007490375052099
 GameObject:
   m_ObjectHideFlags: 0
@@ -271,6 +272,7 @@ MonoBehaviour:
   monsterSpawnSystem: {fileID: 0}
   maskMakeManager: {fileID: 7108327857735227525}
   makeMuskUI: {fileID: 0}
+  battleUI: {fileID: 0}
   playerConfig: {fileID: 11400000, guid: 07b301303c7a1ee45be2a2557b9ede8d, type: 2}
   maskLibraryRoot: {fileID: 0}
   materialInventory:
@@ -279,6 +281,11 @@ MonoBehaviour:
   autoBindInventoryOnMake: 0
   dropPool: {fileID: 0}
   dropMethod: {fileID: 0}
-  dropCount: 1
+  dropCount: 10
+  autoBuildDropPoolFromResources: 1
+  resourcesMatFolder: Mat
+  initialCommonMaterialCount: 4
   autoRunLoop: 0
   autoCompleteMakePhase: 0
+  enableJamAutoFixes: 1
+  enablePhaseDebugLogs: 1

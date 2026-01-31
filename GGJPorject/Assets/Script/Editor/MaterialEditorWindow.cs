@@ -172,10 +172,7 @@ public class MaterialEditorWindow : OdinEditorWindow
         DrawMaterialBaseFields(_editingMaterial);
 
         EditorGUILayout.Space(10);
-        DrawAddComponentPanel();
-
-        EditorGUILayout.Space(10);
-        DrawComponentEditors();
+        DrawLogicTreeEditor();
 
         EditorGUILayout.Space(10);
         if (GUILayout.Button("保存到文件夹（按 {id}_{材质名} 命名）", GUILayout.Height(36)))
@@ -323,6 +320,567 @@ public class MaterialEditorWindow : OdinEditorWindow
                 if (string.IsNullOrWhiteSpace(desc)) desc = "(空)";
                 EditorGUILayout.HelpBox(desc, MessageType.None);
             }
+        }
+    }
+
+    private void DrawLogicTreeEditor()
+    {
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            EditorGUILayout.LabelField("逻辑树（树状配置）", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "说明：logicTreeRoots 非空时，运行时将优先使用“树状逻辑”而不是 orderedComponents 链式逻辑。\n" +
+                "条件节点（Gate）不满足时只会跳过该分支，不会终止整个遍历。组件可被多个节点复用（节点只是引用）。",
+                MessageType.Info);
+
+            if (_editingMaterial == null) return;
+
+            var so = new SerializedObject(_editingMaterial);
+            so.Update();
+            var roots = so.FindProperty("logicTreeRoots");
+            if (roots == null || !roots.isArray)
+            {
+                EditorGUILayout.HelpBox("找不到 MaterialObj.logicTreeRoots 字段（序列化）。", MessageType.Error);
+                return;
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("添加 Root（搜索）", GUILayout.Width(140)))
+                {
+                    var r = GUILayoutUtility.GetLastRect();
+                    ShowAddNodePopup(r, roots.propertyPath);
+                }
+                if (GUILayout.Button("清空逻辑树", GUILayout.Width(100)))
+                {
+                    if (EditorUtility.DisplayDialog("清空逻辑树", "确认清空所有逻辑树节点？（不会删除组件本体）", "清空", "取消"))
+                    {
+                        // 递归清空（保证“清空=清空整棵树”）
+                        for (int i = roots.arraySize - 1; i >= 0; i--)
+                        {
+                            DeleteNodeRecursive(roots, i);
+                        }
+                    }
+                }
+            }
+
+            EditorGUILayout.Space(6);
+            DrawNodeArray(roots, 0);
+
+            // 树状最终描述预览（\t 代表层级）
+            if (_editingMaterial != null)
+            {
+                EditorGUILayout.Space(10);
+                EditorGUILayout.LabelField("最终描述预览（树状，\\t 表示层级）", EditorStyles.boldLabel);
+                var desc = _editingMaterial.BuildDescription();
+                if (string.IsNullOrWhiteSpace(desc)) desc = "(空)";
+                EditorGUILayout.HelpBox(desc, MessageType.None);
+            }
+
+            if (so.ApplyModifiedProperties())
+            {
+                EditorUtility.SetDirty(_editingMaterial);
+                Repaint();
+            }
+        }
+    }
+
+    private static void AddNewNodeToArray(SerializedProperty arrayProp)
+    {
+        if (arrayProp == null || !arrayProp.isArray) return;
+        int idx = arrayProp.arraySize;
+        arrayProp.InsertArrayElementAtIndex(idx);
+        var elem = arrayProp.GetArrayElementAtIndex(idx);
+        // 新建节点时把引用清空，避免 Unity 复制上一个元素的值
+        elem.FindPropertyRelative("Title").stringValue = "";
+        var expanded = elem.FindPropertyRelative("Expanded");
+        if (expanded != null) expanded.boolValue = true;
+        elem.FindPropertyRelative("Component").objectReferenceValue = null;
+        elem.FindPropertyRelative("Role").enumValueIndex = 0; // Auto
+        elem.FindPropertyRelative("ActionSide").enumValueIndex = 0; // Both
+        var children = elem.FindPropertyRelative("Children");
+        if (children != null && children.isArray) children.ClearArray();
+    }
+
+    private static void AddNewNodeToArray(SerializedProperty arrayProp, MonoBehaviour comp)
+    {
+        AddNewNodeToArray(arrayProp);
+        if (arrayProp == null || !arrayProp.isArray) return;
+        var elem = arrayProp.GetArrayElementAtIndex(arrayProp.arraySize - 1);
+        var compProp = elem.FindPropertyRelative("Component");
+        if (compProp != null) compProp.objectReferenceValue = comp;
+        var titleProp = elem.FindPropertyRelative("Title");
+        if (titleProp != null && comp != null && string.IsNullOrWhiteSpace(titleProp.stringValue))
+        {
+            titleProp.stringValue = comp.GetType().Name;
+        }
+    }
+
+    private void DrawNodeArray(SerializedProperty arrayProp, int indent)
+    {
+        if (arrayProp == null || !arrayProp.isArray) return;
+        for (int i = 0; i < arrayProp.arraySize; i++)
+        {
+            var node = arrayProp.GetArrayElementAtIndex(i);
+            DrawSingleNode(arrayProp, node, i, indent);
+        }
+    }
+
+    private void DrawSingleNode(SerializedProperty parentArray, SerializedProperty node, int index, int indent)
+    {
+        if (node == null) return;
+
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.Space(indent * 14);
+
+                var titleProp = node.FindPropertyRelative("Title");
+                var compProp = node.FindPropertyRelative("Component");
+                var roleProp = node.FindPropertyRelative("Role");
+                var sideProp = node.FindPropertyRelative("ActionSide");
+                var expandedProp = node.FindPropertyRelative("Expanded");
+
+                string title = titleProp != null ? titleProp.stringValue : "";
+                var comp = compProp != null ? compProp.objectReferenceValue as MonoBehaviour : null;
+                var header = BuildNodeHeader(title, comp, roleProp, sideProp);
+                bool expanded = expandedProp == null || expandedProp.boolValue;
+                expanded = EditorGUILayout.Foldout(expanded, header, true);
+                if (expandedProp != null) expandedProp.boolValue = expanded;
+
+                GUI.enabled = index > 0;
+                if (GUILayout.Button("↑", GUILayout.Width(28))) parentArray.MoveArrayElement(index, index - 1);
+                GUI.enabled = index < parentArray.arraySize - 1;
+                if (GUILayout.Button("↓", GUILayout.Width(28))) parentArray.MoveArrayElement(index, index + 1);
+                GUI.enabled = true;
+
+                // 节点内直接添加子节点（搜索）
+                if (GUILayout.Button("+", GUILayout.Width(28)))
+                {
+                    var childArray = node.FindPropertyRelative("Children");
+                    if (childArray != null && childArray.isArray)
+                    {
+                        var r = GUILayoutUtility.GetLastRect();
+                        ShowAddNodePopup(r, childArray.propertyPath);
+                    }
+                }
+
+                if (GUILayout.Button("删", GUILayout.Width(28)))
+                {
+                    DeleteNodeRecursive(parentArray, index);
+                    // 结构变化，退出避免索引错乱（注意：DeleteNodeRecursive 内部已 Apply）
+                    GUIUtility.ExitGUI();
+                }
+            }
+
+            var expandedNow = node.FindPropertyRelative("Expanded");
+            if (expandedNow != null && !expandedNow.boolValue) return;
+
+            GUILayout.Space(2);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                var titleProp = node.FindPropertyRelative("Title");
+                GUILayout.Space(indent * 14);
+                if (titleProp != null) EditorGUILayout.PropertyField(titleProp);
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                var compProp = node.FindPropertyRelative("Component");
+                GUILayout.Space(indent * 14);
+                if (compProp != null) EditorGUILayout.PropertyField(compProp);
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                var roleProp = node.FindPropertyRelative("Role");
+                var sideProp = node.FindPropertyRelative("ActionSide");
+                GUILayout.Space(indent * 14);
+                if (roleProp != null) EditorGUILayout.PropertyField(roleProp);
+                if (sideProp != null) EditorGUILayout.PropertyField(sideProp);
+            }
+
+            // 提示：组件应来自当前 editingInstance
+            var comp2 = node.FindPropertyRelative("Component")?.objectReferenceValue as MonoBehaviour;
+            if (comp2 != null && _editingInstance != null && comp2.gameObject != _editingInstance)
+            {
+                EditorGUILayout.HelpBox("该节点引用的组件不在当前材质 prefab 上（可能导致运行时无效）。建议只引用当前 prefab 上的组件。", MessageType.Warning);
+            }
+
+            // 参数编辑：直接在逻辑树节点内编辑组件参数（组件可复用）
+            if (comp2 != null && !(comp2 is MaterialObj))
+            {
+                EditorGUILayout.Space(4);
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    EditorGUILayout.LabelField("节点参数（编辑组件字段）", EditorStyles.miniBoldLabel);
+                    var so2 = new SerializedObject(comp2);
+                    so2.Update();
+                    var it = so2.GetIterator();
+                    bool enterChildren = true;
+                    while (it.NextVisible(enterChildren))
+                    {
+                        enterChildren = false;
+                        if (it.name == "m_Script") continue;
+                        if (it.propertyType == SerializedPropertyType.String && it.name == "description") continue;
+                        EditorGUILayout.PropertyField(it, true);
+                    }
+                    if (so2.ApplyModifiedProperties())
+                    {
+                        EditorUtility.SetDirty(comp2);
+                    }
+                }
+            }
+
+            var children = node.FindPropertyRelative("Children");
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.Space(indent * 14);
+                // 添加统一走 header 的 “+ 搜索”
+                if (GUILayout.Button("添加同级节点", GUILayout.Width(90)))
+                {
+                    int insertAt = index + 1;
+                    parentArray.InsertArrayElementAtIndex(insertAt);
+                    var elem = parentArray.GetArrayElementAtIndex(insertAt);
+                    elem.FindPropertyRelative("Title").stringValue = "";
+                    var expanded = elem.FindPropertyRelative("Expanded");
+                    if (expanded != null) expanded.boolValue = true;
+                    elem.FindPropertyRelative("Component").objectReferenceValue = null;
+                    elem.FindPropertyRelative("Role").enumValueIndex = 0;
+                    elem.FindPropertyRelative("ActionSide").enumValueIndex = 0;
+                    var ch = elem.FindPropertyRelative("Children");
+                    if (ch != null && ch.isArray) ch.ClearArray();
+                }
+            }
+
+            if (children != null && children.isArray && children.arraySize > 0)
+            {
+                EditorGUILayout.Space(4);
+                DrawNodeArray(children, indent + 1);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 删除一个节点，并递归清空其所有子节点。
+    /// 关键点：删除后必须立刻 ApplyModifiedProperties，否则如果调用了 ExitGUI 会导致删除“不生效”。
+    /// </summary>
+    private void DeleteNodeRecursive(SerializedProperty parentArray, int index)
+    {
+        if (parentArray == null || !parentArray.isArray) return;
+        if (index < 0 || index >= parentArray.arraySize) return;
+
+        var so = parentArray.serializedObject;
+        if (so == null) return;
+
+        so.Update();
+
+        // 先递归清空 Children，确保“删除树节点 = 删除整棵子树”
+        var node = parentArray.GetArrayElementAtIndex(index);
+        RecursiveClearChildren(node);
+
+        int oldSize = parentArray.arraySize;
+        parentArray.DeleteArrayElementAtIndex(index);
+        // 某些情况下第一次 Delete 只会置空不缩容，这里做一次兜底
+        if (parentArray.arraySize == oldSize && index >= 0 && index < parentArray.arraySize)
+        {
+            parentArray.DeleteArrayElementAtIndex(index);
+        }
+
+        so.ApplyModifiedProperties();
+
+        if (_editingMaterial != null) EditorUtility.SetDirty(_editingMaterial);
+        Repaint();
+    }
+
+    private static void RecursiveClearChildren(SerializedProperty nodeProp)
+    {
+        if (nodeProp == null) return;
+        var children = nodeProp.FindPropertyRelative("Children");
+        if (children == null || !children.isArray) return;
+
+        for (int i = children.arraySize - 1; i >= 0; i--)
+        {
+            var child = children.GetArrayElementAtIndex(i);
+            RecursiveClearChildren(child);
+            children.DeleteArrayElementAtIndex(i);
+            // managed type 通常一次就能删；这里做一次兜底
+            if (i < children.arraySize && children.GetArrayElementAtIndex(i) == null)
+            {
+                children.DeleteArrayElementAtIndex(i);
+            }
+        }
+        children.ClearArray();
+    }
+
+    private void ShowAddNodePopup(Rect activatorRect, string targetArrayPath)
+    {
+        if (string.IsNullOrWhiteSpace(targetArrayPath)) return;
+        if (_editingInstance == null) return;
+        if (_editingMaterial == null) return;
+
+        NodeAddPopupWindow.Show(
+            activatorRect,
+            _editingInstance,
+            _materialComponentTypes,
+            onPickExisting: comp =>
+            {
+                if (comp == null) return;
+                var so = new SerializedObject(_editingMaterial);
+                so.Update();
+                var arr = so.FindProperty(targetArrayPath);
+                if (arr == null || !arr.isArray) return;
+                Undo.RecordObject(_editingMaterial, "Add Logic Node");
+                AddNewNodeToArray(arr, comp);
+                so.ApplyModifiedProperties();
+                EditorUtility.SetDirty(_editingMaterial);
+                Repaint();
+            },
+            onPickNew: t =>
+            {
+                if (t == null) return;
+                var added = Undo.AddComponent(_editingInstance, t) as MonoBehaviour;
+                if (added == null) return;
+                var so = new SerializedObject(_editingMaterial);
+                so.Update();
+                var arr = so.FindProperty(targetArrayPath);
+                if (arr == null || !arr.isArray) return;
+                Undo.RecordObject(_editingMaterial, "Add Logic Node");
+                AddNewNodeToArray(arr, added);
+                so.ApplyModifiedProperties();
+                EditorUtility.SetDirty(_editingMaterial);
+                EditorUtility.SetDirty(added);
+                Repaint();
+            }
+        );
+    }
+
+    private static string BuildNodeHeader(string title, MonoBehaviour comp, SerializedProperty roleProp, SerializedProperty sideProp)
+    {
+        var t = comp != null ? comp.GetType().Name : "未选择组件";
+        var role = roleProp != null ? roleProp.enumDisplayNames[roleProp.enumValueIndex] : "Auto";
+        var side = sideProp != null ? sideProp.enumDisplayNames[sideProp.enumValueIndex] : "Both";
+
+        // 让策划更直观：Gate 默认就是条件节点
+        if (comp is IMaterialTraversalGate) role = "Condition";
+
+        var name = string.IsNullOrWhiteSpace(title) ? t : title;
+        var head = $"{name}  [{role}] [{side}]";
+
+        // 追加中文描述摘要，方便搜索/阅读
+        if (comp is IMaterialDescriptionProvider p)
+        {
+            try
+            {
+                var sb = new System.Text.StringBuilder(128);
+                p.AppendDescription(sb);
+                var desc = sb.ToString().Trim().Replace("\r", "").Replace("\n", " | ");
+                if (!string.IsNullOrWhiteSpace(desc))
+                {
+                    head += $"  -  {desc}";
+                }
+            }
+            catch { /* ignore */ }
+        }
+
+        return head;
+    }
+
+    /// <summary>
+    /// 逻辑树节点添加弹窗（内置在同文件，避免 Jam 期间 csproj/Editor Assembly 差异导致的类型不可见问题）。
+    /// 支持搜索：类型名 + 中文描述（来自 IMaterialDescriptionProvider 的默认描述）。
+    /// </summary>
+    private sealed class NodeAddPopupWindow : EditorWindow
+    {
+        private sealed class Entry
+        {
+            public bool IsExisting;
+            public MonoBehaviour ExistingComp;
+            public Type NewType;
+            public string Name;
+            public string Desc;
+            public bool Disabled;
+        }
+
+        private readonly List<Entry> _entries = new();
+        private Vector2 _scroll;
+        private string _search = "";
+
+        private Action<MonoBehaviour> _onPickExisting;
+        private Action<Type> _onPickNew;
+
+        public static void Show(
+            Rect activatorRect,
+            GameObject editingInstance,
+            IReadOnlyList<Type> candidateTypes,
+            Action<MonoBehaviour> onPickExisting,
+            Action<Type> onPickNew)
+        {
+            var w = CreateInstance<NodeAddPopupWindow>();
+            w.titleContent = new GUIContent("添加节点");
+            w._onPickExisting = onPickExisting;
+            w._onPickNew = onPickNew;
+            w.BuildEntries(editingInstance, candidateTypes);
+            w.ShowAsDropDown(activatorRect, new Vector2(520, 420));
+        }
+
+        private void BuildEntries(GameObject editingInstance, IReadOnlyList<Type> candidateTypes)
+        {
+            _entries.Clear();
+            if (candidateTypes == null) return;
+
+            // Existing comps on this prefab
+            if (editingInstance != null)
+            {
+                var comps = editingInstance.GetComponents<MonoBehaviour>();
+                var typeCounter = new Dictionary<Type, int>();
+                for (int i = 0; i < comps.Length; i++)
+                {
+                    var c = comps[i];
+                    if (c == null) continue;
+                    if (c is MaterialObj) continue;
+                    var t = c.GetType();
+                    if (!candidateTypes.Contains(t)) continue;
+                    typeCounter.TryGetValue(t, out var idx);
+                    idx += 1;
+                    typeCounter[t] = idx;
+                    _entries.Add(new Entry
+                    {
+                        IsExisting = true,
+                        ExistingComp = c,
+                        Name = $"{t.Name}（已有 #{idx}）",
+                        Desc = BuildComponentDescription(c),
+                    });
+                }
+            }
+
+            // New component types
+            for (int i = 0; i < candidateTypes.Count; i++)
+            {
+                var t = candidateTypes[i];
+                if (t == null) continue;
+                bool disallow = Attribute.IsDefined(t, typeof(DisallowMultipleComponent), inherit: true);
+                bool hasOne = editingInstance != null && editingInstance.GetComponent(t) != null;
+                bool disabled = disallow && hasOne;
+                var extra = disabled ? "（该脚本带 DisallowMultipleComponent，不能重复添加）" : "";
+                _entries.Add(new Entry
+                {
+                    IsExisting = false,
+                    NewType = t,
+                    Name = $"{t.Name}（新建）",
+                    Desc = GetDefaultComponentDescription(t) + extra,
+                    Disabled = disabled,
+                });
+            }
+
+            _entries.Sort((a, b) =>
+            {
+                if (a.IsExisting != b.IsExisting) return a.IsExisting ? -1 : 1;
+                return string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
+            });
+        }
+
+        private void OnGUI()
+        {
+            EditorGUILayout.LabelField("添加节点（搜索支持：类型名 / 中文描述）", EditorStyles.boldLabel);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                _search = EditorGUILayout.TextField(_search ?? string.Empty);
+                if (GUILayout.Button("清空", GUILayout.Width(50))) _search = string.Empty;
+            }
+
+            EditorGUILayout.Space(6);
+            _scroll = EditorGUILayout.BeginScrollView(_scroll);
+
+            var s = _search ?? string.Empty;
+            // 先展示“已有组件”，再展示“新建组件”（更符合人类：先复用）
+            bool shownExistingHeader = false;
+            bool shownNewHeader = false;
+            for (int i = 0; i < _entries.Count; i++)
+            {
+                var e = _entries[i];
+                if (e == null) continue;
+                if (!string.IsNullOrWhiteSpace(s))
+                {
+                    bool hit = (e.Name != null && e.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                               (e.Desc != null && e.Desc.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
+                    if (!hit) continue;
+                }
+
+                if (e.IsExisting && !shownExistingHeader)
+                {
+                    shownExistingHeader = true;
+                    EditorGUILayout.LabelField("已挂在该材质上的组件（复用）", EditorStyles.miniBoldLabel);
+                }
+                if (!e.IsExisting && !shownNewHeader)
+                {
+                    shownNewHeader = true;
+                    EditorGUILayout.Space(6);
+                    EditorGUILayout.LabelField("新建组件（会自动 AddComponent 到材质 prefab）", EditorStyles.miniBoldLabel);
+                }
+
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        GUI.enabled = !e.Disabled;
+                        if (GUILayout.Button("选用", GUILayout.Width(60)))
+                        {
+                            if (e.IsExisting) _onPickExisting?.Invoke(e.ExistingComp);
+                            else _onPickNew?.Invoke(e.NewType);
+                            Close();
+                            GUIUtility.ExitGUI();
+                        }
+                        GUI.enabled = true;
+
+                        EditorGUILayout.LabelField(e.Name, EditorStyles.boldLabel);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(e.Desc))
+                    {
+                        EditorGUILayout.LabelField(e.Desc, EditorStyles.miniLabel);
+                    }
+                }
+            }
+
+            EditorGUILayout.EndScrollView();
+        }
+
+        private static string GetDefaultComponentDescription(Type t)
+        {
+            if (t == null) return string.Empty;
+            var go = new GameObject("tmp_desc_go");
+            go.hideFlags = HideFlags.HideAndDontSave;
+            try
+            {
+                var comp = go.AddComponent(t) as MonoBehaviour;
+                return BuildComponentDescription(comp);
+            }
+            catch
+            {
+                return string.Empty;
+            }
+            finally
+            {
+                DestroyImmediate(go);
+            }
+        }
+
+        private static string BuildComponentDescription(MonoBehaviour comp)
+        {
+            if (comp == null) return string.Empty;
+            try
+            {
+                if (comp is IMaterialDescriptionProvider p)
+                {
+                    var sb = new System.Text.StringBuilder(128);
+                    p.AppendDescription(sb);
+                    return sb.ToString().Trim().Replace("\r", "").Replace("\n", " | ");
+                }
+            }
+            catch { /* ignore */ }
+            return string.Empty;
         }
     }
 
@@ -567,8 +1125,10 @@ public class MaterialEditorWindow : OdinEditorWindow
             typeof(IMaterialBindEffect),
             typeof(IFightComponent),
             typeof(IAttackInfoModifier),
+            typeof(IMaterialDamageAppliedEffect),
             typeof(IPersistentGrowthProvider),
             typeof(IMaterialDescriptionProvider),
+            typeof(IMaterialTraversalGate),
         };
 
         foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
@@ -602,7 +1162,8 @@ public class MaterialEditorWindow : OdinEditorWindow
     private void AddComponentToEditing(Type t)
     {
         if (_editingInstance == null || t == null) return;
-        if (_editingInstance.GetComponent(t) != null) return;
+        // Jam：允许同一材质挂多个“同类型”组件实例（用于逻辑树不同分支复用同类型节点）。
+        // 若该组件脚本带 [DisallowMultipleComponent]，Unity 会阻止重复添加（这属于 Unity 规则，而不是编辑器限制）。
         var added = Undo.AddComponent(_editingInstance, t) as MonoBehaviour;
         if (_editingMaterial != null && added != null)
         {

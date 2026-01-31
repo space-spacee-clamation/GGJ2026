@@ -65,7 +65,7 @@
   - `dropMethod == null` 或 `dropCount <= 0`
 - **当前行为**：
   - 运行时创建 `SimpleLuckMaterialDropMethod`（`ScriptableObject.CreateInstance`）
-  - `dropCount<=0` 时自动设为 3
+-  - Jam 版本：`dropCount` 直接使用 `JamDefaultSettings.DropCountPerBattle`
 - **后续 TODO**：
   - 正式版应由策划配置（SO/Inspector），不要运行时偷偷创建
   - 可保留 Debug 默认值，但需明确 UI/日志提示 “使用了默认配置”
@@ -76,9 +76,9 @@
 
 文件：`Assets/Script/GameManager.cs`
 
-- **位置**：`BuildDropPoolFromResources()`（受 `autoBuildDropPoolFromResources` 控制）
+- **位置**：`BuildDropPoolFromResources()`（Jam 版本默认总是执行）
 - **触发条件**：
-  - 启动时 `autoBuildDropPoolFromResources == true`
+  - Jam 版本：启动时默认执行（不依赖开关）
 - **当前行为**：
   - `Resources.LoadAll<MaterialObj>("Mat")` 扫描所有材料 prefab
   - 按 `MaterialObj.Quality` 分组，运行时生成一个 `MaterialPool` 并覆盖 `dropPool`
@@ -92,7 +92,7 @@
 
 文件：`Assets/Script/GameManager.cs`
 
-- **位置**：`SpawnInitialCommonMaterialsIfNeeded()`（`initialCommonMaterialCount=4`）
+- **位置**：`SpawnInitialCommonMaterialsIfNeeded()`（`JamDefaultSettings.InitialCommonMaterialCount`）
 - **触发条件**：
   - 启动时 `_initialMaterialsSpawned == false`
 - **当前行为**：
@@ -159,7 +159,8 @@
 - **当前行为**：
   - 输出 BattleStart、每次攻击伤害、BattleEnd
 - **后续 TODO**：
-  - 正式版应由战斗 UI 驱动表现；Log 只在 Debug 模式开启
+  - ✅ 现已接入 `BattleUI`（血条/速度条/飘字），并由 `GameManager` 在 Make/Battle 阶段切换显示
+  - 正式版应由战斗 UI 驱动表现；Log 只在 Debug 模式开启（可考虑把 `forceLogsInJam` 改为可由 GameSetting/GM 控制）
 
 ---
 
@@ -191,6 +192,49 @@
 后续 TODO：
 - 需要明确策划规范：某些效果必须放在某个 Gate 后面，否则不会触发
 - 可在材质编辑器里加“阶段预览/触发预览”帮助策划
+
+---
+
+## 14) 材料组件执行：从“链式 orderedComponents”升级为“树状逻辑（logicTreeRoots）”
+
+文件：
+- `Assets/Script/Gameplay/Mask/MaterialObj.cs`
+- `Assets/Script/Gameplay/Mask/MaterialRuntimeRunner.cs`
+- `Assets/Script/Editor/MaterialEditorWindow.cs`
+
+变更动机：
+- 原链式遍历的 Gate 一旦 break 会终止整个后续流程；但策划希望 **条件节点可挂子树**，并且 break 只影响该分支。
+- 树状结构允许把多个条件组合成“局部子树”，并允许复用组件引用。
+
+当前行为（V0/Jam）：
+- `MaterialObj.logicTreeRoots` **非空时**：
+  - 描述生成：按树 DFS 遍历，调用 `IMaterialDescriptionProvider`（不做跳出，且会对组件引用做去重）
+  - Bind/BattleStart/AttackModify/BattleEnd/DamageApplied：按树 DFS 遍历
+    - 遇到 `IMaterialTraversalGate.ShouldBreak==true`：**仅跳过该节点的子树（分支）**，不影响同级节点
+    - `ActionSide`：仅在 `AttackModify/DamageApplied` 阶段生效，可筛选“玩家行动/敌人行动/两者”
+- `logicTreeRoots` 为空时：继续走旧 `orderedComponents`（兼容旧 prefab）
+
+新增支持：
+- 概率条件 Gate：`Gate_RandomChance`
+- 行动后阶段：`MaterialTraversePhase.DamageApplied` + `IMaterialDamageAppliedEffect`
+
+后续 TODO：
+- 正式版可移除 `orderedComponents` 或在编辑器明确标记为 Legacy
+- 给策划提供更友好的“节点模板/拖拽复用/阶段预览”工具（当前已提供基础递归编辑）
+
+---
+
+## 13) GameManager：战斗 UI 接入流程（Make/Battle 切换）
+
+文件：`Assets/Script/GameManager.cs`
+
+- **位置**：
+  - `EnterMakeMaskPhase()`：打开 `MakeMuskUI`，关闭 `BattleUI`
+  - `StartBattlePhaseAsync()`：关闭 `MakeMuskUI`，打开 `BattleUI`；战斗结束后关闭 `BattleUI`
+  - `JamTempFixer.Apply()`：若未配置 `battleUI`，会尝试自动 Find（找不到则仅输出 Log）
+- **后续 TODO**：
+  - 正式版建议把 UI Prefab/引用作为“必配”，不要依赖 Find
+  - 可在结算阶段显示单独的 Settlement UI（而不是复用 BattleUI）
 
 
 

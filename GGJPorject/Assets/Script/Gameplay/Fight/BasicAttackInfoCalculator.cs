@@ -6,7 +6,7 @@ using UnityEngine;
 /// 注意：此类为“可序列化的纯数据对象”，用于 Odin 接口序列化注入；不是 MonoBehaviour。
 /// </summary>
 [Serializable]
-public sealed class BasicAttackInfoCalculator : IAttackInfoCalculator
+public sealed class BasicAttackInfoCalculator : IAttackInfoModifier
 {
     [Tooltip("是否启用防御减伤：damage = max(0, raw - defenderDef)")]
     public bool EnableDefenseReduction = true;
@@ -14,7 +14,7 @@ public sealed class BasicAttackInfoCalculator : IAttackInfoCalculator
     [Tooltip("如果开启暴击：随机 < CritChance 则 damage *= CritMultiplier")]
     public bool EnableCrit = true;
 
-    public void Calculate(ref AttackInfo info, FightContext context)
+    public void Modify(ref AttackInfo info, FightContext context)
     {
         if (context == null || context.CurrentDefender == null)
         {

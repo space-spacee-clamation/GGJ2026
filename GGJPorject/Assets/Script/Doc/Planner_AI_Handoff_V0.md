@@ -60,7 +60,7 @@
 - 提供计数器：`CurrentActionNumber / CurrentAttackerAttackNumber`（给“第X攻击/每X回合”类词条使用）
 
 数值计算接口：
-- `IAttackInfoCalculator`：计算最终伤害（可替换实现）
+- `IAttackInfoModifier`：统一的 AttackInfo 处理接口（包含“词条修改 + 最终伤害结算”；最终结算器作为处理链最后一环）
 
 ---
 

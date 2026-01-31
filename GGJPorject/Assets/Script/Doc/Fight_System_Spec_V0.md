@@ -69,7 +69,7 @@
 
 补充：由于项目使用 Odin，可将“可注入内容”以**接口字段**方式配置（而不是 MonoBehaviour）：
 
-- `IAttackInfoCalculator`（数值计算器）
+- `IAttackInfoModifier`（统一处理器：包含“词条修改 + 最终伤害结算”；最终结算器作为处理链最后一环）
 - `IMaskBattleInjector`（面具/材料注入器）
 - `List<IFightComponent>`（战斗组件列表）
 
@@ -169,23 +169,23 @@
 
 ### 5.2 接口定义（文档级规范）
 
-数值计算先抽象为一个接口，接收 `AttackInfo` 并通过 `ref` 修改：
+V0 原本将“处理链修改”和“最终伤害结算”拆成两个接口；现已合并为一个统一接口（避免职责重复）：
 
 ```csharp
-public interface IAttackInfoCalculator
+public interface IAttackInfoModifier
 {
-    // attacker/defender 可按项目现状替换为具体类型，V0 只规定“必须能取到双方运行时实例数据”
-    void Calculate(ref AttackInfo info, FightContext context );
+    // V0 约定：既可用于“材料词条修改”，也可作为“最终结算器（暴击/防御/最终伤害）”
+    void Modify(ref AttackInfo info, FightContext context);
 }
 ```
 
 约定：
 
-- **输入**：处理器链处理后的 `AttackInfo`（仍可能被进一步改写）。  
+- **输入**：处理器链处理中的 `AttackInfo`。  
 - **输出**：通过 `ref` 修改 `AttackInfo`（例如写入本次是否暴击、最终伤害、或直接改写 RawAttack 作为最终伤害）。  
-- **应用**：由 `FightManager` 根据 `AttackInfo` 的输出字段去扣除 defender 的 HP，并判定胜负。
+- **应用**：由 `FightManager` 根据 `AttackInfo` 的输出字段去扣除 defender 的 HP，并判定胜负。  
 
- > 说明：Calculator 通过 `FightContext` 获取“本次攻击方/防守方”的运行时实例（例如 `context.CurrentAttacker / context.CurrentDefender`），从而避免把 attacker/defender 类型写死在接口签名里。
+ > 说明：最终结算器通过 `FightContext` 获取“本次攻击方/防守方”的运行时实例（例如 `context.CurrentAttacker / context.CurrentDefender`），从而避免把 attacker/defender 类型写死在接口签名里。
 
 ---
 

@@ -7,3 +7,11 @@ public interface IMaskBattleInjector
     void InjectBattleContext(FightContext context);
 }
 
+/// <summary>
+/// 可选扩展：注入器可提供“面具数量”信息（面具库 + 当前面具）。
+/// </summary>
+public interface IMaskBattleInjectorWithCount : IMaskBattleInjector
+{
+    int MaskCount { get; }
+}
+

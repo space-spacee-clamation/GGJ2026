@@ -21,9 +21,7 @@ public class GameManager : MonoBehaviour
 
     [Header("UI")]
     [SerializeField] private MakeMuskUI makeMuskUI;
-
-    [Header("Player")]
-    [SerializeField] private PlayerConfigSO playerConfig;
+    [SerializeField] private BattleUI battleUI;
 
     [Header("Mask Library (Runtime)")]
     [SerializeField] private Transform maskLibraryRoot;
@@ -37,18 +35,16 @@ public class GameManager : MonoBehaviour
     [Tooltip("Jam 方便测试：进入制造回合时自动把库存材料尽量绑定到当前面具（按保质期优先）。")]
     [SerializeField] private bool autoBindInventoryOnMake = false;
 
-    [Header("掉落配置")]
+    [Header("掉落配置（Jam 默认：纯代码，无 SO）")]
+    [Tooltip("运行时生成的材料池（由 Resources/Mat 扫描得到）。Jam 默认不需要手动配置 MaterialPool SO。")]
     [SerializeField] private MaterialPool dropPool;
+    [Tooltip("运行时创建的掉落方法（SO 实例，仅用于运行时；Jam 默认不需要创建 DropMethod 资产）。")]
     [SerializeField] private SimpleLuckMaterialDropMethod dropMethod;
-    [SerializeField, Min(0)] private int dropCount = 1;
+    [SerializeField, Min(0)] private int dropCount = JamDefaultSettings.DropCountPerBattle;
 
-    [Header("材料池/初始材料（自动从 Resources/Mat 读取）")]
-    [Tooltip("启动时自动扫描 Assets/Resources/Mat 下所有 MaterialObj prefab，生成运行时材料池并覆盖 dropPool。")]
-    [SerializeField] private bool autoBuildDropPoolFromResources = true;
-    [SerializeField] private string resourcesMatFolder = "Mat";
-
-    [Tooltip("开局给玩家的品质0材质数量（用于制作阶段）。")]
-    [SerializeField, Min(0)] private int initialCommonMaterialCount = 4;
+    [Header("材料池/初始材料（Jam 默认：纯代码）")]
+    [SerializeField] private string resourcesMatFolder = JamDefaultSettings.ResourcesMatFolder;
+    [SerializeField, Min(0)] private int initialCommonMaterialCount = JamDefaultSettings.InitialCommonMaterialCount;
     private bool _initialMaterialsSpawned;
 
     [Header("Flow")]
@@ -102,16 +98,13 @@ public class GameManager : MonoBehaviour
             audioManager.LoadAllEntriesFromResources();
         }
 
-        // 自动构建材料池（用于掉落与开局发牌）
-        if (autoBuildDropPoolFromResources)
-        {
-            BuildDropPoolFromResources();
-        }
+        // Jam：自动构建材料池（用于掉落与开局发牌）。不依赖任何 SO 资产。
+        BuildDropPoolFromResources();
 
-        // 自动化掉落配置（保证 dropMethod/dropCount 可用）
+        // Jam：自动化掉落配置（保证 dropMethod/dropCount 可用）
         EnsureDropConfigForJam();
 
-        // 开局发 4 个品质0材质给玩家
+        // Jam：开局发放默认数量的 Common 材质给玩家
         SpawnInitialCommonMaterialsIfNeeded();
 
         // Jam 容错：用临时测试补全未配置内容，保证流程可跑
@@ -169,11 +162,8 @@ public class GameManager : MonoBehaviour
             if (enablePhaseDebugLogs) Debug.Log("[GameManager] dropMethod 未配置：已创建 Runtime_SimpleLuckDropMethod。");
         }
 
-        if (dropCount <= 0)
-        {
-            dropCount = 3;
-            if (enablePhaseDebugLogs) Debug.Log("[GameManager] dropCount<=0：已自动设置为 3。");
-        }
+        // Jam：dropCount 直接走 JamDefaultSettings 的默认值（可在 JamDefaultSettings 改）
+        dropCount = Mathf.Max(0, JamDefaultSettings.DropCountPerBattle);
     }
 
     private void SpawnInitialCommonMaterialsIfNeeded()
@@ -377,12 +367,8 @@ public class GameManager : MonoBehaviour
     private void BootstrapPlayer()
     {
         if (Player.I != null) return;
-        if (playerConfig == null)
-        {
-            Debug.LogError("[GameManager] PlayerConfigSO 未配置，无法初始化 Player 单例。", this);
-            return;
-        }
-        Player.CreateSingleton(playerConfig.BaseStats);
+        // Jam：不依赖 PlayerConfigSO，直接使用默认值（改 JamDefaultSettings 即可调参）
+        Player.CreateSingleton(JamDefaultSettings.DefaultPlayerBaseStats);
     }
 
     private void BootstrapRuntimeRoots()
@@ -431,6 +417,9 @@ public class GameManager : MonoBehaviour
             makeMuskUI.gameObject.SetActive(true);
             makeMuskUI.RefreshInventoryUI();
         }
+
+        // 进入制造阶段：关闭战斗 UI
+        if (battleUI != null) battleUI.gameObject.SetActive(false);
     }
 
     /// <summary>
@@ -455,6 +444,10 @@ public class GameManager : MonoBehaviour
         {
             EnterMakeMaskPhase();
         }
+
+        // 进入战斗阶段：关闭制造 UI，打开战斗 UI
+        if (makeMuskUI != null) makeMuskUI.gameObject.SetActive(false);
+        if (battleUI != null) battleUI.gameObject.SetActive(true);
 
         // 组装“面具库注入器”：面具库 + 当前面具（当前面具不一定已入库，但本场战斗需要生效）
         var injectors = new System.Collections.Generic.List<IMaskBattleInjector>();
@@ -496,6 +489,9 @@ public class GameManager : MonoBehaviour
 
         // 战后结算（严格在战斗结束后执行）
         PostBattleSettlement(ctx);
+
+        // 战斗结束：关闭战斗 UI（制造阶段会在下一轮再打开）
+        if (battleUI != null) battleUI.gameObject.SetActive(false);
     }
 
     private void PostBattleSettlement(FightContext ctx)
@@ -690,29 +686,11 @@ public class GameManager : MonoBehaviour
         {
             if (gm == null) return;
 
-            // 玩家：如果没配 PlayerConfigSO，则用默认数值创建单例
+            // Jam：玩家一律使用 JamDefaultSettings（不再依赖 PlayerConfigSO）
             if (Player.I == null)
             {
-                if (gm.playerConfig != null)
-                {
-                    Player.CreateSingleton(gm.playerConfig.BaseStats);
-                    if (gm.enablePhaseDebugLogs) Debug.Log("[JamTempFixer] Player 已用 PlayerConfigSO 初始化。");
-                }
-                else
-                {
-                    var s = new PlayerStats
-                    {
-                        MaxHP = 80f,
-                        Attack = 12f,
-                        Defense = 3f,
-                        CritChance = 0.1f,
-                        CritMultiplier = 1.5f,
-                        SpeedRate = 6,
-                        Luck = 20
-                    };
-                    Player.CreateSingleton(s);
-                    Debug.LogWarning("[JamTempFixer] playerConfig 未配置：已用默认 PlayerStats 创建 Player 单例（仅用于测试跑流程）。");
-                }
+                Player.CreateSingleton(JamDefaultSettings.DefaultPlayerBaseStats);
+                if (gm.enablePhaseDebugLogs) Debug.Log("[JamTempFixer] Player 已用 JamDefaultSettings 初始化。");
             }
 
             // 面具底板：确保存在（未配置时自动创建临时底板）
@@ -741,6 +719,22 @@ public class GameManager : MonoBehaviour
             {
                 gm.autoCompleteMakePhase = true;
                 Debug.LogWarning("[JamTempFixer] makeMuskUI 未配置：已强制 autoCompleteMakePhase=true，避免流程卡住。");
+            }
+
+            // 战斗 UI：尽量自动补一个引用（不强制；没有也不影响流程，只是少展示）
+            if (gm.battleUI == null)
+            {
+                gm.battleUI = Object.FindFirstObjectByType<BattleUI>(FindObjectsInactive.Include);
+                if (gm.battleUI == null)
+                {
+                    if (gm.enablePhaseDebugLogs)
+                        Debug.LogWarning("[JamTempFixer] battleUI 未配置/未找到：战斗阶段将只输出 Log（不显示血条/速度条/飘字）。");
+                }
+                else
+                {
+                    if (gm.enablePhaseDebugLogs)
+                        Debug.Log("[JamTempFixer] 已自动找到 BattleUI 并注入到 GameManager。");
+                }
             }
         }
     }

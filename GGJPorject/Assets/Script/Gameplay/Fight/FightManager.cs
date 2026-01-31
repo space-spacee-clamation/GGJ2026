@@ -8,7 +8,7 @@ public class FightManager : MonoBehaviour
     public static FightManager I { get; private set; }
 
     [Header("Injected (Interface via Odin)")]
-    [OdinSerialize] private IAttackInfoCalculator attackInfoCalculator = new BasicAttackInfoCalculator();
+    [OdinSerialize] private IAttackInfoModifier finalDamageCalculator = new FinalDamageCalculator();
 
     [Header("Optional Injection")]
     [Tooltip("如果场景中有面具对象（或面具实例持有者），可在此注入战斗上下文。")]
@@ -63,9 +63,9 @@ public class FightManager : MonoBehaviour
             return;
         }
 
-        if (attackInfoCalculator == null)
+        if (finalDamageCalculator == null)
         {
-            Debug.LogError("[FightManager] attackInfoCalculator 未配置（IAttackInfoCalculator）。", this);
+            Debug.LogError("[FightManager] finalDamageCalculator 未配置（IAttackInfoModifier，用于最终结算且必须最后执行）。", this);
             return;
         }
 
@@ -86,7 +86,6 @@ public class FightManager : MonoBehaviour
         {
             Player = CombatantRuntime.FromStats("Player", Player.I.BuildBattleStats()),
             Enemy = new CombatantRuntime("Enemy", enemyCfg),
-            AttackInfoCalculator = attackInfoCalculator,
             ArenaSpeedThreshold = Mathf.Max(1, GameSetting.DefaultArenaSpeedThreshold),
         };
         var logs = (enableLogs || forceLogsInJam);
@@ -107,7 +106,12 @@ public class FightManager : MonoBehaviour
         {
             Context.MaskInjector = maskBattleInjector;
             maskBattleInjector.InjectBattleContext(Context);
+            Context.MaskCount = (maskBattleInjector as IMaskBattleInjectorWithCount)?.MaskCount ?? 0;
         }
+
+        // 最终结算器：永远最后执行（不允许被材料动态 Add 插到后面）
+        Context.PlayerAttackProcessor.SetFinalizer(finalDamageCalculator);
+        Context.EnemyAttackProcessor.SetFinalizer(finalDamageCalculator);
 
         // 速度条初始化
         Context.PlayerSpeedValue = 0f;
@@ -220,10 +224,6 @@ public class FightManager : MonoBehaviour
         // 通知：攻击前（不用于修改）
         Context.RaiseBeforeAttack(side, info);
 
-        // 数值计算接口（ref 修改）
-        Context.AttackInfoCalculator.Calculate(ref info, Context);
-        var afterCalc = info;
-
         // 通知：攻击后
         Context.RaiseAfterAttack(side, info);
 
@@ -241,7 +241,8 @@ public class FightManager : MonoBehaviour
 
         if (Context != null && Context.DebugVerbose && Context.DebugLogger != null)
         {
-            DumpAttackVerbose(side, attacker, defender, beforeProc, afterProc, afterCalc, damage);
+            // afterProc 即“最终结算后”的 info（因为最终结算器在处理链末尾）
+            DumpAttackVerbose(side, attacker, defender, beforeProc, afterProc, afterProc, damage);
         }
     }
 

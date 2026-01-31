@@ -5,9 +5,10 @@ public enum MaterialTraversePhase
     Bind = 0,
     BattleStart = 1,
     AttackModify = 2,
-    BattleEnd = 3,
-    PersistentGrowth = 4,
-    Description = 5,
+    DamageApplied = 3,
+    BattleEnd = 4,
+    PersistentGrowth = 5,
+    Description = 6,
 }
 
 /// <summary>
