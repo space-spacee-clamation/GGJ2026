@@ -36,8 +36,8 @@ public sealed class FinalDamageCalculator : IAttackInfoModifier
         }
         if (EnableDefenseReduction)
         {
-            /*计算有效防御
-            curDef = context.CurrentDefender.Defense*(1-百分比)-固穿;
+            //计算有效防御
+            float curDef = context.CurrentDefender.Defense*(1-info.PenetrationPercent)-info.PenetrationFixed;
             float reduction;
             if(curDef >= 0)
             {
@@ -48,8 +48,7 @@ public sealed class FinalDamageCalculator : IAttackInfoModifier
                 reduction = -(1+Math.Abs(curDef)/defValue);
             }
             damage = Mathf.Max(1f,damage-damage*reduction);
-            */
-            damage = Mathf.Max(1f, damage - context.CurrentDefender.Defense);
+            //damage = Mathf.Max(1f, damage - context.CurrentDefender.Defense);
         }
 
         info.FinalDamage = damage;
