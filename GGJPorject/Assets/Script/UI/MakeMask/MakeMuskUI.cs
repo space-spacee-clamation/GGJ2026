@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -32,10 +30,6 @@ public class MakeMuskUI : MonoBehaviour
     [Header("Outline Shader Material (UI/AlphaOutline)")]
     [SerializeField] private Material outlineMaterial;
 
-    [Header("Cost Warning")]
-    [Tooltip("费用不足警告的 CanvasGroup（用于 fadeIn/fadeOut 动画）")]
-    [SerializeField] private CanvasGroup costWarningCanvasGroup;
-
     [Header("Debug")]
     [SerializeField] private bool enableLogs = true;
 
@@ -43,7 +37,6 @@ public class MakeMuskUI : MonoBehaviour
     private readonly Dictionary<MaterialObj, ChoicedMaterial> _choiced = new();
 
     private bool _composedOnce;
-    private Tween _costWarningTween; // 费用不足警告动画
 
     private void OnEnable()
     {
@@ -72,10 +65,6 @@ public class MakeMuskUI : MonoBehaviour
     {
         if (nextButton != null) nextButton.onClick.RemoveListener(OnClickNext);
         if (composeButton != null) composeButton.onClick.RemoveListener(OnClickCompose);
-        
-        // 清理动画
-        _costWarningTween?.Kill();
-        _costWarningTween = null;
     }
 
     public void RefreshInventoryUI()
@@ -137,6 +126,24 @@ public class MakeMuskUI : MonoBehaviour
 
         // 已选则忽略（V0：一个材料只能被选中一次）
         if (_choiced.ContainsKey(mat)) return;
+
+        // 检查费用是否足够
+        var mask = GameManager.I != null ? GameManager.I.GetCurrentMask() : null;
+        if (mask != null)
+        {
+            int cost = Mathf.Max(0, mat.ManaCost);
+            foreach(var choiced in _choiced.Values)
+            {
+                cost -= choiced.Material.ManaCost;
+            }
+            if (mask.CurrentMana < cost)
+            {
+                // 费用不足：关闭信息，显示警告，不执行后续逻辑
+                CloseInfo();
+                GameManager.I?.ShowCostWarning();
+                return;
+            }
+        }
 
         // 生成 ChoicedMaterial（UI），但不移动材料实例（材料仍在库存中）
         ChoicedMaterial c = null;
@@ -230,7 +237,7 @@ public class MakeMuskUI : MonoBehaviour
                 // 如果是费用不足，触发警告动画
                 if (result.FailReason == BindFailReason.NotEnoughMana)
                 {
-                    ShowCostWarning();
+                    GameManager.I?.ShowCostWarning();
                 }
                 
                 // 绑定失败：取消选择，材料仍在库存中
@@ -279,37 +286,5 @@ public class MakeMuskUI : MonoBehaviour
     }
     private void Update(){
         CostText.text = MaskMakeManager.I.CurrentMask.CurrentMana.ToString();
-    }
-
-    /// <summary>
-    /// 显示费用不足警告动画：fadeIn -> 持续1秒 -> fadeOut
-    /// </summary>
-    private void ShowCostWarning()
-    {
-        if (costWarningCanvasGroup == null) return;
-
-        // 停止当前动画
-        _costWarningTween?.Kill();
-
-        // 确保 CanvasGroup 激活
-        if (!costWarningCanvasGroup.gameObject.activeSelf)
-        {
-            costWarningCanvasGroup.gameObject.SetActive(true);
-        }
-
-        // 初始化：alpha = 0
-        costWarningCanvasGroup.alpha = 0f;
-
-        // 创建动画序列：fadeIn (0.3s) -> 等待 (1s) -> fadeOut (0.3s)
-        _costWarningTween = DOTween.Sequence()
-            .SetUpdate(true) // 即使 TimeScale=0 也能播 UI
-            .Append(costWarningCanvasGroup.DOFade(1f, 0.3f).SetEase(Ease.OutQuad)) // fadeIn
-            .AppendInterval(1f) // 持续1秒
-            .Append(costWarningCanvasGroup.DOFade(0f, 0.3f).SetEase(Ease.InQuad)) // fadeOut
-            .OnComplete(() => {
-                _costWarningTween = null;
-                // 动画完成后可以隐藏 GameObject（可选）
-                // costWarningCanvasGroup.gameObject.SetActive(false);
-            });
     }
 }

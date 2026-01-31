@@ -36,6 +36,7 @@ public class MaterialButton : MonoBehaviour, IPointerClickHandler, IPointerEnter
     public void OnPointerClick(PointerEventData eventData)
     {
         _owner?.OnClickMaterialButton(this);
+
         _owner?.CloseInfo();
     }
 

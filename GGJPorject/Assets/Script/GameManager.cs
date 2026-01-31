@@ -25,6 +25,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private BattleUI battleUI;
     [Tooltip("黑屏 CanvasGroup（用于场景切换时的淡入淡出）。")]
     [SerializeField] private CanvasGroup blackScreen;
+    [Tooltip("费用不足警告的 CanvasGroup（用于 fadeIn/fadeOut 动画）。")]
+    [SerializeField] private CanvasGroup costWarningCanvasGroup;
 
     [Header("Mask Library (Runtime)")]
     [SerializeField] private Transform maskLibraryRoot;
@@ -81,6 +83,7 @@ public class GameManager : MonoBehaviour
     private UniTaskCompletionSource<bool> _battleEndTcs;
     private CancellationToken _destroyToken;
     private bool _manualAdvanceInProgress;
+    private Tween _costWarningTween; // 费用不足警告动画
 
     private void Awake()
     {
@@ -553,11 +556,10 @@ public class GameManager : MonoBehaviour
         {
             // 进入战斗阶段：关闭制造 UI，打开战斗 UI（CanvasGroup 会同时控制透明度与射线）
             if (makeMuskUI != null) SetUIActiveWithCanvasGroup(makeMuskUI.gameObject, false);
-            if (battleUI != null) SetUIActiveWithCanvasGroup(battleUI.gameObject, true);
-        }, ct);
-
-        // 组装“面具库注入器”：面具库 + 当前面具（当前面具不一定已入库，但本场战斗需要生效）
-        var injectors = new System.Collections.Generic.List<IMaskBattleInjector>();
+            if (battleUI != null) 
+            {
+                SetUIActiveWithCanvasGroup(battleUI.gameObject, true);
+                 var injectors = new System.Collections.Generic.List<IMaskBattleInjector>();
         for (int i = 0; i < _maskLibrary.Count; i++)
         {
             if (_maskLibrary[i] != null) injectors.Add(_maskLibrary[i]);
@@ -567,13 +569,14 @@ public class GameManager : MonoBehaviour
             injectors.Add(maskMakeManager.CurrentMask);
         }
         fightManager.SetMaskBattleInjector(new MaskLibraryInjector(injectors));
-
+                fightManager.StartFight();
+            }
+        }, ct);
         _battleEndTcs = new UniTaskCompletionSource<bool>();
 
-        fightManager.StartFight();
-        Debug.Log("[GameManager] 进入战斗阶段（纯数值战斗）。");
-
         var ctx = fightManager.Context;
+        fightManager.StartFightUpdate();
+
         if (ctx == null)
         {
             Debug.LogError("[GameManager] FightContext 为空，无法等待战斗结束。", this);
@@ -1075,6 +1078,38 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// 显示费用不足警告动画：fadeIn -> 持续1秒 -> fadeOut
+    /// </summary>
+    public void ShowCostWarning()
+    {
+        if (costWarningCanvasGroup == null) return;
+
+        // 停止当前动画
+        _costWarningTween?.Kill();
+
+        // 确保 CanvasGroup 激活
+        if (!costWarningCanvasGroup.gameObject.activeSelf)
+        {
+            costWarningCanvasGroup.gameObject.SetActive(true);
+        }
+
+        // 初始化：alpha = 0
+        costWarningCanvasGroup.alpha = 0f;
+
+        // 创建动画序列：fadeIn (0.3s) -> 等待 (1s) -> fadeOut (0.3s)
+        _costWarningTween = DOTween.Sequence()
+            .SetUpdate(true) // 即使 TimeScale=0 也能播 UI
+            .Append(costWarningCanvasGroup.DOFade(1f, 0.3f).SetEase(Ease.OutQuad)) // fadeIn
+            .AppendInterval(1f) // 持续1秒
+            .Append(costWarningCanvasGroup.DOFade(0f, 0.3f).SetEase(Ease.InQuad)) // fadeOut
+            .OnComplete(() => {
+                _costWarningTween = null;
+                // 动画完成后可以隐藏 GameObject（可选）
+                // costWarningCanvasGroup.gameObject.SetActive(false);
+            });
     }
 }
 

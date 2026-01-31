@@ -1,3 +1,5 @@
+using System.Linq;
+
 /// <summary>
 /// 持久成长结算器（Jam 版，纯代码可改公式）。
 ///
@@ -34,7 +36,7 @@ public sealed class JamPersistentGrowthCalculator_Default : IJamPersistentGrowth
         // - 例如：delta.AddAttack = Mathf.Floor(delta.AddAttack * 0.5f);
         var delta2 = new PlayerGrowthDelta();
        int allQuality= 0;
-       foreach(var item in MaskMakeManager.I.CurrentMask.Materials)
+       foreach(var item in GameManager.I.GetMaskLibrary().Last().Materials)
         {
             allQuality += (int)item.Quality;
         }

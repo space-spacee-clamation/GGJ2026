@@ -118,7 +118,7 @@ public class FightManager : MonoBehaviour
         Context.EnemySpeedValue = 0f;
         _nextPlayerAttackTime = Time.time;
         _nextEnemyAttackTime = Time.time;
-        _isFighting = true;
+      
 
         Context.RaiseBattleEnter();
         Context.RaiseBattleStart();
@@ -136,8 +136,11 @@ public class FightManager : MonoBehaviour
     public void StopFight()
     {
         _isFighting = false;
-    }
 
+    }
+    public void StartFightUpdate(){
+        _isFighting = true;
+    }
     private void Update()
     {
         if (!_isFighting || Context == null) return;
