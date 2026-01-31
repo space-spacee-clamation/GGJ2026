@@ -49,3 +49,4 @@ MonoBehaviour:
     DisplayName: 
     Description: 
   materialRoot: {fileID: 5323289309436374146}
+  displaySprite: {fileID: -11614825, guid: ffae986a1a3579e49a7aaeec4ffea99c, type: 3}

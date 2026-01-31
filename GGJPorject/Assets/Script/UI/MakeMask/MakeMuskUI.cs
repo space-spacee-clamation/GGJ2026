@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -30,6 +32,10 @@ public class MakeMuskUI : MonoBehaviour
     [Header("Outline Shader Material (UI/AlphaOutline)")]
     [SerializeField] private Material outlineMaterial;
 
+    [Header("Cost Warning")]
+    [Tooltip("费用不足警告的 CanvasGroup（用于 fadeIn/fadeOut 动画）")]
+    [SerializeField] private CanvasGroup costWarningCanvasGroup;
+
     [Header("Debug")]
     [SerializeField] private bool enableLogs = true;
 
@@ -37,6 +43,7 @@ public class MakeMuskUI : MonoBehaviour
     private readonly Dictionary<MaterialObj, ChoicedMaterial> _choiced = new();
 
     private bool _composedOnce;
+    private Tween _costWarningTween; // 费用不足警告动画
 
     private void OnEnable()
     {
@@ -65,6 +72,10 @@ public class MakeMuskUI : MonoBehaviour
     {
         if (nextButton != null) nextButton.onClick.RemoveListener(OnClickNext);
         if (composeButton != null) composeButton.onClick.RemoveListener(OnClickCompose);
+        
+        // 清理动画
+        _costWarningTween?.Kill();
+        _costWarningTween = null;
     }
 
     public void RefreshInventoryUI()
@@ -114,7 +125,7 @@ public class MakeMuskUI : MonoBehaviour
         string desc = mat.BuildDescription();
         int ttl = mat.RemainingShelfLifeTurns;
         Sprite sprite = mat.BaseSprite; // 使用材料的 BaseSprite
-        infoNode.Show(name, desc, ttl, sprite);
+        infoNode.Show(name, desc, ttl, sprite,mat.ManaCost);
     }
     public void CloseInfo(){
         infoNode.gameObject.SetActive(false);
@@ -133,17 +144,6 @@ public class MakeMuskUI : MonoBehaviour
         {
             c = Instantiate(choicedMaterialPrefab, chosenSpawnArea, false);
             c.Initialize(this, mat, outlineMaterial, outlineMaterial);
-
-            // 随机位置（在 given area 内）
-            var rt = c.transform as RectTransform;
-            if (rt != null)
-            {
-                var size = chosenSpawnArea.rect.size;
-                var px = Random.Range(-size.x * 0.5f, size.x * 0.5f);
-                var py = Random.Range(-size.y * 0.5f, size.y * 0.5f);
-                rt.anchoredPosition = new Vector2(px, py);
-            }
-
         }
 
         // 即使未配置 choicedMaterialPrefab / chosenSpawnArea，也要记录“已选”，否则 Compose 会认为没选中
@@ -226,6 +226,13 @@ public class MakeMuskUI : MonoBehaviour
             else
             {
                 if (enableLogs) Debug.LogWarning($"[MakeMuskUI] Compose 失败：Bind {mat.DisplayName} reason={result.FailReason}", this);
+                
+                // 如果是费用不足，触发警告动画
+                if (result.FailReason == BindFailReason.NotEnoughMana)
+                {
+                    ShowCostWarning();
+                }
+                
                 // 绑定失败：取消选择，材料仍在库存中
                 if (_choiced.TryGetValue(mat, out var cm) && cm != null) Destroy(cm.gameObject);
                 _choiced.Remove(mat);
@@ -272,5 +279,37 @@ public class MakeMuskUI : MonoBehaviour
     }
     private void Update(){
         CostText.text = MaskMakeManager.I.CurrentMask.CurrentMana.ToString();
+    }
+
+    /// <summary>
+    /// 显示费用不足警告动画：fadeIn -> 持续1秒 -> fadeOut
+    /// </summary>
+    private void ShowCostWarning()
+    {
+        if (costWarningCanvasGroup == null) return;
+
+        // 停止当前动画
+        _costWarningTween?.Kill();
+
+        // 确保 CanvasGroup 激活
+        if (!costWarningCanvasGroup.gameObject.activeSelf)
+        {
+            costWarningCanvasGroup.gameObject.SetActive(true);
+        }
+
+        // 初始化：alpha = 0
+        costWarningCanvasGroup.alpha = 0f;
+
+        // 创建动画序列：fadeIn (0.3s) -> 等待 (1s) -> fadeOut (0.3s)
+        _costWarningTween = DOTween.Sequence()
+            .SetUpdate(true) // 即使 TimeScale=0 也能播 UI
+            .Append(costWarningCanvasGroup.DOFade(1f, 0.3f).SetEase(Ease.OutQuad)) // fadeIn
+            .AppendInterval(1f) // 持续1秒
+            .Append(costWarningCanvasGroup.DOFade(0f, 0.3f).SetEase(Ease.InQuad)) // fadeOut
+            .OnComplete(() => {
+                _costWarningTween = null;
+                // 动画完成后可以隐藏 GameObject（可选）
+                // costWarningCanvasGroup.gameObject.SetActive(false);
+            });
     }
 }
