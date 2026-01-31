@@ -30,7 +30,7 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
         {
             r = (roundIndex + 1) * 3;
         }
-        else
+        else if(roundIndex > 20)
         {
             r = (roundIndex - 1) / 20;
         }
