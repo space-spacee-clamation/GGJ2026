@@ -107,13 +107,18 @@ public sealed class Node_Effect : MonoBehaviour,
     {
         if (Effect == null) return;
 
-        // AttackModify 的上下文：把当前 info 快照塞进 context（便于描述/日志），真正修改走 ref 参数
+        // 攻击前上下文：把当前 info 快照塞进 ctx（便于 gate/描述/日志），真正修改走 ref 参数
+        // 注意：这里使用“新阶段（玩家/敌人攻击前）”，同时保持 Gate_Phase 对 Legacy 的兼容映射。
+        var phase = context != null && context.CurrentAttackerSide == FightSide.Enemy
+            ? MaterialTraversePhase.EnemyAttackBefore
+            : MaterialTraversePhase.PlayerAttackBefore;
+
         var ctx = new MaterialVommandeTreeContext(
-            MaterialTraversePhase.AttackModify,
+            phase,
             mask: null,
             maskMaterials: null,
             onMaterialBound: null,
-            fight: null,
+            fight: context,
             side: context != null ? context.CurrentAttackerSide : FightSide.None,
             defenderSide: context != null
                 ? (context.CurrentAttackerSide == FightSide.Player ? FightSide.Enemy : FightSide.Player)
@@ -132,7 +137,12 @@ public sealed class Node_Effect : MonoBehaviour,
             return;
         }
 
-        // 非攻击效果器：不做任何事（避免误用）
+        // 允许在“攻击前”触发不修改 AttackInfo 的效果（例如播特效/SFX/计数等）
+        // 这能让 Gate_Phase.PlayerAttackBefore 下挂普通 IMaterialEffect 正常工作。
+        if (Effect is IMaterialEffect e)
+        {
+            e.Execute(in ctx);
+        }
     }
 
     private void TryExecute(in MaterialVommandeTreeContext context)

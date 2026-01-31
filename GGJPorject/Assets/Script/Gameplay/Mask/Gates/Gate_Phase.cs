@@ -27,6 +27,28 @@ public sealed class Gate_Phase : MonoBehaviour, IMaterialLogicNode, IMaterialTra
     {
         if (actual == configured) return true;
 
+        // Legacy 兼容：
+        // - 旧配置 AttackModify 视为“玩家/敌人攻击前”
+        // - 旧配置 DamageApplied 视为“玩家/敌人攻击后”
+        if (configured == MaterialTraversePhase.AttackModify)
+        {
+            return actual == MaterialTraversePhase.PlayerAttackBefore || actual == MaterialTraversePhase.EnemyAttackBefore;
+        }
+        if (configured == MaterialTraversePhase.DamageApplied)
+        {
+            return actual == MaterialTraversePhase.PlayerAttackAfter || actual == MaterialTraversePhase.EnemyAttackAfter;
+        }
+
+        // 反向兼容：如果运行时仍在某些节点里用 Legacy 阶段构造上下文，也应当能命中“新阶段 Gate”
+        if (actual == MaterialTraversePhase.AttackModify)
+        {
+            return configured == MaterialTraversePhase.PlayerAttackBefore || configured == MaterialTraversePhase.EnemyAttackBefore;
+        }
+        if (actual == MaterialTraversePhase.DamageApplied)
+        {
+            return configured == MaterialTraversePhase.PlayerAttackAfter || configured == MaterialTraversePhase.EnemyAttackAfter;
+        }
+
         return false;
     }
 
