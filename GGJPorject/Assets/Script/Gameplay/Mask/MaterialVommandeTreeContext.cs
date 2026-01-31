@@ -32,7 +32,7 @@ public readonly struct MaterialVommandeTreeContext
     // ---- Settlement / Growth ----
     private readonly Player _playerOverride;
     public Player Player => _playerOverride ?? Player.I;
-    public readonly PlayerGrowthDelta GrowthDelta;
+    public readonly PlayerGrowthDelta GrowthDelta => GameManager.I.PendingGrowthDelta;
 
     public MaterialVommandeTreeContext(
         MaterialTraversePhase phase,
@@ -61,7 +61,6 @@ public readonly struct MaterialVommandeTreeContext
         AttackInfo = attackInfo;
         Damage = damage;
         _playerOverride = player;
-        GrowthDelta = growthDelta;
     }
 
     public static MaterialVommandeTreeContext ForDescription()

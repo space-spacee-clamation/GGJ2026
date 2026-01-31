@@ -31,11 +31,11 @@ public class GameManager : MonoBehaviour
     private readonly System.Collections.Generic.List<MaskObj> _maskLibrary = new();
 
     [Header("持久成长（未应用）")]
-    [Tooltip("战斗结束后收集但还未应用到玩家的提升值（用于 UI 显示）。")]
+    [Tooltip("跨回合累积的成长值（从上次结算后开始累积，直到下次战斗结束应用）。")]
     private PlayerGrowthDelta _pendingGrowthDelta;
 
     /// <summary>
-    /// 获取未应用的提升值（战斗结束后收集但还未应用）。
+    /// 获取未应用的提升值（跨回合累积，从上次结算后开始累积，直到下次战斗结束应用）。
     /// </summary>
     public PlayerGrowthDelta PendingGrowthDelta => _pendingGrowthDelta;
 
@@ -99,7 +99,7 @@ public class GameManager : MonoBehaviour
         BootstrapMask();
         BootstrapPlayer();
         BootstrapRuntimeRoots();
-
+_pendingGrowthDelta= new PlayerGrowthDelta();
         _destroyToken = this.GetCancellationTokenOnDestroy();
 
         if (enablePhaseDebugLogs)
@@ -319,6 +319,9 @@ public class GameManager : MonoBehaviour
         if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 制造阶段结算：库存 TickEndOfMakePhase。round={_roundIndex}");
         materialInventory?.TickEndOfMakePhase(materialInventoryRoot);
 
+        // 制造阶段结束时：收集当前面具材料的成长值（回合结束奖励）
+        CollectMakePhaseGrowth();
+
         // 3) 战斗阶段：开始战斗并等待结束
         if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 进入战斗阶段。round={_roundIndex}");
         await StartBattlePhaseAsync(ct);
@@ -415,44 +418,46 @@ public class GameManager : MonoBehaviour
 
     private async UniTaskVoid EnterMakeMaskPhaseAsync(CancellationToken ct)
     {
-        // 黑屏淡入淡出：从战斗到制造
-        await PlayBlackScreenTransition(ct);
-
-        if (maskMakeManager == null)
+        // 黑屏淡入淡出：从战斗到制造（内容切换在黑屏期间执行）
+        await PlayBlackScreenTransition(() =>
         {
-            Debug.LogError("[GameManager] MaskMakeManager 未初始化。", this);
-            return;
-        }
+            if (maskMakeManager == null)
+            {
+                Debug.LogError("[GameManager] MaskMakeManager 未初始化。", this);
+                return;
+            }
 
-        var newMask = maskMakeManager.MakeNextMask();
-        if (newMask == null) return;
+            var newMask = maskMakeManager.MakeNextMask();
+            if (newMask == null) return;
 
-        // 当前面具：用于本回合材料附加与本场战斗，同时也会参与"面具库注入"（但战后才正式入库）
-        if (newMask.transform.parent != transform && newMask.transform.parent != maskMakeManager.transform)
-        {
-            newMask.transform.SetParent(maskMakeManager.transform, false);
-        }
+            // 当前面具：用于本回合材料附加与本场战斗，同时也会参与"面具库注入"（但战后才正式入库）
+            if (newMask.transform.parent != transform && newMask.transform.parent != maskMakeManager.transform)
+            {
+                newMask.transform.SetParent(maskMakeManager.transform, false);
+            }
 
-        if (autoBindInventoryOnMake)
-        {
-            AutoBindInventoryToCurrentMask();
-        }
+            if (autoBindInventoryOnMake)
+            {
+                AutoBindInventoryToCurrentMask();
+            }
 
-        if (makeMuskUI != null)
-        {
-            SetUIActiveWithCanvasGroup(makeMuskUI.gameObject, true);
-            makeMuskUI.RefreshInventoryUI();
-        }
+            if (makeMuskUI != null)
+            {
+                SetUIActiveWithCanvasGroup(makeMuskUI.gameObject, true);
+                makeMuskUI.RefreshInventoryUI();
+            }
 
-        // 进入制造阶段：关闭战斗 UI
-        if (battleUI != null) SetUIActiveWithCanvasGroup(battleUI.gameObject, false);
+            // 进入制造阶段：关闭战斗 UI
+            if (battleUI != null) SetUIActiveWithCanvasGroup(battleUI.gameObject, false);
+        }, ct);
     }
 
     /// <summary>
     /// 播放黑屏淡入淡出过渡动画。
-    /// 流程：fadeIn 0.5s -> 等待 0.5s -> fadeOut 0.5s
+    /// 流程：fadeIn 0.5s -> 执行内容切换回调 -> 等待 0.5s -> fadeOut 0.5s
     /// </summary>
-    private async UniTask PlayBlackScreenTransition(CancellationToken ct)
+    /// <param name="onContentSwitch">在 fadeIn 完成后、等待期间执行的内容切换回调</param>
+    private async UniTask PlayBlackScreenTransition(System.Action onContentSwitch, CancellationToken ct)
     {
         if (blackScreen == null) return;
 
@@ -468,13 +473,24 @@ public class GameManager : MonoBehaviour
         blackScreen.interactable = false;
 
         // FadeIn: 0 -> 1 (0.5s)
-        await blackScreen.DOFade(1f, 0.5f).SetUpdate(true).ToUniTask(cancellationToken: ct);
+        var fadeInTcs = new UniTaskCompletionSource();
+        var fadeInTween = blackScreen.DOFade(1f, 0.5f).SetUpdate(true);
+        fadeInTween.OnComplete(() => fadeInTcs.TrySetResult());
+        fadeInTween.OnKill(() => fadeInTcs.TrySetCanceled());
+        await fadeInTcs.Task.AttachExternalCancellation(ct);
 
-        // 等待 0.5s
+        // 在黑屏完全显示后立即执行内容切换
+        onContentSwitch?.Invoke();
+
+        // 等待 0.5s（让内容切换完成）
         await UniTask.Delay(500, cancellationToken: ct);
 
         // FadeOut: 1 -> 0 (0.5s)
-        await blackScreen.DOFade(0f, 0.5f).SetUpdate(true).ToUniTask(cancellationToken: ct);
+        var fadeOutTcs = new UniTaskCompletionSource();
+        var fadeOutTween = blackScreen.DOFade(0f, 0.5f).SetUpdate(true);
+        fadeOutTween.OnComplete(() => fadeOutTcs.TrySetResult());
+        fadeOutTween.OnKill(() => fadeOutTcs.TrySetCanceled());
+        await fadeOutTcs.Task.AttachExternalCancellation(ct);
 
         // 淡出后禁用 blocksRaycasts
         blackScreen.blocksRaycasts = false;
@@ -509,21 +525,36 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // 清空上一场战斗的未应用提升值（因为已经应用了）
-        _pendingGrowthDelta = null;
+        // 注意：不再在这里清空 _pendingGrowthDelta，因为它是跨回合的
+        // 会在 CollectAndApplyPersistentGrowth 中应用后立即创建新的
 
-        // 确保存在当前面具
+        // 确保存在当前面具（在进入战斗前先创建，但不等待黑屏过渡）
         if (maskMakeManager != null && maskMakeManager.CurrentMask == null)
         {
-            await EnterMakeMaskPhaseAsync(ct);
+            if (maskMakeManager != null)
+            {
+                var newMask = maskMakeManager.MakeNextMask();
+                if (newMask != null)
+                {
+                    if (newMask.transform.parent != transform && newMask.transform.parent != maskMakeManager.transform)
+                    {
+                        newMask.transform.SetParent(maskMakeManager.transform, false);
+                    }
+                    if (autoBindInventoryOnMake)
+                    {
+                        AutoBindInventoryToCurrentMask();
+                    }
+                }
+            }
         }
 
-        // 黑屏淡入淡出：从制造到战斗
-        await PlayBlackScreenTransition(ct);
-
-        // 进入战斗阶段：关闭制造 UI，打开战斗 UI（CanvasGroup 会同时控制透明度与射线）
-        if (makeMuskUI != null) SetUIActiveWithCanvasGroup(makeMuskUI.gameObject, false);
-        if (battleUI != null) SetUIActiveWithCanvasGroup(battleUI.gameObject, true);
+        // 黑屏淡入淡出：从制造到战斗（内容切换在黑屏期间执行）
+        await PlayBlackScreenTransition(() =>
+        {
+            // 进入战斗阶段：关闭制造 UI，打开战斗 UI（CanvasGroup 会同时控制透明度与射线）
+            if (makeMuskUI != null) SetUIActiveWithCanvasGroup(makeMuskUI.gameObject, false);
+            if (battleUI != null) SetUIActiveWithCanvasGroup(battleUI.gameObject, true);
+        }, ct);
 
         // 组装“面具库注入器”：面具库 + 当前面具（当前面具不一定已入库，但本场战斗需要生效）
         var injectors = new System.Collections.Generic.List<IMaskBattleInjector>();
@@ -761,12 +792,69 @@ public class GameManager : MonoBehaviour
         return inst;
     }
 
+    /// <summary>
+    /// 收集制造阶段的成长值（回合结束奖励）。
+    /// 遍历当前面具的材料，收集 IPersistentGrowthProvider 的成长值到 _pendingGrowthDelta。
+    /// </summary>
+    private void CollectMakePhaseGrowth()
+    {
+        if (Player.I == null) return;
+
+        // 确保 _pendingGrowthDelta 存在（如果不存在则创建）
+        if (_pendingGrowthDelta == null)
+        {
+            _pendingGrowthDelta = new PlayerGrowthDelta();
+        }
+
+        // 获取当前面具
+        var currentMask = maskMakeManager != null ? maskMakeManager.CurrentMask : null;
+        if (currentMask == null) return;
+
+        var mats = currentMask.Materials;
+        if (mats == null || mats.Count == 0) return;
+
+        // 遍历当前面具的材料，收集成长值
+        for (int i = 0; i < mats.Count; i++)
+        {
+            var mat = mats[i];
+            if (mat == null) continue;
+
+            // 树状逻辑：PersistentGrowth 阶段
+            if (mat.LogicTreeRoots != null && mat.LogicTreeRoots.Count > 0)
+            {
+                var tctx = new MaterialVommandeTreeContext(
+                    MaterialTraversePhase.PersistentGrowth,
+                    mask: currentMask,
+                    maskMaterials: mats,
+                    onMaterialBound: null,
+                    fight: null,
+                    side: FightSide.None,
+                    defenderSide: FightSide.None,
+                    actionNumber: 0,
+                    attackerAttackNumber: 0,
+                    attackInfo: default,
+                    damage: 0f,
+                    player: null,
+                    growthDelta: _pendingGrowthDelta
+                );
+                TraverseMaterialGrowthTree(mat.LogicTreeRoots, in tctx, _pendingGrowthDelta, null);
+            }
+        }
+
+        if (enablePhaseDebugLogs)
+        {
+            Debug.Log($"[GameManager] 制造阶段成长值收集完成。round={_roundIndex}");
+        }
+    }
+
     private void CollectAndApplyPersistentGrowth(FightContext ctx)
     {
         if (Player.I == null) return;
         if (ctx == null) return;
 
-        var delta = new PlayerGrowthDelta();
+        // 使用现有的 _pendingGrowthDelta（如果存在），否则创建新的
+        // 这样可以从上次结算后开始累积（包括制造阶段的成长值）
+        var delta = _pendingGrowthDelta ?? new PlayerGrowthDelta();
 
         // 面具库顺序 → 材料顺序 → 逻辑树遍历顺序（运行时只使用 logicTreeRoots）
         for (int mi = 0; mi < _maskLibrary.Count; mi++)
@@ -834,8 +922,14 @@ public class GameManager : MonoBehaviour
             Player.I.ApplyGrowth(delta);
         }
 
-        // 注意：应用后不立即清空 _pendingGrowthDelta，以便 UI 可以显示"已应用的提升值"
-        // 在下一个战斗开始前清空（在 StartBattlePhaseAsync 中清空）
+        // 应用后立即创建新的 _pendingGrowthDelta（用于下一轮累积）
+        // 这样制造阶段就可以往这个新的 delta 中添加成长值
+        _pendingGrowthDelta = new PlayerGrowthDelta();
+
+        if (enablePhaseDebugLogs)
+        {
+            Debug.Log($"[GameManager] 持久成长值已应用，已创建新的 _pendingGrowthDelta 用于下一轮。round={_roundIndex}");
+        }
     }
 
     private void TraverseMaterialGrowthTree(IReadOnlyList<MaterialLogicNode> nodes, in MaterialVommandeTreeContext tctx, PlayerGrowthDelta delta, FightContext fight)
