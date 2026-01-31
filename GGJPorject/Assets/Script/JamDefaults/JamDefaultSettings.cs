@@ -11,13 +11,13 @@ public static class JamDefaultSettings
     // ---- Player ----
     public static PlayerStats DefaultPlayerBaseStats => new PlayerStats
     {
-        MaxHP = 80f,
-        Attack = 30f,
-        Defense = 10f,
+        MaxHP = 120f,
+        Attack = 20f,
+        Defense = 30f,
         CritChance = 0.10f,
-        CritMultiplier = 1.5f,
-        SpeedRate = 6,
-        Luck = 20,
+        CritMultiplier = 1.2f,
+        SpeedRate = 5,
+        Luck = 10,
         PenetrationPercent = 0f,
         PenetrationFixed = 0f
     };

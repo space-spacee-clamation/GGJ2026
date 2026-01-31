@@ -6,9 +6,9 @@ using UnityEngine;
 public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
 {
     [Header("Base")]
-    [SerializeField] private float baseHP = 60f;
-    [SerializeField] private float baseATK = 20f;
-    [SerializeField] private float baseDEF = 10f;
+    [SerializeField] private float baseHP = 150f;
+    [SerializeField] private float baseATK = 30f;
+    [SerializeField] private float baseDEF = 50f;
     [SerializeField] private int baseSpeedRate = 3;
 
     [Header("Per Round Growth")]
