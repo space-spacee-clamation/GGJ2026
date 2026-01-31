@@ -48,11 +48,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Id: 100092
-  DisplayName: "\u7834\u788E\u955C\u7247"
+  DisplayName: "\u8150\u5316\u5723\u5FBD"
   Type: 1
   ManaCost: 1
   Quality: 0
-  BaseSprite: {fileID: 0}
+  BaseSprite: {fileID: -710680878, guid: 61fa58eba8ae79d448d20da75cfa4a04, type: 3}
   ShelfLifeTurns: 1
   remainingShelfLifeTurns: 1
   logicTreeRoots:
@@ -103,6 +103,8 @@ MonoBehaviour:
   addMaxHP: 0
   addSpeedRate: 0
   addLuck: 0
+  addPenetrationPercent: 0
+  addPenetrationFixed: 0
 --- !u!114 &5693885982944471418
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -48,11 +48,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Id: 100083
-  DisplayName: "\u5E9F\u5F03\u6838\u5FC3"
+  DisplayName: "\u8150\u673D\u83CC\u6838"
   Type: 3
   ManaCost: 2
   Quality: 2
-  BaseSprite: {fileID: 0}
+  BaseSprite: {fileID: -2130302942, guid: 61fa58eba8ae79d448d20da75cfa4a04, type: 3}
   ShelfLifeTurns: 3
   remainingShelfLifeTurns: 1
   logicTreeRoots:

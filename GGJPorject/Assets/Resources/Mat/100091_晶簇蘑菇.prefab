@@ -51,11 +51,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Id: 100091
-  DisplayName: "\u6676\u7C07\u8611\u83C7"
+  DisplayName: "\u9E26\u4EBA\u4E4B\u7FBD"
   Type: 2
   ManaCost: 1
   Quality: 1
-  BaseSprite: {fileID: 0}
+  BaseSprite: {fileID: -237904417, guid: 61fa58eba8ae79d448d20da75cfa4a04, type: 3}
   ShelfLifeTurns: 2
   remainingShelfLifeTurns: 1
   logicTreeRoots:
