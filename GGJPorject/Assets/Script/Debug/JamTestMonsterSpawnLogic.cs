@@ -20,7 +20,20 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
     public CharacterConfig TrySpawn(int roundIndex, FightContext context)
     {
         // roundIndex 从 0 开始
-        int r = Mathf.Max(0, roundIndex);
+        //int r = Mathf.Max(0, roundIndex);
+        int r = 1;
+        if(roundIndex <= 5)
+        {
+           r = (roundIndex - 1) * 2;  
+        }
+        else if(roundIndex <= 20)
+        {
+            r = (roundIndex - 1) * 3;
+        }
+        else
+        {
+            r = (roundIndex - 1) / 20;
+        }
         return new CharacterConfig
         {
             HPBase = baseHP + hpPerRound * r,

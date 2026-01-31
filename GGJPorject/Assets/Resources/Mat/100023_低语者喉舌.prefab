@@ -15,11 +15,11 @@ GameObject:
   - component: {fileID: 2226855970119035265}
   - component: {fileID: 3446048487717179163}
   - component: {fileID: 5794068705996585575}
-  - component: {fileID: 603221758317239225}
-  - component: {fileID: 1587187668831392129}
-  - component: {fileID: 7998676087272163877}
-  - component: {fileID: 7490789006938602191}
-  - component: {fileID: 1338625567320646985}
+  - component: {fileID: 2878455500500364997}
+  - component: {fileID: 6068722482860166325}
+  - component: {fileID: 7073360880932363128}
+  - component: {fileID: 2577929172388065029}
+  - component: {fileID: 3443502615622114360}
   m_Layer: 0
   m_Name: "100023_\u4F4E\u8BED\u8005\u5589\u820C"
   m_TagString: Untagged
@@ -76,7 +76,7 @@ MonoBehaviour:
       ActionSide: 0
       Children: []
   - Title: Gate_Phase
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 3446048487717179163}
     Role: 0
     ActionSide: 0
@@ -89,19 +89,19 @@ MonoBehaviour:
       Children:
       - Title: Gate_MaxTriggerCount
         Expanded: 1
-        Component: {fileID: 603221758317239225}
+        Component: {fileID: 2878455500500364997}
         Role: 0
         ActionSide: 0
         Children:
         - Title: Node_Effect
-          Expanded: 0
-          Component: {fileID: 7998676087272163877}
+          Expanded: 1
+          Component: {fileID: 7073360880932363128}
           Role: 0
           ActionSide: 0
           Children: []
         - Title: Node_Effect
-          Expanded: 0
-          Component: {fileID: 1338625567320646985}
+          Expanded: 1
+          Component: {fileID: 3443502615622114360}
           Role: 0
           ActionSide: 0
           Children: []
@@ -182,7 +182,7 @@ MonoBehaviour:
   EveryX: 2
   Invert: 0
   _counter: 0
---- !u!114 &603221758317239225
+--- !u!114 &2878455500500364997
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -197,7 +197,7 @@ MonoBehaviour:
   MaxTimes: 1
   Invert: 0
   _passedCount: 0
---- !u!114 &1587187668831392129
+--- !u!114 &6068722482860166325
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -206,7 +206,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5697091583983419821}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f86b311c0c2cdfd488b9a5c9feb26752, type: 3}
+  m_Script: {fileID: 11500000, guid: 7bf7a87bc07c50341b4c826be16f3075, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   sourceSide: 1
@@ -215,7 +215,7 @@ MonoBehaviour:
   targetStat: 1
   percent: 0.3
   maxHpAlsoHeal: 1
---- !u!114 &7998676087272163877
+--- !u!114 &7073360880932363128
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -227,8 +227,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Effect: {fileID: 1587187668831392129}
---- !u!114 &7490789006938602191
+  Effect: {fileID: 6068722482860166325}
+--- !u!114 &2577929172388065029
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -237,7 +237,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5697091583983419821}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f86b311c0c2cdfd488b9a5c9feb26752, type: 3}
+  m_Script: {fileID: 11500000, guid: 7bf7a87bc07c50341b4c826be16f3075, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   sourceSide: 1
@@ -246,7 +246,7 @@ MonoBehaviour:
   targetStat: 2
   percent: -0.3
   maxHpAlsoHeal: 1
---- !u!114 &1338625567320646985
+--- !u!114 &3443502615622114360
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -258,4 +258,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Effect: {fileID: 7490789006938602191}
+  Effect: {fileID: 2577929172388065029}
