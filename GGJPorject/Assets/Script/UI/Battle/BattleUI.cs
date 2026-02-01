@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -40,6 +41,13 @@ public sealed class BattleUI : MonoBehaviour
     [Tooltip("怪物生成位置节点（Transform 或 RectTransform）。")]
     [SerializeField] private Transform monsterSpawnNode;
 
+    [Header("Monster Kill Drop")]
+    [Tooltip("怪物死亡掉落物 Prefab（MonsterKillDrop 组件）。")]
+    [SerializeField] private MonsterKillDrop monsterKillDropPrefab;
+    [Tooltip("掉落物生成根节点（通常是 Canvas 或 UI 根节点）。")]
+    [SerializeField] private Transform dropRoot;
+
+    [SerializeField] private RoundFace roundFace;
     private FightContext _bound;
     private Vector2 _playerInitialPos;
     private Vector2 _enemyInitialPos;
@@ -47,6 +55,10 @@ public sealed class BattleUI : MonoBehaviour
     private Tween _enemyAttackTween;
     private bool _warnedMissingAttackAnimRefs;
     private GameObject _currentMonsterInstance;
+    private FightContext _lastSpawnedContext; // 跟踪已为哪个 Context 生成过怪物
+    private readonly List<MonsterKillDrop> _activeDrops = new List<MonsterKillDrop>();
+    private int _pendingDropCount; // 等待完成的掉落物数量
+    private UniTaskCompletionSource _dropAnimationTcs; // 掉落动画完成的 UniTask 信号
 
     private void OnEnable()
     {
@@ -62,6 +74,12 @@ public sealed class BattleUI : MonoBehaviour
     {
         TryRebind();
         RefreshBars();
+        
+        // 检查是否需要生成怪物（不依赖事件注入）
+        if (_bound != null && _bound.Player != null && _bound.Enemy != null)
+        {
+            TrySpawnMonsterIfNeeded();
+        }
     }
 
     private void TryRebind()
@@ -80,12 +98,16 @@ public sealed class BattleUI : MonoBehaviour
         _bound.OnDamageApplied += OnDamageApplied;
         _bound.OnBeforePlayerAttack += OnBeforePlayerAttack;
         _bound.OnBeforeEnemyAttack += OnBeforeEnemyAttack;
-        _bound.OnBattleStart += OnBattleStart;
-        _bound.OnBattleEnd += OnBattleEnd;
-
+        _bound.OnBattleEnd += OnBattleEnd;roundFace.RefreshMasks();
         // 保存初始位置
         if (playerRect != null) _playerInitialPos = playerRect.anchoredPosition;
         if (enemyRect != null) _enemyInitialPos = enemyRect.anchoredPosition;
+        
+        // 如果 Context 已存在且有效，立即尝试生成怪物（不等待事件）
+        if (_bound != null && _bound.Player != null && _bound.Enemy != null)
+        {
+            TrySpawnMonsterIfNeeded();
+        }
     }
 
     private void Unbind()
@@ -95,10 +117,10 @@ public sealed class BattleUI : MonoBehaviour
             _bound.OnDamageApplied -= OnDamageApplied;
             _bound.OnBeforePlayerAttack -= OnBeforePlayerAttack;
             _bound.OnBeforeEnemyAttack -= OnBeforeEnemyAttack;
-            _bound.OnBattleStart -= OnBattleStart;
             _bound.OnBattleEnd -= OnBattleEnd;
         }
         _bound = null;
+        _lastSpawnedContext = null;
 
         // 停止并清理动画
         _playerAttackTween?.Kill();
@@ -231,20 +253,62 @@ public sealed class BattleUI : MonoBehaviour
             sequence.OnComplete(() => _enemyAttackTween = null);
         }
     }
-
-    private void OnBattleStart(FightContext ctx)
+    public void ResetHasCreateMonsterFlag()
     {
-        SpawnRandomMonster();
+        _hasCreateMonsterInThisAttack = false;
     }
-
     private void OnBattleEnd(FightContext ctx)
     {
-        ClearMonsterInstance();
+        // 先不清理怪物实例，等掉落动画完成后再清理
+        // ClearMonsterInstance();
+        _lastSpawnedContext = null;
+        
+        // 重置掉落动画完成信号
+        _dropAnimationTcs?.TrySetCanceled();
+        _dropAnimationTcs = new UniTaskCompletionSource();
+        
+        // 生成掉落物
+        SpawnDropItems(ctx);
+    }
+    
+    /// <summary>
+    /// 等待掉落动画完成（供 GameManager 调用）。
+    /// </summary>
+    public UniTask WaitForDropAnimationAsync()
+    {
+        if (_dropAnimationTcs == null)
+        {
+            // 如果没有掉落动画（可能没有掉落物或 Prefab 未设置），立即完成
+            return UniTask.CompletedTask;
+        }
+        return _dropAnimationTcs.Task;
+    }
+    
+    
+    
+    private bool _hasCreateMonsterInThisAttack;
+    /// <summary>
+    /// 检查是否需要生成怪物：如果当前 Context 有效且还没有为它生成过怪物，就生成。
+    /// </summary>
+    private void TrySpawnMonsterIfNeeded()
+    {
+        if (_bound == null) return;
+        if(_hasCreateMonsterInThisAttack) return;
+        // 如果已经为当前 Context 生成过怪物，跳过
+        if (_lastSpawnedContext == _bound) return;
+        
+        // 确保战斗上下文有效（有玩家和敌人）
+        if (_bound.Player == null || _bound.Enemy == null) return;
+        
+        // 生成怪物并记录
+        SpawnRandomMonster();
+        _lastSpawnedContext = _bound;
     }
 
     private void SpawnRandomMonster()
     {
         // 先清理之前的怪物
+        _hasCreateMonsterInThisAttack = true;
         ClearMonsterInstance();
 
         // 检查是否有可用的 Prefab
@@ -298,6 +362,155 @@ public sealed class BattleUI : MonoBehaviour
             _currentMonsterInstance = null;
         }
     }
+
+    /// <summary>
+    /// 生成掉落物：从怪物位置掉落材料，使用贝塞尔曲线动画。
+    /// </summary>
+    private void SpawnDropItems(FightContext ctx)
+    {
+        if (monsterKillDropPrefab == null)
+        {
+            Debug.LogWarning("[BattleUI] MonsterKillDrop Prefab 未设置，跳过掉落物生成。", this);
+            // 如果没有掉落物 Prefab，直接清理怪物并执行掉落逻辑
+            ClearMonsterInstance();
+            if (GameManager.I != null)
+            {
+                var directDrops = GameManager.I.GetBattleDrops();
+                if (directDrops != null)
+                {
+                    GameManager.I.AddDropsToInventory(directDrops);
+                }
+            }
+            // 立即完成掉落动画等待
+            _dropAnimationTcs?.TrySetResult();
+            _dropAnimationTcs = null;
+            return;
+        }
+
+        if (dropRoot == null)
+        {
+            Debug.LogWarning("[BattleUI] Drop Root 未设置，使用当前 Transform 作为父节点。", this);
+            dropRoot = transform;
+        }
+
+        // 获取掉落列表
+        var drops = GameManager.I != null ? GameManager.I.GetBattleDrops() : null;
+        if (drops == null || drops.Count == 0)
+        {
+            // 没有掉落物，直接清理
+            ClearMonsterInstance();
+            return;
+        }
+
+        // 获取怪物位置（用于掉落起始点）
+        Vector3 monsterPosition = GetMonsterPosition();
+
+        // 统计总掉落物数量
+        _pendingDropCount = 0;
+        foreach (var entry in drops)
+        {
+            if (entry != null && entry.MaterialPrefab != null)
+            {
+                _pendingDropCount += Mathf.Max(0, entry.Count);
+            }
+        }
+
+        if (_pendingDropCount == 0)
+        {
+            ClearMonsterInstance();
+            // 没有掉落物，立即完成掉落动画等待
+            _dropAnimationTcs?.TrySetResult();
+            _dropAnimationTcs = null;
+            return;
+        }
+
+        // 为每个掉落物创建 MonsterKillDrop
+        foreach (var entry in drops)
+        {
+            if (entry == null || entry.MaterialPrefab == null) continue;
+
+            int count = Mathf.Max(0, entry.Count);
+            Sprite materialSprite = entry.MaterialPrefab.BaseSprite;
+
+            for (int i = 0; i < count; i++)
+            {
+                var drop = Instantiate(monsterKillDropPrefab, dropRoot, false);
+                _activeDrops.Add(drop);
+                
+                drop.Initialize(materialSprite, monsterPosition, dropRoot, OnDropComplete);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 获取怪物位置（用于掉落起始点）。
+    /// </summary>
+    private Vector3 GetMonsterPosition()
+    {
+        // 优先使用怪物实例的位置
+        if (_currentMonsterInstance != null)
+        {
+            return _currentMonsterInstance.transform.position;
+        }
+
+        // 回退到怪物生成节点
+        if (monsterSpawnNode != null)
+        {
+            return monsterSpawnNode.position;
+        }
+
+        // 最后回退到 enemyRect 或 enemyDamageAnchor
+        if (enemyDamageAnchor != null)
+        {
+            return enemyDamageAnchor.position;
+        }
+
+        if (enemyRect != null)
+        {
+            return enemyRect.position;
+        }
+
+        // 默认位置（屏幕中心）
+        return new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
+    }
+
+    List<GameObject> desList=new List<GameObject>();
+    /// <summary>
+    /// 掉落物动画完成回调。
+    /// </summary>
+    private void OnDropComplete(MonsterKillDrop drop)
+    {
+        if (drop != null && _activeDrops.Contains(drop))
+        {
+            _activeDrops.Remove(drop);
+            desList.Add(drop.gameObject);
+        }
+
+        _pendingDropCount--;
+        
+        // 所有掉落物动画完成后，清理怪物并执行掉落逻辑
+        if (_pendingDropCount <= 0)
+        {
+            ClearMonsterInstance();
+            
+            // 执行掉落逻辑（将材料加入库存）
+            if (GameManager.I != null)
+            {
+                var drops = GameManager.I.GetBattleDrops();
+                if (drops != null)
+                {
+                    GameManager.I.AddDropsToInventory(drops);
+                }
+            }
+            
+            // 通知掉落动画完成
+            _dropAnimationTcs?.TrySetResult();
+            _dropAnimationTcs = null;
+            for(int i = 0; i < desList.Count; i++)
+            {
+                Destroy(desList[i]);
+                desList[i] = null;
+            }
+        }
+    }
 }
-
-

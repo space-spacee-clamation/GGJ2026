@@ -287,6 +287,12 @@ public class AudioTimeline : MonoBehaviour
         src.volume = 0f;
         return src;
     }
+
+    internal void Reset()
+    {
+        timelineTime = 0;
+        StopAllBgm();
+    }
 }
 
 

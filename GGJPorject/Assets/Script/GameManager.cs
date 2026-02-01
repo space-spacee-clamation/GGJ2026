@@ -7,10 +7,9 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager I { get; private set; }
 
-    [Header("Audio (Runtime Created)")]
-    [SerializeField] private AudioManager audioManager;
-    [SerializeField] private AudioTimeline audioTimeline;
+    private AudioManager audioManager => AudioManager.I;
 
+    [SerializeField] private CanvasGroup bookCanvasGroup;
     [Header("Fight (Runtime Created)")]
     [SerializeField] private FightManager fightManager;
 
@@ -22,7 +21,7 @@ public class GameManager : MonoBehaviour
 
     [Header("UI")]
     [SerializeField] private MakeMuskUI makeMuskUI;
-    [SerializeField] private BattleUI battleUI;
+    [SerializeField] public BattleUI battleUI;
     [Tooltip("黑屏 CanvasGroup（用于场景切换时的淡入淡出）。")]
     [SerializeField] private CanvasGroup blackScreen;
     [Tooltip("费用不足警告的 CanvasGroup（用于 fadeIn/fadeOut 动画）。")]
@@ -92,11 +91,9 @@ public class GameManager : MonoBehaviour
         // Singleton bootstrap (Jam 简化：重复实例直接销毁)
         if (I != null && I != this)
         {
-            Destroy(gameObject);
-            return;
+            Destroy(I.gameObject);
         }
         I = this;
-        DontDestroyOnLoad(gameObject);
         // 所有单例/管理类必须在此初始化（强约束）
         BootstrapAudio();
         BootstrapFight();
@@ -115,11 +112,6 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        // 其它初始化放在 Start（强约束）
-        if (audioManager != null)
-        {
-            audioManager.LoadAllEntriesFromResources();
-        }
 
         // Jam：自动构建材料池（用于掉落与开局发牌）。不依赖任何 SO 资产。
         BuildDropPoolFromResources();
@@ -141,7 +133,7 @@ public class GameManager : MonoBehaviour
             RunMainLoopAsync().Forget();
         }
         SwitchMainBgm(AudioKey.Game_Shop_Music);
-
+        bookCanvasGroup.DOFade(1f, 0.6f);
     }
 
     private void SwitchMainBgm(AudioKey key)
@@ -345,22 +337,7 @@ public class GameManager : MonoBehaviour
 
     private void BootstrapAudio()
     {
-        if (audioTimeline == null)
-        {
-            var go = new GameObject("AudioTimeline");
-            go.transform.SetParent(transform, false);
-            audioTimeline = go.AddComponent<AudioTimeline>();
-        }
 
-        if (audioManager == null)
-        {
-            var go = new GameObject("AudioManager");
-            go.transform.SetParent(transform, false);
-            audioManager = go.AddComponent<AudioManager>();
-        }
-
-        audioTimeline.Initialize();
-        audioManager.Initialize(audioTimeline);
     }
 
     private void BootstrapFight()
@@ -432,7 +409,6 @@ public class GameManager : MonoBehaviour
     private async UniTaskVoid EnterMakeMaskPhaseAsync(CancellationToken ct)
     {
         SwitchMainBgm(AudioKey.Game_Shop_Music);
-
         // 黑屏淡入淡出：从战斗到制造（内容切换在黑屏期间执行）
         await PlayBlackScreenTransition(_ =>
         {
@@ -465,7 +441,9 @@ public class GameManager : MonoBehaviour
             }
 
             // 进入制造阶段：关闭战斗 UI
-            if (battleUI != null) SetUIActiveWithCanvasGroup(battleUI.gameObject, false);
+            if (battleUI != null) {SetUIActiveWithCanvasGroup(battleUI.gameObject, false)
+            ;
+            };
             return UniTask.CompletedTask;
         }, ct);
     }
@@ -663,11 +641,11 @@ public class GameManager : MonoBehaviour
 
         await _battleEndTcs.Task.AttachExternalCancellation(ct);
 
-        // 战后结算（严格在战斗结束后执行）
-        PostBattleSettlement(ctx);
+        // 战后结算（严格在战斗结束后执行，等待 UI 掉落动画完成）
+        await PostBattleSettlementAsync(ctx, ct);
 
         // 战斗结束：关闭战斗 UI（制造阶段会在下一轮再打开）
-        // 重要：不要在这里关 battleUI；否则会出现“还没黑屏战斗界面就关闭”的观感问题。
+        // 重要：不要在这里关 battleUI；否则会出现"还没黑屏战斗界面就关闭"的观感问题。
         // battleUI 的关闭应统一放到 EnterMakeMaskPhaseAsync 的黑屏内容切换中执行。
     }
 
@@ -701,9 +679,10 @@ public class GameManager : MonoBehaviour
         go.SetActive(active);
     }
 
-    private void PostBattleSettlement(FightContext ctx)
+    private async UniTask PostBattleSettlementAsync(FightContext ctx, CancellationToken ct)
     {
         if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 战后结算开始。round={_roundIndex}");
+        
         // 当前面具入库
         var cur = maskMakeManager != null ? maskMakeManager.DetachCurrentMaskForLibrary() : null;
         if (cur != null && !_maskLibrary.Contains(cur))
@@ -716,9 +695,20 @@ public class GameManager : MonoBehaviour
         CollectAndApplyPersistentGrowth(ctx);
         if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 持久增值结算完成。round={_roundIndex}");
 
-        // 掉落结算（入材料库存）
-        RunDrops();
-        if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 掉落结算完成。round={_roundIndex}");
+        // 等待 UI 掉落动画完成（掉落物会在动画完成后自动加入库存）
+        if (battleUI != null)
+        {
+            if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 等待掉落动画完成... round={_roundIndex}");
+            await battleUI.WaitForDropAnimationAsync().AttachExternalCancellation(ct);
+            if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 掉落动画完成。round={_roundIndex}");
+        }
+        else
+        {
+            // 如果没有 battleUI，直接执行掉落逻辑（兼容性处理）
+            RunDrops();
+            if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 掉落结算完成（无 UI）。round={_roundIndex}");
+        }
+
     }
 
     // ---- UI helpers ----
@@ -1005,15 +995,24 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void RunDrops()
+    /// <summary>
+    /// 获取本次战斗的掉落列表（不直接加入库存，用于 UI 表现）。
+    /// </summary>
+    public System.Collections.Generic.IReadOnlyList<MaterialDropEntry> GetBattleDrops()
     {
-        if (Player.I == null) return;
-
-        if (dropPool == null || dropMethod == null) return;
+        if (Player.I == null) return null;
+        if (dropPool == null || dropMethod == null) return null;
 
         int luck = Player.I.ActualStats.Luck;
         if (enablePhaseDebugLogs) Debug.Log($"[GameManager] RollDrops luck={luck} dropCount={dropCount} round={_roundIndex}");
-        var drops = dropMethod.Roll(dropPool, luck, dropCount);
+        return dropMethod.Roll(dropPool, luck, dropCount);
+    }
+
+    /// <summary>
+    /// 将掉落物加入库存（在掉落动画完成后调用）。
+    /// </summary>
+    public void AddDropsToInventory(System.Collections.Generic.IReadOnlyList<MaterialDropEntry> drops)
+    {
         if (drops == null) return;
 
         for (int i = 0; i < drops.Count; i++)
@@ -1030,6 +1029,13 @@ public class GameManager : MonoBehaviour
                 materialInventory.Add(inst);
             }
         }
+    }
+
+    private void RunDrops()
+    {
+        var drops = GetBattleDrops();
+        if (drops == null) return;
+        AddDropsToInventory(drops);
     }
 
     private void AutoBindInventoryToCurrentMask()

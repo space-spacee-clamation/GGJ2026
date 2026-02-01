@@ -122,7 +122,7 @@ public class FightManager : MonoBehaviour
 
         Context.RaiseBattleEnter();
         Context.RaiseBattleStart();
-
+        GameManager.I.battleUI.ResetHasCreateMonsterFlag();
         if (logs)
         {
             DumpBattleHeader();

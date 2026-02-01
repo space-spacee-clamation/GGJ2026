@@ -18,6 +18,8 @@ public class MakeMuskUI : MonoBehaviour
     [SerializeField] private Image maskImage;
     [SerializeField] private Sprite baseMaskSprite;
     [SerializeField] private Sprite composedMaskSprite;
+    [Tooltip("不同材料数量下的面具 Sprite 列表（按顺序递进）：0个材料取下标0，超过列表长度取最后一个）。")]
+    [SerializeField] private List<Sprite> maskSpritesByMaterialCount = new List<Sprite>();
 
     [Header("Inventory List")]
     [SerializeField] private Transform inventoryContentRoot; // ScrollView Content
@@ -295,15 +297,29 @@ public class MakeMuskUI : MonoBehaviour
     {
         if (maskImage == null) return;
 
-        // 优先使用当前面具的 DisplaySprite
         var mask = GameManager.I != null ? GameManager.I.GetCurrentMask() : null;
+        
+        // 优先使用材料数量对应的 Sprite 列表
+        if (mask != null && maskSpritesByMaterialCount != null && maskSpritesByMaterialCount.Count > 0)
+        {
+            int materialCount = mask.Materials != null ? mask.Materials.Count : 0;
+            int spriteIndex = Mathf.Clamp(materialCount, 0, maskSpritesByMaterialCount.Count - 1);
+            var sprite = maskSpritesByMaterialCount[spriteIndex];
+            if (sprite != null)
+            {
+                maskImage.sprite = sprite;
+                return;
+            }
+        }
+
+        // 回退：优先使用当前面具的 DisplaySprite
         if (mask != null && mask.DisplaySprite != null)
         {
             maskImage.sprite = mask.DisplaySprite;
             return;
         }
 
-        // 回退到旧逻辑
+        // 最后回退到旧逻辑
         maskImage.sprite = _composedOnce && composedMaskSprite != null ? composedMaskSprite : baseMaskSprite;
     }
     private void Update(){

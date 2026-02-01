@@ -35,7 +35,29 @@ public class AudioManager : MonoBehaviour
 
     [FoldoutGroup("Audio Tester"), SerializeField, Range(0f, 2f)]
     private float testerSfxVolumeMul = 1f;
+    [SerializeField] private AudioTimeline audioTimeline;
 
+    void Awake()
+    {
+        if (I != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        DontDestroyOnLoad(gameObject);
+        if (audioTimeline == null)
+        {
+            var go = new GameObject("AudioTimeline");
+            go.transform.SetParent(transform, false);
+            audioTimeline = go.AddComponent<AudioTimeline>();
+        }
+        audioTimeline.Initialize();
+        this.Initialize(audioTimeline);
+    }
+    public void ResetTimeline()
+    {
+        timeline.Reset();
+    }
     public void Initialize(AudioTimeline audioTimeline)
     {
         // 不允许在 AudioManager 自己 Awake 里抢初始化（生命周期强约束：由 GameManager 统一初始化）
@@ -65,6 +87,8 @@ public class AudioManager : MonoBehaviour
             go.transform.SetParent(transform, false);
             bgmPoolRoot = go.transform;
         }
+        this.LoadAllEntriesFromResources();
+
     }
 
     public void LoadAllEntriesFromResources()

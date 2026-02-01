@@ -12,6 +12,7 @@ public enum AudioKey
     FBX_Cost_Not_Enough,
     FBX_Compose_Met,
     FBX_Click_Met,
+    Menu_BGM,
 }
 
 
