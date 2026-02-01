@@ -62,11 +62,119 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
         //基础数值
         if (roundIndex > 0)
         {
-            int num = Random.Range(2, 5);
+            int num = Random.Range(0, 2);
 
             for (int i = 0; i < num; i++)
             {
-                int a = Random.Range(1, 8);
+                int a = Random.Range(1, 3);
+                switch (a)
+                {
+                    case 1:
+                        hpUp += 1;
+                        break;
+                    case 2:
+                        atkUp += 1;
+                        break;
+                    case 3:
+                        defUp += 1;
+                        break;
+                    case 4:
+                        spdUp += 1;
+                        break;
+                    case 5:
+                        hpUp += 1;
+                        atkUp += 1;
+                        defUp += 1;
+                        critUp += 1;
+                        critMUp += 1;
+                        spdUp += 1;
+                        break;
+                }
+            }
+            for (int i = 0; i < num; i++)
+            {
+                int a = Random.Range(1, 3);
+                switch (a)
+                {
+                    case 1:
+                        hpUp += 1;
+                        break;
+                    case 2:
+                        atkUp += 1;
+                        break;
+                    case 3:
+                        defUp += 1;
+                        break;
+                    case 4:
+                        spdUp += 1;
+                        break;
+                    case 5:
+                        hpUp += 1;
+                        atkUp += 1;
+                        defUp += 1;
+                        critUp += 1;
+                        critMUp += 1;
+                        spdUp += 1;
+                        break;
+                }
+            }
+            for (int i = 0; i < num; i++)
+            {
+                int a = Random.Range(1, 3);
+                switch (a)
+                {
+                    case 1:
+                        hpUp += 1;
+                        break;
+                    case 2:
+                        atkUp += 1;
+                        break;
+                    case 3:
+                        defUp += 1;
+                        break;
+                    case 4:
+                        spdUp += 1;
+                        break;
+                    case 5:
+                        hpUp += 1;
+                        atkUp += 1;
+                        defUp += 1;
+                        critUp += 1;
+                        critMUp += 1;
+                        spdUp += 1;
+                        break;
+                }
+            }
+            for (int i = 0; i < num; i++)
+            {
+                int a = Random.Range(1, 3);
+                switch (a)
+                {
+                    case 1:
+                        hpUp += 1;
+                        break;
+                    case 2:
+                        atkUp += 1;
+                        break;
+                    case 3:
+                        defUp += 1;
+                        break;
+                    case 4:
+                        spdUp += 1;
+                        break;
+                    case 5:
+                        hpUp += 1;
+                        atkUp += 1;
+                        defUp += 1;
+                        critUp += 1;
+                        critMUp += 1;
+                        spdUp += 1;
+                        break;
+                }
+            }
+            for (int i = 0; i < num; i++)
+            {
+                int a = Random.Range(1, 3);
                 switch (a)
                 {
                     case 1:
