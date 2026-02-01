@@ -769,12 +769,6 @@ public class GameManager : MonoBehaviour
             await battleUI.WaitForDropAnimationAsync().AttachExternalCancellation(ct);
             if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 掉落动画完成。round={_roundIndex}");
         }
-        else
-        {
-            // 如果没有 battleUI，直接执行掉落逻辑（兼容性处理）
-            RunDrops();
-            if (enablePhaseDebugLogs) Debug.Log($"[GameManager] 掉落结算完成（无 UI）。round={_roundIndex}");
-        }
 
     }
 
@@ -1098,12 +1092,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void RunDrops()
-    {
-        var drops = GetBattleDrops();
-        if (drops == null) return;
-        AddDropsToInventory(drops);
-    }
+
 
     private void AutoBindInventoryToCurrentMask()
     {
