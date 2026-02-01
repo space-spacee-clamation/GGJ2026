@@ -40,7 +40,7 @@ public sealed class JamPersistentGrowthCalculator_Default : IJamPersistentGrowth
         {
             allQuality += (int)item.Quality;
         }
-        int value = allQuality/300;
+        int value = allQuality/3;
 
         delta2.AddAttack = delta.AddAttack*value;
         delta2.AddDefense = delta.AddDefense*value;

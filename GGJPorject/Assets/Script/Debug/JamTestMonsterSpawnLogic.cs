@@ -118,8 +118,8 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
     };
 
     [Header("Growth Parameters")]
-    [SerializeField] private float linearPhaseEnd = 10f;     // 线性阶段结束轮次
-    [SerializeField] private float exponentialStart = 20f;   // 指数阶段开始轮次
+    [SerializeField] private float linearPhaseEnd = 2f;     // 线性阶段结束轮次
+    [SerializeField] private float exponentialStart = 3f;   // 指数阶段开始轮次
     [SerializeField] private float exponentialFactor = 1.15f; // 指数系数
     [SerializeField] private float playerCompensationFactor = 0.3f; // 玩家强度补偿系数
 

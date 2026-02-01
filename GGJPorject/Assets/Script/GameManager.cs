@@ -56,7 +56,7 @@ public class GameManager : MonoBehaviour
     [Tooltip("运行时生成的材料池（由 Resources/Mat 扫描得到）。Jam 默认不需要手动配置 MaterialPool SO。")]
     [SerializeField] private MaterialPool dropPool;
     [Tooltip("运行时创建的掉落方法（SO 实例，仅用于运行时；Jam 默认不需要创建 DropMethod 资产）。")]
-    [SerializeField] private SimpleLuckMaterialDropMethod dropMethod;
+    [SerializeField] public SimpleLuckMaterialDropMethod dropMethod;
     [SerializeField, Min(0)] private int dropCount = JamDefaultSettings.DropCountPerBattle;
 
     [Header("材料池/初始材料（Jam 默认：纯代码）")]
@@ -193,7 +193,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Jam：dropCount 直接走 JamDefaultSettings 的默认值（可在 JamDefaultSettings 改）
-        dropCount = Mathf.Max(0, JamDefaultSettings.DropCountPerBattle);
+        dropCount = Random.Range(JamDefaultSettings.DropCountPerBattle,Player.I.BuildBattleStats().Luck/10);
     }
 
     private void SpawnInitialCommonMaterialsIfNeeded()
