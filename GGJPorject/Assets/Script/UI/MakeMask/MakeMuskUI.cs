@@ -124,7 +124,7 @@ public class MakeMuskUI : MonoBehaviour
         string desc = mat.BuildDescription();
         int ttl = mat.RemainingShelfLifeTurns;
         Sprite sprite = mat.BaseSprite; // 使用材料的 BaseSprite
-        infoNode.Show(name, desc, ttl, sprite,mat.ManaCost);
+        infoNode.Show(name, desc, ttl, sprite,mat.ManaCost,mat.Quality);
     }
     public void CloseInfo(){
         infoNode.gameObject.SetActive(false);

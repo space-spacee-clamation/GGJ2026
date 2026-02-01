@@ -5,7 +5,7 @@ public static class GameSetting
     /// <summary>
     /// 小节长度（秒）。AudioTimeline 的 bar 对齐与排挤 cross-fade 都基于这个值。
     /// </summary>
-    public const float BarSeconds = 1.6f;
+    public const float BarSeconds = 1.2f;
 
     /// <summary>
     /// Resources 下 AudioEntrySO 的加载路径（相对 Resources 根目录）。

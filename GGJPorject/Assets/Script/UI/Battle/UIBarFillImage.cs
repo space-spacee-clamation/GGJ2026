@@ -58,7 +58,10 @@ public sealed class UIBarFillImage : MonoBehaviour
         _runtimeMat.SetFloat(Fill01Id, fill01);
         _runtimeMat.SetFloat(ReverseId, reverse ? 1f : 0f);
     }
-
+    void Update()
+    {
+        Apply();
+    }
     public void SetFill01(float v)
     {
         fill01 = Mathf.Clamp01(v);

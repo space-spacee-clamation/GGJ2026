@@ -134,7 +134,7 @@ public class GameManager : MonoBehaviour
             RunMainLoopAsync().Forget();
         }
         SwitchMainBgm(AudioKey.Game_Shop_Music);
-        bookCanvasGroup.DOFade(1f, 1.6f);
+        bookCanvasGroup.DOFade(1f, 1f);
     }
 
     private void Start()

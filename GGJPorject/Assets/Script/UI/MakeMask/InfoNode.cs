@@ -13,13 +13,14 @@ public class InfoNode : MonoBehaviour
     [SerializeField] private TextMeshProUGUI descText;
     [SerializeField] private TextMeshProUGUI ttlText;
     [SerializeField] private TextMeshProUGUI costText;
+    [SerializeField] private TextMeshProUGUI quantityText;
 
     public void Show(string name, string desc, int remainingTurns)
     {
         Show(name, desc, remainingTurns, null);
     }
 
-    public void Show(string name, string desc, int remainingTurns, Sprite sprite,int cost =0)
+    public void Show(string name, string desc, int remainingTurns, Sprite sprite,int cost =0,MaterialQuality quality = MaterialQuality.Common)
     {
         // 优先显示 Sprite
         if (spriteImage != null)
@@ -33,6 +34,8 @@ public class InfoNode : MonoBehaviour
         if (descText != null) descText.text = desc ?? string.Empty;
         if (ttlText != null) ttlText.text = $"保质期：{remainingTurns}";
         if(costText!=null) costText.text = cost.ToString();
+        if(quantityText!=null) quantityText.text =quality.ToString();
+    
     }
 
     public void Clear()
