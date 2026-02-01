@@ -368,7 +368,7 @@ public sealed class BattleUI : MonoBehaviour
             _currentMonsterInstance = null;
         }
     }
-
+    private IReadOnlyList<MaterialDropEntry> currentDrops;
     /// <summary>
     /// 生成掉落物：从怪物位置掉落材料，使用贝塞尔曲线动画。
     /// </summary>
@@ -400,8 +400,8 @@ public sealed class BattleUI : MonoBehaviour
         }
 
         // 获取掉落列表
-        var drops = GameManager.I != null ? GameManager.I.GetBattleDrops() : null;
-        if (drops == null || drops.Count == 0)
+        currentDrops = GameManager.I != null ? GameManager.I.GetBattleDrops() : null;
+        if (currentDrops == null || currentDrops.Count == 0)
         {
             // 没有掉落物，直接清理
             ClearMonsterInstance();
@@ -413,7 +413,7 @@ public sealed class BattleUI : MonoBehaviour
 
         // 统计总掉落物数量
         _pendingDropCount = 0;
-        foreach (var entry in drops)
+        foreach (var entry in currentDrops)
         {
             if (entry != null && entry.MaterialPrefab != null)
             {
@@ -431,7 +431,7 @@ public sealed class BattleUI : MonoBehaviour
         }
 
         // 为每个掉落物创建 MonsterKillDrop
-        foreach (var entry in drops)
+        foreach (var entry in currentDrops)
         {
             if (entry == null || entry.MaterialPrefab == null) continue;
 
@@ -481,6 +481,8 @@ public sealed class BattleUI : MonoBehaviour
     }
 
     List<GameObject> desList=new List<GameObject>();
+
+
     /// <summary>
     /// 掉落物动画完成回调。
     /// </summary>
@@ -502,10 +504,10 @@ public sealed class BattleUI : MonoBehaviour
             // 执行掉落逻辑（将材料加入库存）
             if (GameManager.I != null)
             {
-                var drops = GameManager.I.GetBattleDrops();
-                if (drops != null)
+                if (currentDrops != null)
                 {
-                    GameManager.I.AddDropsToInventory(drops);
+                    GameManager.I.AddDropsToInventory(currentDrops);
+                    currentDrops=null;
                 }
             }
             

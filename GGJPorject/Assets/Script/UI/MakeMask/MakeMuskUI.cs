@@ -324,7 +324,11 @@ public class MakeMuskUI : MonoBehaviour
         maskImage.sprite = _composedOnce && composedMaskSprite != null ? composedMaskSprite : baseMaskSprite;
     }
     private void Update(){
-        CostText.text = MaskMakeManager.I?.CurrentMask?.CurrentMana.ToString();
+        if(MaskMakeManager.I.CurrentMask == null)
+        {
+            MaskMakeManager.I.MakeNextMask();
+        }
+        CostText.text = MaskMakeManager.I.CurrentMask.CurrentMana.ToString();
     }
 
     /// <summary>
