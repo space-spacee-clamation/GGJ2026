@@ -33,11 +33,6 @@ public class FightManager : MonoBehaviour
     /// </summary>
     public void Initialize()
     {
-        if (I != null && I != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
         I = this;
     }
 

@@ -12,7 +12,6 @@ public sealed class Player
 
     public static void CreateSingleton(PlayerStats baseStats)
     {
-        if (I != null) return;
         baseStats.Clamp();
         I = new Player
         {
