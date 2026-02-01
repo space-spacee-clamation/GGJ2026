@@ -13,7 +13,7 @@ public sealed class FinalDamageCalculator : IAttackInfoModifier
     [Tooltip("Enable critical: rand < CritChance => damage *= CritMultiplier")]
     public bool EnableCrit = true;
 
-    private float defValue = 50;
+    private float defValue = 80f; //默认防御参数，用于计算伤害减免比例
 
     public void Modify(ref AttackInfo info, FightContext context)
     {

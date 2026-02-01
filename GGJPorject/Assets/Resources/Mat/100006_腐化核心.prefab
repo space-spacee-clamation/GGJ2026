@@ -63,7 +63,7 @@ MonoBehaviour:
     ActionSide: 0
     Children:
     - Title: Node_Effect
-      Expanded: 0
+      Expanded: 1
       Component: {fileID: 5322935978653445083}
       Role: 0
       ActionSide: 0
