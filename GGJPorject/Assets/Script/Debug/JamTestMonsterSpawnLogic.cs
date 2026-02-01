@@ -62,7 +62,7 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
         //基础数值
         if (roundIndex > 0)
         {
-            int num = Random.Range(1, 2);
+            int num = Random.Range(2, 5);
 
             for (int i = 0; i < num; i++)
             {
