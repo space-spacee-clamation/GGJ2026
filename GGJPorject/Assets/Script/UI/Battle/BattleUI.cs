@@ -257,8 +257,15 @@ public sealed class BattleUI : MonoBehaviour
     {
         _hasCreateMonsterInThisAttack = false;
     }
-    private void OnBattleEnd(FightContext ctx)
+    // 将其改为 async void (对于 UI 事件回调是允许的) 或者使用 UniTaskVoid
+    private async void OnBattleEnd(FightContext ctx)
     {
+        // 【新增】等待 0.5 秒。
+        // 这个时间应略大于 GameSetting.AttackTweenTotalSeconds (0.3s)，
+        // 保证最后一击的“攻击去程+回程”动画能完整播完，且伤害数字能飘出来。
+        await UniTask.Delay(500, cancellationToken: this.GetCancellationTokenOnDestroy());
+
+        // 原有逻辑保持不变
         // 先不清理怪物实例，等掉落动画完成后再清理
         // ClearMonsterInstance();
         _lastSpawnedContext = null;
@@ -270,7 +277,6 @@ public sealed class BattleUI : MonoBehaviour
         // 生成掉落物
         SpawnDropItems(ctx);
     }
-    
     /// <summary>
     /// 等待掉落动画完成（供 GameManager 调用）。
     /// </summary>

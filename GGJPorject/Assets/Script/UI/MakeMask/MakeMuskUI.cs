@@ -253,6 +253,7 @@ public class MakeMuskUI : MonoBehaviour
                 _choiced.Remove(mat);
 
                 _composedOnce = true;
+                GameManager.I.RecordMaterialUsage(mat);
             }
             else
             {
@@ -323,7 +324,7 @@ public class MakeMuskUI : MonoBehaviour
         maskImage.sprite = _composedOnce && composedMaskSprite != null ? composedMaskSprite : baseMaskSprite;
     }
     private void Update(){
-        CostText.text = MaskMakeManager.I.CurrentMask.CurrentMana.ToString();
+        CostText.text = MaskMakeManager.I?.CurrentMask?.CurrentMana.ToString();
     }
 
     /// <summary>

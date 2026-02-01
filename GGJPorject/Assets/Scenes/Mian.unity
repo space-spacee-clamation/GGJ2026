@@ -467,10 +467,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: GameManager
       objectReference: {fileID: 0}
-    - target: {fileID: 8659007490375052099, guid: 6989d301bba6d634d995a43f5f226e1c, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 9142076141905277765, guid: 6989d301bba6d634d995a43f5f226e1c, type: 3}
       propertyPath: m_Camera
       value: 
@@ -703,7 +699,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4186270576032308264, guid: 44a4c269fe6b0ac4d966138ba3af0cf9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.0000104904175
+      value: 0.000052452087
       objectReference: {fileID: 0}
     - target: {fileID: 4609149746661113302, guid: 44a4c269fe6b0ac4d966138ba3af0cf9, type: 3}
       propertyPath: m_Camera

@@ -42,7 +42,11 @@ public class GameManager : MonoBehaviour
 
     [Header("材料库存")]
     [SerializeField] private MaterialInventory materialInventory = new();
-    [SerializeField] private Transform materialInventoryRoot;
+
+    // [新增] 统计材料使用次数的字典 <材料名, 次数>
+    private Dictionary<string, int> _materialUsageHistory = new Dictionary<string, int>();
+
+   [SerializeField] private Transform materialInventoryRoot;
 
     [Header("制造阶段（可选自动行为）")]
     [Tooltip("Jam 方便测试：进入制造回合时自动把库存材料尽量绑定到当前面具（按保质期优先）。")]
@@ -77,7 +81,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private bool enableJamAutoFixes = true;
     [SerializeField] private bool enablePhaseDebugLogs = true;
     private int _roundIndex;
-
+    // [新增] 引用 EndPass
+    [Header("End Game")]
+    [SerializeField] private EndPass endPass;  
     private UniTaskCompletionSource<bool> _makePhaseTcs;
     private UniTaskCompletionSource<bool> _battleEndTcs;
     private CancellationToken _destroyToken;
@@ -86,7 +92,7 @@ public class GameManager : MonoBehaviour
     private readonly System.Threading.SemaphoreSlim _blackScreenTransitionGate = new(1, 1);
     private AudioKey? _currentMainBgm;
 
-    private void Awake()
+    private void OnEnable()
     {
         // Singleton bootstrap (Jam 简化：重复实例直接销毁)
         if (I != null && I != this)
@@ -108,12 +114,7 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log("[GameManager] Awake 完成：系统 Bootstrap 完毕。");
         }
-    }
-
-    private void Start()
-    {
-
-        // Jam：自动构建材料池（用于掉落与开局发牌）。不依赖任何 SO 资产。
+          // Jam：自动构建材料池（用于掉落与开局发牌）。不依赖任何 SO 资产。
         BuildDropPoolFromResources();
 
         // Jam：自动化掉落配置（保证 dropMethod/dropCount 可用）
@@ -133,7 +134,13 @@ public class GameManager : MonoBehaviour
             RunMainLoopAsync().Forget();
         }
         SwitchMainBgm(AudioKey.Game_Shop_Music);
-        bookCanvasGroup.DOFade(1f, 0.6f);
+        bookCanvasGroup.DOFade(1f, 1.6f);
+    }
+
+    private void Start()
+    {
+
+      
     }
 
     private void SwitchMainBgm(AudioKey key)
@@ -352,6 +359,43 @@ public class GameManager : MonoBehaviour
         fightManager.Initialize();
     }
 
+    /// <summary>
+    /// [新增] 记录材料使用（在 MakeMuskUI 合成成功时调用）
+    /// </summary>
+    public void RecordMaterialUsage(MaterialObj mat)
+    {
+        if (mat == null) return;
+        string key = !string.IsNullOrEmpty(mat.DisplayName) ? mat.DisplayName : mat.name;
+        
+        if (_materialUsageHistory.ContainsKey(key))
+            _materialUsageHistory[key]++;
+        else
+            _materialUsageHistory[key] = 1;
+    }
+
+    /// <summary>
+    /// [新增] 获取使用次数最多的材料
+    /// </summary>
+    public (string name, int count) GetMostUsedMaterialInfo()
+    {
+        string bestName = "无";
+        int bestCount = 0;
+        foreach (var kv in _materialUsageHistory)
+        {
+            if (kv.Value > bestCount)
+            {
+                bestCount = kv.Value;
+                bestName = kv.Key;
+            }
+        }
+        return (bestName, bestCount);
+    }
+
+    /// <summary>
+    /// [新增] 获取当前回合数
+    /// </summary>
+    public int CurrentRoundIndex => _roundIndex;
+
     private void BootstrapSpawn()
     {
         if (monsterSpawnSystem == null)
@@ -518,10 +562,32 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void GameOver()
     {
-        // TODO: 后续补充游戏结束逻辑
-        if (enablePhaseDebugLogs)
+        Debug.Log("[GameManager] TriggerGameOver Called.");
+        
+        // 1. 停止主循环 (通过 Cancel Token)
+        if (_destroyToken.CanBeCanceled)
         {
-            Debug.Log("[GameManager] GameOver 被调用（方法待补充）。");
+            // 注意：这里只是示例，通常建议用专门的 CancellationTokenSource 来控制逻辑循环
+            // 如果 runMainLoopAsync 绑定的是 destroyToken，销毁物体会自动停。
+            // 建议增加一个专门的 _gameLoopCts
+        }
+        // 简单暴力法：设置一个标志位让 RunMainLoopAsync 退出
+        // (需修改 RunMainLoopAsync 增加 !isGameOver 判断)
+        
+        // 2. 停止战斗 (如果正在进行)
+        if (fightManager != null) fightManager.StopFight();
+        // 3. 播放 BGM (可选，比如悲伤的音乐)
+        // SwitchMainBgm(AudioKey.Game_Over_Music); 
+
+        // 4. 呼叫 EndPass
+        if (endPass != null)
+        {
+            endPass.gameObject.SetActive(true);
+            endPass.StartEndingSequence();
+        }
+        else
+        {
+            Debug.LogError("EndPass reference is missing in GameManager!");
         }
     }
 
@@ -621,9 +687,7 @@ public class GameManager : MonoBehaviour
                     fightManager.StopFight();
                 }
                 
-                // 等待几秒后调用 gameOver
                 await UniTask.Delay(2000, cancellationToken: ct); // 等待 2 秒
-                GameOver();
                 
                 _battleEndTcs.TrySetResult(true);
             };
@@ -632,7 +696,10 @@ public class GameManager : MonoBehaviour
             {
                 ctx.OnVictory -= onVictory;
                 ctx.OnDefeat -= onDefeat;
+
                 _battleEndTcs.TrySetResult(true);
+                GameOver();
+
             };
             
             ctx.OnVictory += onVictory;

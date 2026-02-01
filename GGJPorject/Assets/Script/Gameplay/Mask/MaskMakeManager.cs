@@ -20,11 +20,6 @@ public class MaskMakeManager : MonoBehaviour
 
     public void Initialize()
     {
-        if (I != null && I != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
         I = this;
     }
 
