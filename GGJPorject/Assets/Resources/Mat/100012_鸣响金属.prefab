@@ -97,7 +97,7 @@ MonoBehaviour:
   ApplyAsPersistentGrowth: 1
   appliesTo: 1
   addAttack: 0
-  addDefense: 32
+  addDefense: 40
   addCritChance: 0
   addCritMultiplier: 0
   addMaxHP: 0

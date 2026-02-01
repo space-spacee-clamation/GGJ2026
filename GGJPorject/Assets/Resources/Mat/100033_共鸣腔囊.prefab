@@ -1,0 +1,250 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7070915587351049760
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7520601704081001415}
+  - component: {fileID: 699549920500895250}
+  - component: {fileID: 6559711837460962207}
+  - component: {fileID: 5203273571518900361}
+  - component: {fileID: 6819380430072095734}
+  - component: {fileID: 4543900383603872155}
+  - component: {fileID: 4966460827077441041}
+  - component: {fileID: 893937724393207973}
+  - component: {fileID: 7404642656897631988}
+  - component: {fileID: 7385578853080815276}
+  - component: {fileID: 7831204172441455859}
+  m_Layer: 0
+  m_Name: "100033_\u5171\u9E23\u8154\u56CA"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7520601704081001415
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070915587351049760}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &699549920500895250
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070915587351049760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71969320e5d8ad849b48f9c4e064b7e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Id: 100073
+  DisplayName: "\u5171\u9E23\u8154\u56CA"
+  Type: 3
+  ManaCost: 4
+  Quality: 4
+  BaseSprite: {fileID: -1349594481, guid: 61fa58eba8ae79d448d20da75cfa4a04, type: 3}
+  ShelfLifeTurns: 5
+  remainingShelfLifeTurns: 1
+  logicTreeRoots:
+  - Title: Gate_Phase
+    Expanded: 0
+    Component: {fileID: 6559711837460962207}
+    Role: 0
+    ActionSide: 0
+    Children:
+    - Title: Node_Effect
+      Expanded: 0
+      Component: {fileID: 6819380430072095734}
+      Role: 0
+      ActionSide: 0
+      Children: []
+  - Title: Gate_Phase
+    Expanded: 1
+    Component: {fileID: 4543900383603872155}
+    Role: 0
+    ActionSide: 0
+    Children:
+    - Title: Node_Effect
+      Expanded: 1
+      Component: {fileID: 893937724393207973}
+      Role: 0
+      ActionSide: 0
+      Children: []
+    - Title: Gate_RandomChance
+      Expanded: 1
+      Component: {fileID: 7404642656897631988}
+      Role: 0
+      ActionSide: 0
+      Children:
+      - Title: Node_Effect
+        Expanded: 1
+        Component: {fileID: 7831204172441455859}
+        Role: 0
+        ActionSide: 0
+        Children: []
+--- !u!114 &6559711837460962207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070915587351049760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdce60ac543361f428c11fb667e61ca6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Phase: 0
+  Invert: 0
+--- !u!114 &5203273571518900361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070915587351049760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ApplyAsPersistentGrowth: 1
+  appliesTo: 1
+  addAttack: 0
+  addDefense: 0
+  addCritChance: 0.13
+  addCritMultiplier: 0
+  addMaxHP: 0
+  addSpeedRate: 65
+  addLuck: 0
+  addPenetrationPercent: 0
+  addPenetrationFixed: 0
+--- !u!114 &6819380430072095734
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070915587351049760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Effect: {fileID: 5203273571518900361}
+--- !u!114 &4543900383603872155
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070915587351049760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdce60ac543361f428c11fb667e61ca6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Phase: 10
+  Invert: 0
+--- !u!114 &4966460827077441041
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070915587351049760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ApplyAsPersistentGrowth: 0
+  appliesTo: 1
+  addAttack: 0
+  addDefense: 0
+  addCritChance: 0
+  addCritMultiplier: 0
+  addMaxHP: 0
+  addSpeedRate: 0
+  addLuck: 0
+  addPenetrationPercent: 0.02
+  addPenetrationFixed: 0
+--- !u!114 &893937724393207973
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070915587351049760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Effect: {fileID: 4966460827077441041}
+--- !u!114 &7404642656897631988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070915587351049760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba915f14b9e719c41a96b2ccabf16d60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Chance01: 0.1
+  Invert: 0
+--- !u!114 &7385578853080815276
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070915587351049760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ApplyAsPersistentGrowth: 1
+  appliesTo: 1
+  addAttack: 2
+  addDefense: 2
+  addCritChance: 0
+  addCritMultiplier: 0
+  addMaxHP: 2
+  addSpeedRate: 2
+  addLuck: 0
+  addPenetrationPercent: 0
+  addPenetrationFixed: 0
+--- !u!114 &7831204172441455859
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070915587351049760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Effect: {fileID: 7385578853080815276}

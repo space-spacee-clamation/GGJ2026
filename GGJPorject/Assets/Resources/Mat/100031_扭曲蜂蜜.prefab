@@ -47,7 +47,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71969320e5d8ad849b48f9c4e064b7e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Id: 100070
+  Id: 100031
   DisplayName: "\u626D\u66F2\u8702\u871C"
   Type: 3
   ManaCost: 1
