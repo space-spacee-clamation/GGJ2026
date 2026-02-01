@@ -13,11 +13,10 @@ GameObject:
   - component: {fileID: 2149580077456950167}
   - component: {fileID: 6176827572734609679}
   - component: {fileID: 4935223999510666167}
-  - component: {fileID: 8575266668578848583}
-  - component: {fileID: 6715303409779210669}
-  - component: {fileID: 5087656700046768835}
+  - component: {fileID: 1095055573227129542}
+  - component: {fileID: 2581710755623385077}
   m_Layer: 0
-  m_Name: "100086_\u6B8B\u7834\u5377\u8F74"
+  m_Name: "100086_\u71B5\u589E\u88C5\u7F6E"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -71,15 +70,9 @@ MonoBehaviour:
       Role: 0
       ActionSide: 0
       Children: []
-  - Title: Gate_Phase
-    Expanded: 0
-    Component: {fileID: 8575266668578848583}
-    Role: 0
-    ActionSide: 0
-    Children:
     - Title: Node_Effect
       Expanded: 1
-      Component: {fileID: 5087656700046768835}
+      Component: {fileID: 2581710755623385077}
       Role: 0
       ActionSide: 0
       Children: []
@@ -133,21 +126,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Effect: {fileID: 6176827572734609679}
---- !u!114 &8575266668578848583
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8799035292761807274}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bdce60ac543361f428c11fb667e61ca6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Phase: 1
-  Invert: 0
---- !u!114 &6715303409779210669
+--- !u!114 &1095055573227129542
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -160,7 +139,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   RestoreAmount: 1
---- !u!114 &5087656700046768835
+--- !u!114 &2581710755623385077
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -172,4 +151,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Effect: {fileID: 6715303409779210669}
+  Effect: {fileID: 1095055573227129542}

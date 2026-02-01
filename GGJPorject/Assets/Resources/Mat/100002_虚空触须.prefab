@@ -96,8 +96,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ApplyAsPersistentGrowth: 1
   appliesTo: 1
-  addAttack: 120
-  addDefense: 80
+  addAttack: 96
+  addDefense: 63
   addCritChance: -0.02
   addCritMultiplier: 0
   addMaxHP: 0

@@ -64,13 +64,13 @@ MonoBehaviour:
   remainingShelfLifeTurns: 1
   logicTreeRoots:
   - Title: Gate_Phase
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 9149059833685159224}
     Role: 0
     ActionSide: 0
     Children:
     - Title: Node_Effect
-      Expanded: 0
+      Expanded: 1
       Component: {fileID: 917062039358644278}
       Role: 0
       ActionSide: 0
@@ -82,7 +82,7 @@ MonoBehaviour:
       ActionSide: 0
       Children: []
   - Title: Gate_Phase
-    Expanded: 1
+    Expanded: 0
     Component: {fileID: 8285842122814950510}
     Role: 0
     ActionSide: 0
@@ -126,7 +126,7 @@ MonoBehaviour:
   addCritChance: 0
   addCritMultiplier: 0
   addMaxHP: 0
-  addSpeedRate: 16
+  addSpeedRate: 8
   addLuck: 0
   addPenetrationPercent: 0
   addPenetrationFixed: 0

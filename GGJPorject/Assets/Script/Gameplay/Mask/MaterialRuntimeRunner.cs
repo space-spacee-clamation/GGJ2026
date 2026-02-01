@@ -41,7 +41,7 @@ public sealed class MaterialRuntimeRunner : IFightComponent, IAttackInfoModifier
             mask: null,
             maskMaterials: null,
             onMaterialBound: null,
-            fight: null,
+            fight: context,
             side: FightSide.None,
             defenderSide: FightSide.None,
             actionNumber: 0,
