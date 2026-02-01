@@ -11,7 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Mian.unity
     guid: 1a954a2291c28bf4dbce6779aa5b38a2
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Exit.unity
     guid: ff5f344f871ffcf4da6a41f15249af78
   m_configObjects: {}

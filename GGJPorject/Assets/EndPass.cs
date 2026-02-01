@@ -107,7 +107,7 @@ public class EndPass : MonoBehaviour
 
         if (bestMat.count > 0)
         {
-            sb.Append($"在你手中，<color=cyan>{bestMat.name}</color> 绽放了最耀眼的光芒，\n");
+            sb.Append($"在你手中，<color=#FF6633>{bestMat.name}</color> 绽放了最耀眼的光芒，\n");
             sb.Append($"它被你使用了 <color=yellow>{bestMat.count}</color> 次，是你最忠实的素材。\n\n");
         }
         else
