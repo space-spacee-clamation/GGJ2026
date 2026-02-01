@@ -79,15 +79,9 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
                         defUp += 1;
                         break;
                     case 4:
-                        critUp += 1;
-                        break;
-                    case 5:
-                        critMUp += 1;
-                        break;
-                    case 6:
                         spdUp += 1;
                         break;
-                    case 7:
+                    case 5:
                         hpUp += 1;
                         atkUp += 1;
                         defUp += 1;
@@ -105,7 +99,7 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
             HPBase = baseHP + hpPerRound * hpUp,
             ATKBase = baseATK + atkPerRound * atkUp,
             DEFBase = baseDEF + defPerRound * defUp,
-            CritChance = 0.05f + 0.05f*critUp,
+            CritChance = 0.05f + 0.05f*critUp + roundIndex/100f,
             CritMultiplier = 1.5f + 1.5f*critMUp,
             SpeedRate = Mathf.Max(0, baseSpeedRate + speedPerRound * spdUp),
         };

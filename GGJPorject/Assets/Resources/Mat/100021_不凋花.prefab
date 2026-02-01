@@ -14,8 +14,6 @@ GameObject:
   - component: {fileID: 6907794238994817248}
   - component: {fileID: 4054433507287495611}
   - component: {fileID: 6803412031548793611}
-  - component: {fileID: 7754285783973683518}
-  - component: {fileID: 1034082217733174888}
   - component: {fileID: 3394027218787698813}
   - component: {fileID: 3274324639129174454}
   m_Layer: 0
@@ -62,7 +60,7 @@ MonoBehaviour:
   remainingShelfLifeTurns: 5
   logicTreeRoots:
   - Title: Gate_Phase
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 8189161971522336165}
     Role: 0
     ActionSide: 0
@@ -79,12 +77,6 @@ MonoBehaviour:
     Role: 0
     ActionSide: 0
     Children:
-    - Title: Node_Effect
-      Expanded: 0
-      Component: {fileID: 1034082217733174888}
-      Role: 0
-      ActionSide: 0
-      Children: []
     - Title: Node_Effect
       Expanded: 1
       Component: {fileID: 3274324639129174454}
@@ -125,7 +117,7 @@ MonoBehaviour:
   addCritMultiplier: 0
   addMaxHP: 100
   addSpeedRate: 65
-  addLuck: 0
+  addLuck: 10
   addPenetrationPercent: 0
   addPenetrationFixed: 0
 --- !u!114 &4054433507287495611
@@ -155,35 +147,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Phase: 8
   Invert: 0
---- !u!114 &7754285783973683518
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5634654133524183751}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d354bbb736423524e98bef0130008088, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  target: 0
-  mode: 0
-  flatDelta: 0
-  percentOfMaxHpDelta: 0
---- !u!114 &1034082217733174888
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5634654133524183751}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Effect: {fileID: 7754285783973683518}
 --- !u!114 &3394027218787698813
 MonoBehaviour:
   m_ObjectHideFlags: 0

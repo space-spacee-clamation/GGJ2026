@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 6377485049988542880}
   - component: {fileID: 5693885982944471418}
   m_Layer: 0
-  m_Name: "100092_\u7834\u788E\u955C\u7247"
+  m_Name: "100092_\u8150\u5316\u5723\u5FBD"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -63,7 +63,7 @@ MonoBehaviour:
     ActionSide: 0
     Children:
     - Title: Node_Effect
-      Expanded: 0
+      Expanded: 1
       Component: {fileID: 5693885982944471418}
       Role: 0
       ActionSide: 0
@@ -96,13 +96,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ApplyAsPersistentGrowth: 0
   appliesTo: 1
-  addAttack: 30
+  addAttack: 25
   addDefense: 0
   addCritChance: 0
   addCritMultiplier: 0
   addMaxHP: 0
   addSpeedRate: 0
-  addLuck: 0
+  addLuck: 1
   addPenetrationPercent: 0
   addPenetrationFixed: 0
 --- !u!114 &5693885982944471418

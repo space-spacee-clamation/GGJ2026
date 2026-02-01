@@ -161,13 +161,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ApplyAsPersistentGrowth: 1
   appliesTo: 1
-  addAttack: 75
+  addAttack: 60
   addDefense: 0
   addCritChance: 0
   addCritMultiplier: 0
   addMaxHP: 0
   addSpeedRate: 0
-  addLuck: 0
+  addLuck: 5
   addPenetrationPercent: 0
   addPenetrationFixed: 0
 --- !u!114 &7285137996833216764

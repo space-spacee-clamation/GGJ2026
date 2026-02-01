@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 8446674858288574060}
   - component: {fileID: 2305536515857517505}
   m_Layer: 0
-  m_Name: "100079_\u865A\u5316\u6811\u8102"
+  m_Name: "100079_\u6697\u5F71\u8760\u7FFC"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -60,13 +60,13 @@ MonoBehaviour:
   remainingShelfLifeTurns: 1
   logicTreeRoots:
   - Title: Gate_Phase
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 8828075537322810399}
     Role: 0
     ActionSide: 0
     Children:
     - Title: Node_Effect
-      Expanded: 0
+      Expanded: 1
       Component: {fileID: 5374687337963570433}
       Role: 0
       ActionSide: 0
@@ -78,7 +78,7 @@ MonoBehaviour:
     ActionSide: 0
     Children:
     - Title: Node_Effect
-      Expanded: 1
+      Expanded: 0
       Component: {fileID: 2305536515857517505}
       Role: 0
       ActionSide: 0
@@ -116,8 +116,8 @@ MonoBehaviour:
   addCritChance: 0
   addCritMultiplier: 0
   addMaxHP: 0
-  addSpeedRate: 25
-  addLuck: 0
+  addSpeedRate: 15
+  addLuck: 2
   addPenetrationPercent: 0
   addPenetrationFixed: 0
 --- !u!114 &5374687337963570433
