@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 1866208985044583361}
   - component: {fileID: 6849594990269529849}
   - component: {fileID: 8347749546903509965}
+  - component: {fileID: 1072336237849606138}
+  - component: {fileID: 3525087958445486444}
   m_Layer: 0
   m_Name: "100099_\u98A4\u6817\u94C3"
   m_TagString: Untagged
@@ -68,6 +70,12 @@ MonoBehaviour:
       Role: 0
       ActionSide: 0
       Children: []
+    - Title: Node_Effect
+      Expanded: 1
+      Component: {fileID: 3525087958445486444}
+      Role: 0
+      ActionSide: 0
+      Children: []
 --- !u!114 &1866208985044583361
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -97,7 +105,7 @@ MonoBehaviour:
   ApplyAsPersistentGrowth: 0
   appliesTo: 1
   addAttack: 0
-  addDefense: -5
+  addDefense: 0
   addCritChance: 0
   addCritMultiplier: 0
   addMaxHP: 0
@@ -118,3 +126,39 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Effect: {fileID: 6849594990269529849}
+--- !u!114 &1072336237849606138
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6851633517059138996}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ApplyAsPersistentGrowth: 0
+  appliesTo: 2
+  addAttack: 0
+  addDefense: 0
+  addCritChance: 0
+  addCritMultiplier: 0
+  addMaxHP: 0
+  addSpeedRate: -5
+  addLuck: 0
+  addPenetrationPercent: 0
+  addPenetrationFixed: 0
+--- !u!114 &3525087958445486444
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6851633517059138996}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Effect: {fileID: 1072336237849606138}
