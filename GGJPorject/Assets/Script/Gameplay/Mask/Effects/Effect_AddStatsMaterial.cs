@@ -91,6 +91,8 @@ public sealed class Effect_AddStatsMaterial : MonoBehaviour, IMaterialEffect, IM
 
         // 这里不写“战斗开始/战斗结束”，交给 Gate_Phase 等逻辑节点表达
         var who = ApplyAsPersistentGrowth ? "玩家" : (appliesTo == FightSide.Enemy ? "敌人" : "玩家");
+        if(ApplyAsPersistentGrowth) sb.Append(" 永久 ");
+        else sb.Append(" 战斗阶段临时 ");
 
         var any = false;
         if (addMaxHP != 0f) { sb.Append($"{who} 最大生命 {(addMaxHP >= 0 ? "+" : "")}{addMaxHP}"); any = true; }
@@ -98,7 +100,7 @@ public sealed class Effect_AddStatsMaterial : MonoBehaviour, IMaterialEffect, IM
         if (addDefense != 0f) { sb.Append($"{who} 防御 {(addDefense >= 0 ? "+" : "")}{addDefense}"); any = true; }
         if (addCritChance != 0f) { sb.Append($"{who} 暴击率 {(addCritChance >= 0 ? "+" : "")}{addCritChance:P0}"); any = true; }
         if (addCritMultiplier != 0f) { sb.Append($"{who} 爆伤倍率 {(addCritMultiplier >= 0 ? "+" : "")}{addCritMultiplier}"); any = true; }
-        if (addSpeedRate != 0) { sb.Append($"{who} 速度成长 {(addSpeedRate >= 0 ? "+" : "")}{addSpeedRate}/秒"); any = true; }
+        if (addSpeedRate != 0) { sb.Append($"{who} 速度 {(addSpeedRate >= 0 ? "+" : "")}{addSpeedRate}"); any = true; }
         if (ApplyAsPersistentGrowth && addLuck != 0) { sb.Append($"{who} 幸运 {(addLuck >= 0 ? "+" : "")}{addLuck}"); any = true; }
         if (addPenetrationPercent != 0f) { sb.Append($"{who} 百分比穿透 {(addPenetrationPercent >= 0 ? "+" : "")}{addPenetrationPercent:P0}"); any = true; }
         if (addPenetrationFixed != 0f) { sb.Append($"{who} 固定穿透 {(addPenetrationFixed >= 0 ? "+" : "")}{addPenetrationFixed}"); any = true; }

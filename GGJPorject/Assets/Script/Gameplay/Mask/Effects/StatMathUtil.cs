@@ -11,7 +11,7 @@ public static class StatMathUtil
             case StatKey.Defense: return "防御";
             case StatKey.CritChance: return "暴击率";
             case StatKey.CritMultiplier: return "爆伤倍率";
-            case StatKey.SpeedRate: return "速度成长";
+            case StatKey.SpeedRate: return "速度";
             case StatKey.Luck: return "幸运";
             default: return key.ToString();
         }

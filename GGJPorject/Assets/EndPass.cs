@@ -114,13 +114,13 @@ public class EndPass : MonoBehaviour
         {
             sb.Append("你似乎还在探索素材的奥秘，未曾偏爱某一种材料。\n\n");
         }
+        var detale= GameManager.I.PendingGrowthDelta;
 
         sb.Append("最终，你的勇者获得了：\n");
-        sb.Append($"<color=red> 攻击力：{stats.Attack:F1}</color>   ");
-        sb.Append($"<color=blue> 防御力：{stats.Defense:F1}</color>\n");
-        sb.Append($"<color=green> 速度：{stats.SpeedRate}</color>      ");
-        sb.Append($"<color=#FF69B4> 最大生命：{stats.MaxHP:F0}</color>\n");
-
+        sb.Append($"<color=red> 攻击力：{stats.Attack+detale.AddAttack:F1}</color>   ");
+        sb.Append($"<color=blue> 防御力：{stats.Defense+detale.AddDefense:F1}</color>\n");
+        sb.Append($"<color=green> 速度：{stats.SpeedRate+detale.AddSpeedRate}</color>      ");
+        sb.Append($"<color=#FF69B4> 最大生命：{stats.MaxHP+detale.AddMaxHP:F0}</color>\n");
         // 根据属性生成一个趣味评价（Flavor Text）
         string title = DeterminePlayerTitle(stats);
         sb.Append($"\n他已然成为了一名 <size=110%><color=purple><b>{title}</b></color></size>！");
