@@ -52,7 +52,7 @@ public sealed class JamPersistentGrowthCalculator_Default : IJamPersistentGrowth
         delta2.AddPenetrationFixed = delta.AddPenetrationFixed*value;
         delta2.AddPenetrationPercent = delta.AddPenetrationPercent*value;
 
-        GameManager.I.dropCount = Random.Range(JamDefaultSettings.DropCountPerBattle, Player.I.BuildBattleStats().Luck / 10);
+        GameManager.I.dropCount = Random.Range(JamDefaultSettings.DropCountPerBattle, (Player.I.BuildBattleStats().Luck + GameManager.I.PendingGrowthDelta.AddLuck)/ 10 + JamDefaultSettings.DropCountPerBattle);
         player.ApplyGrowth(delta2);
 
         // 注意：不再进行 reset，允许成长值累积

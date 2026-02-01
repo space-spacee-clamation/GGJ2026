@@ -139,7 +139,7 @@ MonoBehaviour:
   addCritMultiplier: 0
   addMaxHP: 0
   addSpeedRate: 0
-  addLuck: 0
+  addLuck: -5
   addPenetrationPercent: 0
   addPenetrationFixed: 0
 --- !u!114 &1149154242041290362

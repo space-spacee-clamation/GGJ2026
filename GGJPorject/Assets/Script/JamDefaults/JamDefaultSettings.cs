@@ -16,7 +16,7 @@ public static class JamDefaultSettings
         Defense = 80f,
         CritChance = 0.01f,
         CritMultiplier = 1.2f,
-        SpeedRate = 10,
+        SpeedRate = 30,
         Luck = 10,
         PenetrationPercent = 0f,
         PenetrationFixed = 0f

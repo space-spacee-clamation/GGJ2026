@@ -1,4 +1,6 @@
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.U2D.IK;
 
 /// <summary>
 /// Jam 测试逻辑：当策划还没配置任何怪物列表时，提供一个可跑流程的默认怪物生成。
@@ -6,10 +8,10 @@ using UnityEngine;
 public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
 {
     [Header("Base")]
-    [SerializeField] private float baseHP = 140f;
-    [SerializeField] private float baseATK = 40f;
-    [SerializeField] private float baseDEF = 60f;
-    [SerializeField] private int baseSpeedRate = 12;
+    [SerializeField] private float baseHP = 100f;
+    [SerializeField] private float baseATK = 35f;
+    [SerializeField] private float baseDEF = 50f;
+    [SerializeField] private int baseSpeedRate = 21;
 
     [Header("Per Round Growth")]
     [SerializeField] private float hpPerRound = 30f;
@@ -46,39 +48,60 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
     {
         0.01f,0.03f,0.025f,0.032f,0.045f
     };
-
+    int hpUp = 0;
+    int atkUp = 0;
+    int defUp = 0;
+    int critUp = 0;
+    int critMUp = 0;
+    int spdUp = 0;
 
     public CharacterConfig TrySpawn(int roundIndex, FightContext context)
     {
         // roundIndex 从 0 开始
         //int r = Mathf.Max(0, roundIndex);
         //基础数值
-        int r = 0;
+        if (roundIndex > 0)
+        {
+            int num = Random.Range(2, 5);
 
-        if (roundIndex <= 4) // 新手期：平稳增长
-        {
-            r = roundIndex;
+            for (int i = 0; i < num; i++)
+            {
+                int a = Random.Range(1, 8);
+                switch (a)
+                {
+                    case 1:
+                        hpUp += 1;
+                        break;
+                    case 2:
+                        atkUp += 1;
+                        break;
+                    case 3:
+                        defUp += 1;
+                        break;
+                    case 4:
+                        spdUp += 1;
+                        break;
+                    case 5:
+                        hpUp += 1;
+                        atkUp += 1;
+                        defUp += 1;
+                        critUp += 1;
+                        critMUp += 1;
+                        spdUp += 1;
+                        break;
+                }
+            }
         }
-        else if (roundIndex <= 10) // 成长期：斜率降低，稍微喘息
-        {
-            // 从第 10 关的 r=10 开始，每 2 关增加 1 点
-            r = 10 + (roundIndex - 10) / 2;
-        }
-        else // 挑战期：难度再次提升
-        {
-            // 从第 30 关的 r=20 开始，每 1 关增加 1 点
-            r = 20 + roundIndex + Random.Range(1, 10);
-        }
-
         //增长数值
         return new CharacterConfig
         {
-            HPBase = baseHP + hpPerRound * r,
-            ATKBase = baseATK + atkPerRound * r,
-            DEFBase = baseDEF + defPerRound * r,
-            CritChance = 0.05f,
-            CritMultiplier = 1.5f,
-            SpeedRate = Mathf.Max(0, baseSpeedRate + speedPerRound * r),
+
+            HPBase = baseHP + hpPerRound * hpUp,
+            ATKBase = baseATK + atkPerRound * atkUp,
+            DEFBase = baseDEF + defPerRound * defUp,
+            CritChance = 0.05f + 0.05f*critUp + roundIndex/100f,
+            CritMultiplier = 1.5f + 1.5f*critMUp,
+            SpeedRate = Mathf.Max(0, baseSpeedRate + speedPerRound * spdUp),
         };
     }
 }
