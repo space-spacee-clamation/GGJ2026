@@ -16,8 +16,8 @@ GameObject:
   - component: {fileID: 6803412031548793611}
   - component: {fileID: 7754285783973683518}
   - component: {fileID: 1034082217733174888}
-  - component: {fileID: 6167502522732625987}
-  - component: {fileID: 6500476548214194722}
+  - component: {fileID: 3394027218787698813}
+  - component: {fileID: 3274324639129174454}
   m_Layer: 0
   m_Name: "100021_\u4E0D\u51CB\u82B1"
   m_TagString: Untagged
@@ -74,7 +74,7 @@ MonoBehaviour:
       ActionSide: 0
       Children: []
   - Title: Gate_Phase
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 6803412031548793611}
     Role: 0
     ActionSide: 0
@@ -86,8 +86,8 @@ MonoBehaviour:
       ActionSide: 0
       Children: []
     - Title: Node_Effect
-      Expanded: 0
-      Component: {fileID: 6500476548214194722}
+      Expanded: 1
+      Component: {fileID: 3274324639129174454}
       Role: 0
       ActionSide: 0
       Children: []
@@ -184,7 +184,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Effect: {fileID: 7754285783973683518}
---- !u!114 &6167502522732625987
+--- !u!114 &3394027218787698813
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -193,14 +193,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 5634654133524183751}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1b08508b363d5c54187eee9f3af9c77e, type: 3}
+  m_Script: {fileID: 11500000, guid: 7bf7a87bc07c50341b4c826be16f3075, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sourceDomain: 0
-  sourceStat: 1
+  sourceSide: 1
+  sourceStat: 0
+  targetSide: 1
   targetStat: 0
   percent: 0.05
---- !u!114 &6500476548214194722
+  maxHpAlsoHeal: 1
+--- !u!114 &3274324639129174454
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -212,4 +214,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Effect: {fileID: 6167502522732625987}
+  Effect: {fileID: 3394027218787698813}

@@ -14,8 +14,8 @@ GameObject:
   - component: {fileID: 9070827130120399550}
   - component: {fileID: 8151766211037660462}
   - component: {fileID: 261188124197610651}
-  - component: {fileID: 7218966126578488623}
-  - component: {fileID: 4090234676309375227}
+  - component: {fileID: 6201895147857121358}
+  - component: {fileID: 4255144829353427395}
   m_Layer: 0
   m_Name: "100001_\u9E7F\u8338"
   m_TagString: Untagged
@@ -79,7 +79,7 @@ MonoBehaviour:
     Children:
     - Title: Node_Effect
       Expanded: 1
-      Component: {fileID: 4090234676309375227}
+      Component: {fileID: 4255144829353427395}
       Role: 0
       ActionSide: 0
       Children: []
@@ -126,7 +126,7 @@ MonoBehaviour:
   ApplyAsPersistentGrowth: 1
   appliesTo: 1
   addAttack: 135
-  addDefense: 80
+  addDefense: 0
   addCritChance: 0
   addCritMultiplier: 0
   addMaxHP: 64
@@ -147,7 +147,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Effect: {fileID: 8151766211037660462}
---- !u!114 &7218966126578488623
+--- !u!114 &6201895147857121358
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -156,14 +156,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 2405239512617461962}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1b08508b363d5c54187eee9f3af9c77e, type: 3}
+  m_Script: {fileID: 11500000, guid: 7bf7a87bc07c50341b4c826be16f3075, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sourceDomain: 0
+  sourceSide: 1
   sourceStat: 1
+  targetSide: 1
   targetStat: 1
   percent: 0.05
---- !u!114 &4090234676309375227
+  maxHpAlsoHeal: 1
+--- !u!114 &4255144829353427395
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -175,4 +177,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Effect: {fileID: 7218966126578488623}
+  Effect: {fileID: 6201895147857121358}

@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 8976231459839430912}
   - component: {fileID: 391188585658341476}
   - component: {fileID: 4859175921543739901}
-  - component: {fileID: 1983820586190376995}
-  - component: {fileID: 4664669934482769004}
+  - component: {fileID: 4598258631053746282}
+  - component: {fileID: 4031503927661105406}
   m_Layer: 0
   m_Name: "100029_\u6676\u5316\u810A\u9AA8"
   m_TagString: Untagged
@@ -64,7 +64,7 @@ MonoBehaviour:
     Children:
     - Title: Node_Effect
       Expanded: 1
-      Component: {fileID: 4664669934482769004}
+      Component: {fileID: 4031503927661105406}
       Role: 0
       ActionSide: 0
       Children: []
@@ -82,7 +82,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Phase: 10
   Invert: 0
---- !u!114 &1983820586190376995
+--- !u!114 &4598258631053746282
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -91,21 +91,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 3614922817179463078}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ffc8e9f61847004c802fe7f7ecd2ad0, type: 3}
+  m_Script: {fileID: 11500000, guid: 7bf7a87bc07c50341b4c826be16f3075, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ApplyAsPersistentGrowth: 0
-  appliesTo: 1
-  addAttack: 0
-  addDefense: 0
-  addCritChance: 0
-  addCritMultiplier: 0
-  addMaxHP: 2
-  addSpeedRate: 0
-  addLuck: 0
-  addPenetrationPercent: 0
-  addPenetrationFixed: 0
---- !u!114 &4664669934482769004
+  sourceSide: 1
+  sourceStat: 2
+  targetSide: 1
+  targetStat: 2
+  percent: 0.01
+  maxHpAlsoHeal: 1
+--- !u!114 &4031503927661105406
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -117,4 +112,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79ee7b27ad51e8b4596e0278d1a6c3b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Effect: {fileID: 1983820586190376995}
+  Effect: {fileID: 4598258631053746282}

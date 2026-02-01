@@ -82,10 +82,10 @@ using UnityEngine;
 public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
 {
     [Header("Base")]
-    [SerializeField] private float baseHP = 140f;
-    [SerializeField] private float baseATK = 40f;
-    [SerializeField] private float baseDEF = 60f;
-    [SerializeField] private int baseSpeedRate = 12;
+    [SerializeField] private float baseHP = 100f;
+    [SerializeField] private float baseATK = 20f;
+    [SerializeField] private float baseDEF = 10f;
+    [SerializeField] private int baseSpeedRate = 6;
 
     [Header("Per Round Growth")]
     [SerializeField] private float hpPerRound = 50f;  // 增加基础增量
@@ -93,7 +93,7 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
     {
         20f, 50f, 100f, 200f, 400f  // 增强后期加成
     };
-    [SerializeField] private float atkPerRound = 20f; // 增加基础增量
+    [SerializeField] private float atkPerRound = 10f; // 增加基础增量
     [SerializeField] private float[] atkRounds = new float[5]
     {
         30f, 60f, 120f, 240f, 480f  // 增强后期加成
@@ -204,7 +204,7 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
     {
         float r = roundIndex;
 
-        if (r <= linearPhaseEnd)
+        if (r <= linearPhaseEnd && r > 0)
         {
             // 前期：线性平缓增长
             // 1-10轮：从1.0增长到2.0
@@ -217,13 +217,14 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
             float normalized = (r - linearPhaseEnd) / (exponentialStart - linearPhaseEnd);
             return 2.0f + Mathf.Pow(normalized, 1.5f) * 3.0f;
         }
-        else
+        else if( r > exponentialStart)
         {
             // 后期：指数爆炸增长
             // 21+轮：指数增长
             int expRounds = Mathf.Max(0, roundIndex - (int)exponentialStart);
             return 5.0f * Mathf.Pow(exponentialFactor, expRounds * 0.5f);
         }
+        return r;
     }
 
     /// <summary>

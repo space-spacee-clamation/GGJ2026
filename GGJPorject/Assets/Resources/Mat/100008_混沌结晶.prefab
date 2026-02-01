@@ -72,7 +72,7 @@ MonoBehaviour:
       ActionSide: 0
       Children: []
   - Title: Gate_Phase
-    Expanded: 0
+    Expanded: 1
     Component: {fileID: 7191768436869352391}
     Role: 0
     ActionSide: 0
@@ -109,7 +109,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdce60ac543361f428c11fb667e61ca6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Phase: 2
+  Phase: 7
   Invert: 0
 --- !u!114 &162554071917805345
 MonoBehaviour:
