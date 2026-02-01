@@ -1,4 +1,5 @@
 using System.Linq;
+using UnityEngine;
 
 /// <summary>
 /// 持久成长结算器（Jam 版，纯代码可改公式）。
@@ -50,7 +51,8 @@ public sealed class JamPersistentGrowthCalculator_Default : IJamPersistentGrowth
         delta2.AddSpeedRate = delta.AddSpeedRate*value;
         delta2.AddPenetrationFixed = delta.AddPenetrationFixed*value;
         delta2.AddPenetrationPercent = delta.AddPenetrationPercent*value;
-       
+
+        GameManager.I.dropCount = Random.Range(JamDefaultSettings.DropCountPerBattle, Player.I.BuildBattleStats().Luck / 10);
         player.ApplyGrowth(delta2);
 
         // 注意：不再进行 reset，允许成长值累积

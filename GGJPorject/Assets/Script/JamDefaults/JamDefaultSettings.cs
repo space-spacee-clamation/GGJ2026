@@ -14,7 +14,7 @@ public static class JamDefaultSettings
         MaxHP = 120f,
         Attack = 50f,
         Defense = 80f,
-        CritChance = 0.10f,
+        CritChance = 0.01f,
         CritMultiplier = 1.2f,
         SpeedRate = 10,
         Luck = 10,

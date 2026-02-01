@@ -1,4 +1,4 @@
-/*using UnityEngine;
+using UnityEngine;
 
 /// <summary>
 /// Jam 测试逻辑：当策划还没配置任何怪物列表时，提供一个可跑流程的默认怪物生成。
@@ -13,30 +13,36 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
 
     [Header("Per Round Growth")]
     [SerializeField] private float hpPerRound = 30f;
-    [SerializeField] private float[] hpRounds = new float[5]
+    [SerializeField]
+    private float[] hpRounds = new float[5]
     {
         20f,32f,50f,64f,90f
     };
     [SerializeField] private float atkPerRound = 15f;
-    [SerializeField] private float[] atkRounds = new float[5]
+    [SerializeField]
+    private float[] atkRounds = new float[5]
     {
         30f,48f,75f,96f,135f
     };
     [SerializeField] private float defPerRound = 20f;
-    [SerializeField] private float[] defRounds = new float[5]
+    [SerializeField]
+    private float[] defRounds = new float[5]
     {
         25f,40f,63f,80f,113f
     };
     [SerializeField] private int speedPerRound = 5;
-    [SerializeField] private float[] spdRounds = new float[5]
+    [SerializeField]
+    private float[] spdRounds = new float[5]
     {
         10f,16f,25f,32f,45f
     };
-    [SerializeField] private float[] cirtRounds = new float[5]
+    [SerializeField]
+    private float[] cirtRounds = new float[5]
     {
         0.02f,0.032f,0.05f,0.064f,0.09f
     };
-    [SerializeField] private float[] cirtDamRounds = new float[5]
+    [SerializeField]
+    private float[] cirtDamRounds = new float[5]
     {
         0.01f,0.03f,0.025f,0.032f,0.045f
     };
@@ -46,20 +52,24 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
     {
         // roundIndex 从 0 开始
         //int r = Mathf.Max(0, roundIndex);
-        //基础增长倍率
+        //基础数值
         int r = 0;
-        if(roundIndex <= 5 && roundIndex >=1)
+
+        if (roundIndex <= 4) // 新手期：平稳增长
         {
-           r = (roundIndex + 3) / 3;
+            r = roundIndex;
         }
-        else if(roundIndex <= 20 && roundIndex > 5)
+        else if (roundIndex <= 10) // 成长期：斜率降低，稍微喘息
         {
-            r = (roundIndex + 5) / 5;
+            // 从第 10 关的 r=10 开始，每 2 关增加 1 点
+            r = 10 + (roundIndex - 10) / 2;
         }
-        else if(roundIndex > 20)
+        else // 挑战期：难度再次提升
         {
-            r = (roundIndex + 1) / 6;
+            // 从第 30 关的 r=20 开始，每 1 关增加 1 点
+            r = 20 + roundIndex + Random.Range(1, 10);
         }
+
         //增长数值
         return new CharacterConfig
         {
@@ -72,8 +82,7 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
         };
     }
 }
-*/
-using UnityEngine;
+/*using UnityEngine;
 
 /// <summary>
 /// Jam 测试逻辑：当策划还没配置任何怪物列表时，提供一个可跑流程的默认怪物生成。
@@ -84,7 +93,7 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
     [Header("Base")]
     [SerializeField] private float baseHP = 100f;
     [SerializeField] private float baseATK = 20f;
-    [SerializeField] private float baseDEF = 10f;
+    [SerializeField] private float baseDEF = 100f;
     [SerializeField] private int baseSpeedRate = 6;
 
     [Header("Per Round Growth")]
@@ -176,8 +185,7 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
 
         // 计算速度（速度增长相对独立）
         float speedGrowth = linearGrowth * 0.5f; // 速度增长减半
-        float spd = baseSpeedRate + 
-                   speedPerRound * speedGrowth + 
+        float spd = baseSpeedRate + speedPerRound * speedGrowth + 
                    spdRounds[stageIndex] * Mathf.Min(growthMultiplier, 2f);
 
         // 计算暴击属性
@@ -296,6 +304,7 @@ public class JamTestMonsterSpawnLogic : MonoBehaviour, IMonsterSpawnLogic
                  $"CRIT={config.CritChance:P1}, CRITDMG={config.CritMultiplier:F2}x");
     }
 }
+*/
 
 
 
